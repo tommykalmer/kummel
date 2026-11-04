@@ -105,9 +105,17 @@ body.plan #cross{opacity:1}
   border-radius:18px 18px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.2);transform:translateY(105%);transition:transform .28s ease;display:flex;flex-direction:column;
   padding-bottom:var(--sab)}
 #sheet.open{transform:none}
+#sheet.compact{max-height:34%}
+/* phone: the tool rail stays reachable above an open sheet; sheet content keeps clear of it */
+@media (max-width:899px){
+  #rail{z-index:650}
+  body.sheet-open .sh-body,body.sheet-open .sh-head{padding-right:calc(70px + var(--sar))}
+  body.sheet-open #fab,body.sheet-open #inst{visibility:hidden}
+}
 @media (min-width:900px){
   #sheet{left:calc(10px + var(--sal));right:auto;top:calc(70px + var(--sat));bottom:calc(10px + var(--sab));width:390px;max-height:none;border-radius:18px;transform:translateX(-110%)}
   #sheet.open{transform:none}
+  #sheet.compact{max-height:none}
   body.sheet-open #inst{left:420px}
 }
 .sh-head{display:flex;align-items:center;gap:8px;padding:12px max(16px,var(--sal)) 8px;border-bottom:1px solid var(--line)}
@@ -236,6 +244,8 @@ let saveT;
 function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }, 200); }
 const uid = () => Math.random().toString(36).slice(2, 9);
 const boat = () => S.boats.find(b => b.id === S.boatId) || S.boats[0];
+/* GPS state is declared up front: the map's move handler reads it from the first frame */
+let gps = null, watchId = null, follow = false, lastFix = null, wakeLock = null;
 
 /* ---------- geo helpers ---------- */
 const rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;
@@ -284,6 +294,8 @@ const seamarks = L.tileLayer("https://tiles.openseamap.org/seamark/{z}/{x}/{y}.p
 /* Traficom WMTS (KVP). The 3857 tile set name is probed at start-up. */
 const TRAFICOM = "https://julkinen.traficom.fi/rasteripalvelu/wmts";
 const CHART_LAYERS = ["Traficom:Yleiskartat 250k public", "Traficom:Yleiskartat 100k public", "Traficom:Rannikkokartat public", "Traficom:Merikarttasarjat public", "Traficom:Satamakartat"];
+/* [minZoom, maxZoom, maxNativeZoom] per series */
+const CHART_ZOOMS = [[0, 11, 11], [10, 13, 13], [13, 19, 16], [13, 19, 16], [15, 19, 17]];
 const TMS_CANDIDATES = [
   { set: "WGS84_Pseudo-Mercator", m: "WGS84_Pseudo-Mercator:{z}" },
   { set: "EPSG:3857", m: "EPSG:3857:{z}" },
@@ -326,9 +338,13 @@ async function buildChart() {
   chartGroup.clearLayers();
   const ts = await findTileSet();
   if (!ts) { toast("Traficoms sjökort svarar inte just nu. OpenSeaMap visas i stället.", 4000); return false; }
+  /* One chart series per zoom band, the way paper charts work: overview → coastal → harbour.
+     Coarser series stay underneath one band longer so gaps in the detailed series are filled. */
   CHART_LAYERS.forEach((layer, i) => {
+    const [minZoom, maxZoom, maxNativeZoom] = CHART_ZOOMS[i];
     chartGroup.addLayer(L.tileLayer(wmtsUrl(layer, ts, ts.style), {
-      maxZoom: 19, maxNativeZoom: 16, zIndex: 10 + i, errorTileUrl: "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==",
+      minZoom, maxZoom, maxNativeZoom, zIndex: 10 + i,
+      errorTileUrl: "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==",
       attribution: i === 0 ? "Källa: Traficom. Ej för navigering." : ""
     }));
   });
@@ -393,6 +409,7 @@ function openSheet(title, html, view) {
   $("#sh-title").textContent = title;
   $("#sh-body").innerHTML = html;
   $("#sheet").classList.add("open");
+  $("#sheet").classList.toggle("compact", view === "route"); // keep the chart free for tapping waypoints
   document.body.classList.add("sheet-open");
   sheetView = view || title;
 }
@@ -418,7 +435,6 @@ map.on("dragstart", () => { if (follow) { follow = false; $("#b-locate").setAttr
 updateCross();
 
 /* ---------- GPS ---------- */
-let gps = null, watchId = null, follow = false, lastFix = null, wakeLock = null;
 const boatSvg = `<svg width="34" height="34" viewBox="0 0 34 34"><path d="M17 3 25 29 17 24 9 29Z" fill="#d64545" stroke="#fff" stroke-width="2"/></svg>`;
 const boatMarker = L.marker([0, 0], { icon: L.divIcon({ className: "", html: `<div class="boat-icon" id="boaticon">${boatSvg}</div>`, iconSize: [34, 34], iconAnchor: [17, 17] }), interactive: false, zIndexOffset: 1000 });
 const accCircle = L.circle([0, 0], { radius: 1, color: "#1d6fa3", weight: 1, fillOpacity: .08, interactive: false });
