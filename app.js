@@ -141,7 +141,7 @@ function addOverlays() {
   add({ id: "acc-line", type: "line", source: "acc", paint: { "line-color": "#1d6fa3", "line-width": 1 } });
   add({ id: "shown", type: "line", source: "shown", paint: { "line-color": "#1d6fa3", "line-width": 4, "line-opacity": .85 } });
   add({ id: "track", type: "line", source: "live", paint: { "line-color": "#d64545", "line-width": 4, "line-opacity": .85 } });
-  add({ id: "route", type: "line", source: "route", paint: { "line-color": "#d64545", "line-width": 3, "line-dasharray": [2, 1.5] } });
+  add({ id: "route", type: "line", source: "route", paint: { "line-color": ["case", ["==", ["get", "off"], 1], "#e07b00", "#d64545"], "line-width": ["case", ["==", ["get", "off"], 1], 3, 3.5], "line-dasharray": [2, 1.5] } });
   add({ id: "route-lbl", type: "symbol", source: "route", layout: { "symbol-placement": "line-center", "text-field": ["get", "label"], "text-font": ["Noto Sans Medium"], "text-size": 12, "text-allow-overlap": false }, paint: { "text-color": "#d64545", "text-halo-color": "#fff", "text-halo-width": 2 } });
   add({ id: "navto", type: "line", source: "navto", paint: { "line-color": "#2f8f5b", "line-width": 3, "line-dasharray": [1, 1.2] } });
   add({ id: "heading", type: "line", source: "heading", paint: { "line-color": "#d64545", "line-width": 2, "line-dasharray": [3, 3] } });
@@ -430,7 +430,7 @@ function bindPlaceForm(p) {
     save(); drawPlaces(); closeSheet(); toast("Platsen sparad");
   };
   const del = $("#pf-del"); if (del) del.onclick = () => { S.places = S.places.filter(x => x.id !== p.id); save(); drawPlaces(); closeSheet(); };
-  const nav = $("#pf-nav"); if (nav) nav.onclick = () => startPlanning([gps ? ll(gps) : ll(map.getCenter()), ll(p)]);
+  const nav = $("#pf-nav"); if (nav) nav.onclick = () => { const from = gps ? ll(gps) : ll(map.getCenter()); startPlanning([from, ll(p)]); autoRoute(from, ll(p)); };
 }
 function depthAt(pos) {
   if (!mapReady) return null;
@@ -521,7 +521,7 @@ $("#b-depth").onclick = () => {
 };
 
 /* ---------- route planning ---------- */
-let planning = false, wps = [], wpMarkers = [];
+let planning = false, wps = [], wpMarkers = [], wpsOff = [], autoInfo = null;
 function startPlanning(initial) {
   planning = true; wps = (initial || []).map(ll);
   document.body.classList.add("plan"); $("#b-route").setAttribute("aria-pressed", "true");
@@ -530,12 +530,12 @@ function startPlanning(initial) {
 }
 function stopPlanning(keep) {
   planning = false; document.body.classList.remove("plan"); $("#b-route").setAttribute("aria-pressed", "false");
-  if (!keep) { wps = []; drawWps(); }
+  if (!keep) { wps = []; wpsOff = []; autoInfo = null; drawWps(); }
 }
 map.on("click", e => {
   if (!planning) return;
   if (e.defaultPrevented) return;
-  wps.push(ll(e.lngLat)); renderRoute();
+  wps.push(ll(e.lngLat)); wpsOff = []; autoInfo = null; renderRoute();
 });
 function routeStats(points) {
   const b = boat(); let nm = 0; const legs = [];
@@ -546,13 +546,15 @@ function routeStats(points) {
 function drawWps() {
   wpMarkers.forEach(m => m.remove()); wpMarkers = [];
   const st = routeStats(wps);
-  setData("route", { type: "FeatureCollection", features: wps.slice(1).map((p, i) => ({ type: "Feature", properties: { label: `${String(Math.round(st.legs[i].brg)).padStart(3, "0")}° ${st.legs[i].d.toFixed(1)} nm` }, geometry: { type: "LineString", coordinates: [lnglat(wps[i]), lnglat(p)] } })) });
+  const many = wps.length > 12;
+  setData("route", { type: "FeatureCollection", features: wps.slice(1).map((p, i) => ({ type: "Feature", properties: { off: wpsOff[i] ? 1 : 0, label: many ? "" : `${String(Math.round(st.legs[i].brg)).padStart(3, "0")}° ${st.legs[i].d.toFixed(1)} nm` }, geometry: { type: "LineString", coordinates: [lnglat(wps[i]), lnglat(p)] } })) });
   wps.forEach((p, i) => {
-    const el = document.createElement("div"); el.className = "wp-icon"; el.textContent = i + 1;
+    const el = document.createElement("div"), end = i === 0 || i === wps.length - 1;
+    if (many && !end) el.className = "wp-dot"; else { el.className = "wp-icon"; el.textContent = many ? (i === 0 ? "A" : "B") : i + 1; }
     const m = new maplibregl.Marker({ element: el, draggable: true }).setLngLat(lnglat(p)).addTo(map);
     m.on("drag", () => { wps[i] = ll(m.getLngLat()); const s2 = routeStats(wps); setData("route", lineFC(wps.map(lnglat))); });
-    m.on("dragend", renderRoute);
-    el.addEventListener("click", e => { e.stopPropagation(); if (planning) { wps.splice(i, 1); renderRoute(); } });
+    m.on("dragend", () => { autoInfo = null; renderRoute(); });
+    el.addEventListener("click", e => { e.stopPropagation(); if (planning) { wps.splice(i, 1); wpsOff = []; autoInfo = null; renderRoute(); } });
     wpMarkers.push(m);
   });
 }
@@ -585,6 +587,9 @@ function renderRoute() {
       <div style="text-align:right"><div class="big">${st.h ? fmtDur(st.h) : "–"}</div><div class="muted">${st.h ? "Framme ca " + hm(eta) : "Tryck på kartan"}</div></div>
     </div>
     ${st.fuel ? `<div class="muted">Beräknad bränsleåtgång: <b class="num">${st.fuel.toFixed(0)} l</b> (${b.fuel} l/h)</div>` : ""}
+    ${wps.length >= 2 && !autoInfo ? `<button class="btn pri" id="rt-auto">Föreslå rutt längs farleder</button><div class="muted">Använder första och sista punkten som start och mål.</div>` : ""}
+    ${wps.length < 2 ? `<div class="muted">Tryck ut start och mål, och låt appen föreslå vägen längs farlederna. Eller tryck ut hela rutten själv.</div>` : ""}
+    ${autoInfo ? `<div class="callout ${autoInfo.offNm > .3 ? "bad" : "ok"}">Ruttförslag längs farleder: <b>${autoInfo.onNm.toFixed(1)} nm i farled</b>${autoInfo.minDraft ? `, minsta farledsdjup ${autoInfo.minDraft.toFixed(1)} m` : ""}${autoInfo.unknownNm > .1 ? `, varav ${autoInfo.unknownNm.toFixed(1)} nm med okänt farledsdjup` : ""}.${autoInfo.offNm > .02 ? ` <b>${autoInfo.offNm.toFixed(2)} nm utanför farled</b> (orange): kontrollera själv mot sjökortet.` : ""}</div>` : ""}
     ${shTxt}${dark}${routeWindNote()}
     <div>${st.legs.map((l, i) => `<div class="leg"><span class="pill">${i + 1}→${i + 2}</span><span>${compass(l.brg)}</span><span class="num">${String(Math.round(l.brg)).padStart(3, "0")}°</span><span class="num">${l.d.toFixed(2)} nm</span></div>`).join("") || `<div class="muted">Tryck på en punkt för att ta bort den. Dra för att flytta.</div>`}</div>
     ${wps.length > 1 ? `<div class="card"><h3>Ankomsttid</h3>
@@ -599,9 +604,10 @@ function renderRoute() {
     arr.onchange = upd; arr.oninput = upd; upd();
     $("#rt-go").onclick = () => startNav(wps.map(ll));
   }
-  $("#rt-undo").onclick = () => { wps.pop(); renderRoute(); };
-  $("#rt-rev").onclick = () => { wps.reverse(); renderRoute(); };
-  $("#rt-clear").onclick = () => { wps = []; renderRoute(); };
+  $("#rt-undo").onclick = () => { wps.pop(); wpsOff = []; autoInfo = null; renderRoute(); };
+  $("#rt-rev").onclick = () => { wps.reverse(); wpsOff.reverse(); renderRoute(); };
+  $("#rt-clear").onclick = () => { wps = []; wpsOff = []; autoInfo = null; renderRoute(); };
+  const au = $("#rt-auto"); if (au) au.onclick = () => autoRoute(wps[0], wps[wps.length - 1]);
   const show = $("#rt-show"); if (show) show.onclick = () => map.easeTo({ center: lnglat(sh.at), zoom: Math.max(map.getZoom(), 14) });
   $("#rt-save").onclick = () => {
     if (wps.length < 2) { toast("Lägg till minst två punkter."); return; }
@@ -610,6 +616,98 @@ function renderRoute() {
     save(); toast("Rutten sparad");
   };
 }
+/* ---------- ruttförslag längs farleder ----------
+   Farledsnätet (Väylävirasto) är ramat ner till farledens djup, så det är det enda vatten
+   appen föreslår. Sträckan till och från farleden ritas orange och är förarens ansvar. */
+let FW = null;
+async function loadFairways() {
+  if (FW) return FW;
+  const j = await (await fetch("data/fairways.json")).json();
+  const N = j.nodes.length, adj = Array.from({ length: N }, () => []);
+  const pt = n => ({ lat: j.nodes[n][1], lng: j.nodes[n][0] });
+  for (const [x, y, d] of j.edges) { const w = distNm(pt(x), pt(y)); adj[x].push(y, w, d); adj[y].push(x, w, d); }
+  FW = { nodes: j.nodes, adj, pt };
+  return FW;
+}
+function fwSearch(G, from, to, ok) {
+  const N = G.nodes.length, dist = new Float64Array(N).fill(Infinity), prev = new Int32Array(N).fill(-1);
+  const heap = [[0, from]]; dist[from] = 0;
+  const push = it => { heap.push(it); let i = heap.length - 1; while (i) { const p = (i - 1) >> 1; if (heap[p][0] <= heap[i][0]) break; [heap[p], heap[i]] = [heap[i], heap[p]]; i = p; } };
+  const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === i) break; [heap[m], heap[i]] = [heap[i], heap[m]]; i = m; } } return top; };
+  while (heap.length) {
+    const [dd, u] = pop(); if (dd > dist[u]) continue; if (u === to) break;
+    const A = G.adj[u];
+    for (let k = 0; k < A.length; k += 3) {
+      const v = A[k], d = A[k + 2]; if (!ok(d)) continue;
+      const nd = dd + A[k + 1] * (d === 0 ? 1.25 : 1);   // okänt djup undviks om det finns alternativ
+      if (nd < dist[v]) { dist[v] = nd; prev[v] = u; push([nd, v]); }
+    }
+  }
+  if (!isFinite(dist[to])) return null;
+  const path = []; for (let u = to; u !== -1; u = prev[u]) path.push(u);
+  return path.reverse();
+}
+function nearestFw(G, p, ok) {
+  let best = -1, bd = Infinity;
+  for (let n = 0; n < G.nodes.length; n++) {
+    const A = G.adj[n]; let usable = false;
+    for (let k = 2; k < A.length; k += 3) if (ok(A[k])) { usable = true; break; }
+    if (!usable) continue;
+    const dy = G.nodes[n][1] - p.lat, dx = (G.nodes[n][0] - p.lng) * Math.cos(rad(p.lat)), d = dx * dx + dy * dy;
+    if (d < bd) { bd = d; best = n; }
+  }
+  return best;
+}
+function simplify(pts, tolM) {   // Ramer–Douglas–Peucker i lokala meter
+  if (pts.length < 3) return pts;
+  const k = Math.cos(rad(pts[0].lat)), xy = p => [p.lng * 111320 * k, p.lat * 111320];
+  const keep = new Uint8Array(pts.length); keep[0] = keep[pts.length - 1] = 1;
+  const st = [[0, pts.length - 1]];
+  while (st.length) {
+    const [a, b] = st.pop(), [ax, ay] = xy(pts[a]), [bx, by] = xy(pts[b]); let md = 0, mi = -1;
+    for (let i = a + 1; i < b; i++) {
+      const [px, py] = xy(pts[i]), L = Math.hypot(bx - ax, by - ay) || 1, d = Math.abs((bx - ax) * (ay - py) - (ax - px) * (by - ay)) / L;
+      if (d > md) { md = d; mi = i; }
+    }
+    if (md > tolM) { keep[mi] = 1; st.push([a, mi], [mi, b]); }
+  }
+  return pts.filter((_, i) => keep[i]);
+}
+async function autoRoute(from, to) {
+  if (!S.autoAck) return autoDisclaimer(() => autoRoute(from, to));
+  if (!from || !to) return;
+  let G; try { G = await loadFairways(); } catch (e) { toast("Farledsnätet kunde inte laddas. Försök igen om en stund."); return; }
+  const b = boat(), ok = d => d === 0 || d / 10 >= (+b.draft || 0);
+  const s = nearestFw(G, from, ok), t = nearestFw(G, to, ok);
+  if (s < 0 || t < 0) { toast("Hittade ingen farled i närheten."); return; }
+  const path = s === t ? [s] : fwSearch(G, s, t, ok);
+  if (!path) { toast(`Ingen sammanhängande farled där djupet räcker för ${b.name} (${b.draft} m).`, 4500); return; }
+  const mid = simplify(path.map(G.pt), 12);
+  const out = [ll(from)], off = [];
+  const sOff = distNm(from, mid[0]) * NM > 25, tOff = distNm(to, mid[mid.length - 1]) * NM > 25;
+  if (sOff) { out.push(mid[0]); off.push(true); }
+  for (let i = sOff ? 1 : 0; i < mid.length; i++) { out.push(mid[i]); off.push(false); }
+  if (tOff) { out.push(ll(to)); off.push(true); } else { out[out.length - 1] = ll(to); }
+  // statistik
+  let onNm = 0, unknownNm = 0, minDraft = Infinity;
+  for (let i = 1; i < path.length; i++) {
+    const A = G.adj[path[i - 1]]; let d = 0; for (let k = 0; k < A.length; k += 3) if (A[k] === path[i]) { d = A[k + 2]; break; }
+    const w = distNm(G.pt(path[i - 1]), G.pt(path[i])); onNm += w; if (d === 0) unknownNm += w; else minDraft = Math.min(minDraft, d / 10);
+  }
+  const offNm = (sOff ? distNm(from, mid[0]) : 0) + (tOff ? distNm(to, mid[mid.length - 1]) : 0);
+  wps = out; wpsOff = off.slice(0, out.length - 1);
+  autoInfo = { onNm, offNm, unknownNm, minDraft: isFinite(minDraft) ? minDraft : null };
+  if (!planning) startPlanning(wps); else renderRoute();
+  if (offNm > 3) toast("Långt till närmaste farled. Rita den biten själv.", 4000);
+}
+function autoDisclaimer(next) {
+  openSheet("Ruttförslag", `
+    <div>Appen föreslår en väg längs <b>officiella farleder</b> där farledsdjupet räcker för din båt. Sträckan mellan din start eller ditt mål och närmaste farled ritas <b style="color:#e07b00">orange</b>: där finns ingen kontroll alls.</div>
+    <div class="callout bad">Förslaget är ett hjälpmedel, inte en garanti. Kartdatan kan sakna stenar, grund, broar och kraftledningar, och farledernas djup kan ha ändrats. Du som förare ansvarar alltid för att kontrollera rutten mot officiella sjökort och för att navigera säkert.</div>
+    <button class="btn pri" id="ad-ok">Jag förstår, visa förslaget</button>`, "disclaimer");
+  $("#ad-ok").onclick = () => { S.autoAck = Date.now(); save(); next(); };
+}
+
 /* önskad ankomsttid: när måste man åka, eller vilken fart krävs */
 function arrTarget() {
   if (!S.arrTime) return null;
@@ -1058,7 +1156,7 @@ function openAbout() {
   openSheet("Om Kummel", `
     <div><b>Kummel v0.2</b>: vektorsjökort, väder och båtliv i webbläsaren. Fungerar på mobil, iPad och dator. Lägg till på hemskärmen för att använda som app.</div>
     <div class="card"><h3>Tips</h3><div class="muted">Håll fingret på kartan för att spara en plats. Vrid kartan med två fingrar. Tryck på positionsknappen två gånger för kurs upp. Ställ in båtens djupgående under Meny → Båtar, så markeras grunt vatten för just din båt.</div></div>
-    <div class="disclaimer">Kummel är inte ett certifierat navigationshjälpmedel. Sjökortsdata: Traficom, CC BY 4.0, ej för navigering. Bakgrund: OpenStreetMap. Väder: Open-Meteo.</div>`, "about");
+    <div class="disclaimer">Kummel är inte ett certifierat navigationshjälpmedel. Ruttförslag och varningar är hjälpmedel: föraren ansvarar alltid för navigeringen. Sjökortsdata: Traficom, CC BY 4.0, ej för navigering. Bakgrund: OpenStreetMap. Väder: Open-Meteo.</div>`, "about");
 }
 
 /* ---------- night mode ---------- */
