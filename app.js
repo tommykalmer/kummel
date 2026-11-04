@@ -127,7 +127,7 @@ map.touchZoomRotate.enableRotation();
 let mapReady = false;
 
 /* overlay sources (route, track, boat …) */
-const SRC = ["route", "track", "live", "shown", "heading", "acc", "catches", "fishzone", "mob", "wxgrid", "wxobs", "wxsst"];
+const SRC = ["route", "track", "live", "shown", "heading", "acc", "catches", "fishzone", "mob", "wxgrid", "wxobs", "wxsst", "navto"];
 function addOverlays() {
   SRC.forEach(id => { if (!map.getSource(id)) map.addSource(id, { type: "geojson", data: EMPTY }); });
   const add = l => { if (!map.getLayer(l.id)) map.addLayer(l); };
@@ -143,6 +143,7 @@ function addOverlays() {
   add({ id: "track", type: "line", source: "live", paint: { "line-color": "#d64545", "line-width": 4, "line-opacity": .85 } });
   add({ id: "route", type: "line", source: "route", paint: { "line-color": "#d64545", "line-width": 3, "line-dasharray": [2, 1.5] } });
   add({ id: "route-lbl", type: "symbol", source: "route", layout: { "symbol-placement": "line-center", "text-field": ["get", "label"], "text-font": ["Noto Sans Medium"], "text-size": 12, "text-allow-overlap": false }, paint: { "text-color": "#d64545", "text-halo-color": "#fff", "text-halo-width": 2 } });
+  add({ id: "navto", type: "line", source: "navto", paint: { "line-color": "#2f8f5b", "line-width": 3, "line-dasharray": [1, 1.2] } });
   add({ id: "heading", type: "line", source: "heading", paint: { "line-color": "#d64545", "line-width": 2, "line-dasharray": [3, 3] } });
   add({ id: "catches", type: "circle", source: "catches", paint: { "circle-radius": 7, "circle-color": "#f2c14e", "circle-stroke-color": "#1b1500", "circle-stroke-width": 2 } });
   add({ id: "mob", type: "circle", source: "mob", paint: { "circle-radius": 12, "circle-color": "#d64545", "circle-stroke-color": "#fff", "circle-stroke-width": 3 } });
@@ -154,6 +155,7 @@ map.on("style.load", () => { // inte "load": den väntar på alla källor, och e
   if (mob) setData("mob", { type: "FeatureCollection", features: [{ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: lnglat(mob) } }] });
   if (gps) setData("acc", circlePoly(gps, gps.acc || 1));
   if (wxOn) renderWxLayer();
+  if (nav) { setData("route", { type: "FeatureCollection", features: nav.pts.slice(1).map((p, k) => ({ type: "Feature", properties: { label: "" }, geometry: { type: "LineString", coordinates: [lnglat(nav.pts[k]), lnglat(p)] } })) }); updateNav(gps || ll(map.getCenter())); }
 });
 map.on("error", e => console.warn("Karta:", String(e && e.error && e.error.message || e)));
 /* finns sjökortsfilen? annars gatukarta för stunden (sparas inte som val) */
@@ -321,6 +323,7 @@ function onFix(p) {
   if (follow) { followBoat(false); $("#g-pos").innerHTML = fmtPos(pos); $("#g-poslbl").textContent = "GPS"; }
   $("#b-follow").classList.toggle("hidden", follow || !followWanted);
   if (recording) addTrackPoint(pos, t, gps.sog);
+  if (nav) updateNav(pos);
   if (mob && sheetView === "mob") updateMob();
   if (gps.sog > 0.5) depthAlarm(pos);
 }
@@ -335,6 +338,7 @@ $("#b-locate").onclick = () => {
   else { followWanted = false; setFollow(false); map.easeTo({ bearing: 0 }); toast("Fri karta", 1200); }
 };
 $("#b-follow").onclick = () => setFollow(true);
+$("#nav-stop").onclick = () => stopNav("Navigeringen avslutad");
 
 /* shallow-water warning: what lies ahead within 3 minutes */
 let lastAlarm = 0;
@@ -583,8 +587,18 @@ function renderRoute() {
     ${st.fuel ? `<div class="muted">Beräknad bränsleåtgång: <b class="num">${st.fuel.toFixed(0)} l</b> (${b.fuel} l/h)</div>` : ""}
     ${shTxt}${dark}${routeWindNote()}
     <div>${st.legs.map((l, i) => `<div class="leg"><span class="pill">${i + 1}→${i + 2}</span><span>${compass(l.brg)}</span><span class="num">${String(Math.round(l.brg)).padStart(3, "0")}°</span><span class="num">${l.d.toFixed(2)} nm</span></div>`).join("") || `<div class="muted">Tryck på en punkt för att ta bort den. Dra för att flytta.</div>`}</div>
+    ${wps.length > 1 ? `<div class="card"><h3>Ankomsttid</h3>
+      <label class="f">Vill vara framme kl<input type="time" id="rt-arr" value="${S.arrTime || ""}"></label>
+      <div id="rt-arrout" class="muted"></div>
+      <button class="btn pri" id="rt-go">Starta navigering</button></div>` : ""}
     <div class="row"><button class="btn" id="rt-undo">Ångra</button><button class="btn" id="rt-rev">Vänd</button><button class="btn pri" id="rt-save">Spara rutt</button><button class="btn warn" id="rt-clear">Rensa</button></div>
     <div class="muted">Kontrollera alltid djup och faror mot sjökortet längs hela rutten.</div>`, "route");
+  const arr = $("#rt-arr");
+  if (arr) {
+    const upd = () => { S.arrTime = arr.value; save(); $("#rt-arrout").innerHTML = arrivalPlan(st.nm, st.h); };
+    arr.onchange = upd; arr.oninput = upd; upd();
+    $("#rt-go").onclick = () => startNav(wps.map(ll));
+  }
   $("#rt-undo").onclick = () => { wps.pop(); renderRoute(); };
   $("#rt-rev").onclick = () => { wps.reverse(); renderRoute(); };
   $("#rt-clear").onclick = () => { wps = []; renderRoute(); };
@@ -596,6 +610,67 @@ function renderRoute() {
     save(); toast("Rutten sparad");
   };
 }
+/* önskad ankomsttid: när måste man åka, eller vilken fart krävs */
+function arrTarget() {
+  if (!S.arrTime) return null;
+  const [h, m] = S.arrTime.split(":").map(Number), t = new Date(); t.setHours(h, m, 0, 0);
+  if (t < Date.now() - 5 * 60000) t.setDate(t.getDate() + 1);
+  return t;
+}
+function arrivalPlan(nm, h) {
+  const t = arrTarget(); if (!t || !nm) return "Ange en tid så räknar appen ut när du behöver åka.";
+  const b = boat(), left = (t - Date.now()) / 3600000, need = nm / Math.max(left, .01);
+  const dep = new Date(t - h * 3600000), dayTxt = t.toDateString() === new Date().toDateString() ? "" : "i morgon ";
+  if (left <= 0) return `<span class="pill bad">Tiden har passerat</span>`;
+  if (dep > Date.now()) return `I ${b.speed} kn: <b>åk senast ${dayTxt}${hm(dep)}</b> (om ${fmtDur((dep - Date.now()) / 3600000)}). ${need >= 1 ? `Åker du nu räcker ${need.toFixed(1)} kn.` : ""}`;
+  return need > b.speed * 1.3 ? `<span class="pill bad">Hinns inte</span> Det kräver ${need.toFixed(1)} kn från nu, marschfarten är ${b.speed} kn.` : `Åk nu och håll <b>${need.toFixed(1)} kn</b> för att vara framme ${dayTxt}${hm(t)}.`;
+}
+
+/* ---------- aktiv navigering längs rutt ---------- */
+let nav = null;
+function startNav(pts) {
+  if (pts.length < 2) return;
+  nav = { pts, i: 1, sog: null, started: Date.now() };
+  // börja vid närmaste punkt framför båten om man redan är ute
+  if (gps) { let best = 1, bd = Infinity; pts.forEach((p, k) => { if (k) { const d = distNm(gps, p); if (d < bd) { bd = d; best = k; } } }); nav.i = best; }
+  stopPlanning(true); closeSheet();
+  startGps(); if (!follow) setFollow(true);
+  $("#navbar").classList.remove("hidden");
+  setData("route", { type: "FeatureCollection", features: pts.slice(1).map((p, k) => ({ type: "Feature", properties: { label: "" }, geometry: { type: "LineString", coordinates: [lnglat(pts[k]), lnglat(p)] } })) });
+  updateNav(gps || ll(map.getCenter()));
+  toast("Navigering startad", 1500);
+}
+function stopNav(msg) {
+  nav = null; $("#navbar").classList.add("hidden"); setData("navto", EMPTY); setData("route", EMPTY);
+  if (msg) toast(msg, 3000);
+}
+function updateNav(pos) {
+  if (!nav) return;
+  const P = nav.pts, b = boat();
+  let next = P[nav.i], d = distNm(pos, next);
+  // passerad punkt: nära, eller förbi den längs sträckan
+  const prev = P[nav.i - 1], legBrg = bearing(prev, next), along = distNm(prev, pos) * Math.cos(rad(bearing(prev, pos) - legBrg));
+  if (d < .035 || (along > distNm(prev, next) && nav.i < P.length - 1)) {
+    if (nav.i === P.length - 1) { stopNav(`Framme! ${hm(new Date())}`); try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {} return; }
+    nav.i++; next = P[nav.i]; d = distNm(pos, next);
+    try { navigator.vibrate && navigator.vibrate(150); } catch (e) {}
+  }
+  let rest = d; for (let k = nav.i + 1; k < P.length; k++) rest += distNm(P[k - 1], P[k]);
+  if (gps && gps.sog > 1) nav.sog = nav.sog == null ? gps.sog : nav.sog * .85 + gps.sog * .15;
+  const spd = nav.sog && nav.sog > 1 ? nav.sog : b.speed, h = spd > 0 ? rest / spd : 0, eta = new Date(Date.now() + h * 3600000);
+  const p0 = P[nav.i - 1], d13 = distNm(p0, pos) / R_NM, xte = Math.asin(Math.sin(d13) * Math.sin(rad(bearing(p0, pos) - bearing(p0, next)))) * R_NM * NM;
+  const brg = bearing(pos, next), t = arrTarget();
+  let late = "";
+  if (t) { const diff = Math.round((eta - t) / 60000); late = Math.abs(diff) <= 2 ? `<span class="pill ok">I tid</span>` : diff > 0 ? `<span class="pill bad">${fmtDur(diff / 60)} sen</span>` : `<span class="pill ok">${fmtDur(-diff / 60)} före</span>`; }
+  $("#nav-to").textContent = nav.i === P.length - 1 ? "Till målet" : `Till punkt ${nav.i + 1} av ${P.length}`;
+  $("#nav-brg").textContent = String(Math.round(brg)).padStart(3, "0") + "°";
+  $("#nav-dtw").textContent = d < .3 ? `${Math.round(d * NM)} m` : `${d.toFixed(2)} nm`;
+  $("#nav-eta").textContent = hm(eta);
+  $("#nav-rest").innerHTML = `${rest.toFixed(1)} nm kvar · ${fmtDur(h)} i ${spd.toFixed(1)} kn ${late}`;
+  $("#nav-xte").textContent = Math.abs(xte) > 25 ? `Ur kurs ${Math.round(Math.abs(xte))} m åt ${xte > 0 ? "styrbord" : "babord"}` : "";
+  setData("navto", lineFC([lnglat(pos), lnglat(next)]));
+}
+
 function routeWindNote() {
   if (!wx || wps.length < 2) return "";
   const st = routeStats(wps); if (!st.h) return "";
@@ -927,13 +1002,14 @@ function openPlaces() {
 }
 const boundsOf = pts => pts.reduce((b, p) => b.extend([p[1], p[0]]), new maplibregl.LngLatBounds([pts[0][1], pts[0][0]], [pts[0][1], pts[0][0]]));
 function openRoutes() {
-  openSheet("Sparade rutter", `<div class="list">${S.routes.map(r => `<div class="card"><h3>${esc(r.name)}</h3><div class="row"><button class="btn" data-open="${r.id}">Öppna</button><button class="btn warn" data-del="${r.id}">Ta bort</button></div></div>`).join("") || `<div class="muted">Inga sparade rutter.</div>`}</div>`, "routes");
+  openSheet("Sparade rutter", `<div class="list">${S.routes.map(r => `<div class="card"><h3>${esc(r.name)}</h3><div class="row"><button class="btn pri" data-nav="${r.id}">Navigera</button><button class="btn" data-open="${r.id}">Öppna</button><button class="btn warn" data-del="${r.id}">Ta bort</button></div></div>`).join("") || `<div class="muted">Inga sparade rutter.</div>`}</div>`, "routes");
   document.querySelectorAll("[data-open]").forEach(x => x.onclick = () => {
     const r = S.routes.find(q => q.id === x.dataset.open);
     map.fitBounds(boundsOf(r.pts), { padding: 60, duration: 0 });
     startPlanning(r.pts.map(p => ({ lat: p[0], lng: p[1] })));
   });
   document.querySelectorAll("[data-del]").forEach(x => x.onclick = () => { S.routes = S.routes.filter(q => q.id !== x.dataset.del); save(); openRoutes(); });
+  document.querySelectorAll("[data-nav]").forEach(x => x.onclick = () => { const r = S.routes.find(q => q.id === x.dataset.nav); startNav(r.pts.map(p => ({ lat: p[0], lng: p[1] }))); });
 }
 function openLog() {
   const tot = S.tracks.reduce((s, t) => s + (t.nm || 0), 0);

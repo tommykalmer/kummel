@@ -109,6 +109,12 @@ body.plan #cross{opacity:1}
 .wxb-modes{display:flex;gap:3px;background:var(--paper);border-radius:9px;padding:2px}.wxb-modes button{border:0;background:transparent;border-radius:7px;padding:4px 10px;font-weight:600;color:var(--muted);cursor:pointer}.wxb-modes button[aria-pressed="true"]{background:var(--ink);color:#fff}
 .sst-scale{display:inline-block;width:70px;height:10px;border-radius:5px;background:linear-gradient(90deg,#3b4cc0,#5b8ff9,#3fb6c7,#4cc38a,#e8c547,#f08a3c,#d63e3e)}
 .wxb-legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--muted)}.wxb-legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+#navbar{position:fixed;z-index:515;top:calc(64px + var(--sat));left:calc(10px + var(--sal));right:calc(70px + var(--sar));max-width:520px;background:var(--ink);color:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:8px 12px;display:flex;flex-direction:column;gap:2px}
+#navbar .muted{color:#b9c7cf}.nav-main{display:flex;align-items:center;gap:12px}.nav-main>div:first-child{flex:1;min-width:0}
+.nav-big{display:flex;gap:14px;white-space:nowrap;font:700 30px/1.05 var(--f-num);font-variant-numeric:tabular-nums}.nav-eta{text-align:right}.nav-eta b{display:block;font:700 26px/1 var(--f-num)}
+#navbar .x{color:#fff}#nav-xte{color:var(--signal);font-weight:600;font-size:13px}#nav-xte:empty{display:none}
+body:has(#navbar:not(.hidden)) #wxbar{top:calc(170px + var(--sat))}
+body:has(#navbar:not(.hidden)) .toast{top:auto;bottom:calc(130px + var(--sab))}
 /* sheet / panel */
 #sheet{position:fixed;z-index:600;left:0;right:0;bottom:0;max-height:72%;background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   border-radius:18px 18px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.2);transform:translateY(105%);transition:transform .28s ease;display:flex;flex-direction:column;
@@ -210,6 +216,11 @@ body.night{filter:brightness(.65)}
 </div>
 
 <button id="b-follow" class="hidden">Följ båten</button>
+<div id="navbar" class="hidden" role="status">
+  <div class="nav-main"><div><span id="nav-to" class="muted">–</span><div class="nav-big"><b id="nav-brg">–</b><b id="nav-dtw">–</b></div></div>
+  <div class="nav-eta"><span class="muted">Framme</span><b id="nav-eta">–</b></div><button class="x" id="nav-stop" aria-label="Avsluta navigering">×</button></div>
+  <div id="nav-rest" class="muted"></div><div id="nav-xte"></div>
+</div>
 <div id="wxbar" class="hidden"><div class="wxb-top"><b id="wxb-time">Nu</b><span class="wxb-modes"><button data-wxm="wind" aria-pressed="true">Vind</button><button data-wxm="water" aria-pressed="false">Vatten°</button></span><button class="x" id="wxb-close" aria-label="Stäng väderlagret">×</button></div><input type="range" id="wxb-range" min="0" max="47" step="1" value="0" aria-label="Tid för prognosen"><div id="wxb-sub" class="muted" style="font-size:12px"></div><div class="wxb-legend" id="wxb-legend-wind"><span><i style="background:var(--stbd)"></i>under din gräns</span><span><i style="background:var(--signal)"></i>nära</span><span><i style="background:var(--port)"></i>över</span><span><b>Stor pil</b> = uppmätt nu</span></div><div class="wxb-legend hidden" id="wxb-legend-water"><span class="sst-scale"></span><span>0°</span><span>8°</span><span>16°</span><span>24°</span><span><b>Mörk ring</b> = uppmätt</span></div></div>
 <div id="fab">
   <button class="fab mob hidden" id="b-mob" title="Man överbord">MOB</button>
