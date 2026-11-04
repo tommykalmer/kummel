@@ -1503,6 +1503,13 @@ function editBoat(id) {
 }
 
 /* ---------- layers ---------- */
+/* vilka val som har betydelse för vald karta */
+const OPTS = {
+  fairways: ["chart", "sat"], marks: ["chart", "sat"], rocks: ["chart", "sat"], sectors: ["chart", "sat"],
+  contours: ["chart", "sat"], satdepth: ["sat"], limits: ["chart", "sat"], land: ["chart"],
+  soundings: ["chart", "sat"], detail: ["chart"], props: ["chart", "sat", "osm"], ais: ["chart", "sat", "osm"]
+};
+const applies = k => (OPTS[k] || []).includes(S.layers.base || "chart");
 function openLayers() {
   const r = (k, v) => `<label class="row"><input type="radio" name="base" value="${k}" ${S.layers.base === k ? "checked" : ""}> ${v}</label>`;
   openSheet("Kartlager", `
@@ -1513,35 +1520,35 @@ function openLayers() {
       <div class="muted">${mmlKey() ? "Flygfotot använder Lantmäteriverkets bilder i Finland och på Åland." : "Med en gratis nyckel från Lantmäteriverket i Finland blir flygfotot skarpare och fastighetsgränser kan visas. Skapa den på omatili.maanmittauslaitos.fi. Nyckeln sparas bara på den här enheten."}</div>
       <button class="btn" id="ly-mml-save">Spara nyckel</button>
     </div>
-    <div class="card"><h3>Grynnor och stenar</h3>
+    ${applies("detail") ? `<div class="card"><h3>Detaljkort</h3>
       <label class="row"><input type="checkbox" id="ly-det" ${S.layers.detail ? "checked" : ""}> Visa detaljkortet när jag zoomar in</label>
       <label class="f">Visa detaljkortet från<select id="ly-dz">${[[11, "Översikt (ca 2 nm över skärmen)"], [12, "Mellan (ca 1 nm)"], [13, "Nära (ca 0,5 nm), rekommenderas"], [14, "Mycket nära (ca 0,25 nm)"]].map(([z, t]) => `<option value="${z}" ${dz() === z ? "selected" : ""}>${t}</option>`).join("")}</select></label>
-      <div class="muted">Grynnor och stenar finns bara i Traficoms detaljkort. Längre ut blir det svårläst eftersom kortet förminskas.</div>
-    </div>
+      <div class="muted">Traficoms inskannade sjökort ovanpå vektorkortet. Längre ut blir det svårläst eftersom kortet förminskas.</div>
+    </div>` : ""}
     <div class="card"><h3>Visa på kartan</h3>
-      ${[["fairways", "Farleder, ledlinjer och farledsdjup"], ["marks", "Sjömärken och fyrar"], ["rocks", "Stenar och grund"], ["sectors", "Ljussektorer"], ["contours", "Djupkurvor"], ["satdepth", "Djupfärg på flygfotot"], ["limits", "Fartbegränsningar och förbudsområden"], ["land", "Ortnamn, vägar och hus"]].map(([g, t]) => `<label class="row"><input type="checkbox" data-grp="${g}" ${(S.layers.groups || {})[g] !== false ? "checked" : ""}> ${t}</label>`).join("")}
-      <label class="row"><input type="checkbox" id="ly-snd" ${S.layers.soundings ? "checked" : ""}> Djupsiffror</label>
+      ${[["fairways", "Farleder, ledlinjer och farledsdjup"], ["marks", "Sjömärken och fyrar"], ["rocks", "Stenar och grund"], ["sectors", "Ljussektorer"], ["contours", "Djupkurvor"], ["satdepth", "Djupfärg på flygfotot"], ["limits", "Fartbegränsningar och förbudsområden"], ["land", "Ortnamn, vägar och hus"]].filter(([g]) => applies(g)).map(([g, t]) => `<label class="row"><input type="checkbox" data-grp="${g}" ${(S.layers.groups || {})[g] !== false ? "checked" : ""}> ${t}</label>`).join("")}
+      ${applies("soundings") ? `<label class="row"><input type="checkbox" id="ly-snd" ${S.layers.soundings ? "checked" : ""}> Djupsiffror${S.layers.base === "sat" ? " (bara grundare än din båt)" : ""}</label>` : ""}
       <label class="row"><input type="checkbox" id="ly-ais" ${S.layers.ais ? "checked" : ""}> AIS-fartyg i realtid</label>
-      <label class="row"><input type="checkbox" id="ly-sea" ${S.layers.seamarks ? "checked" : ""}> OpenSeaMap sjömärken</label>
     </div>
-    <div class="muted">På detaljkortet är vatten som är grundare än din båt behöver skuggat i rött.</div>
+    ${applies("detail") ? `<div class="muted">På detaljkortet är vatten som är grundare än din båt behöver skuggat i rött.</div>` : ""}
     <div class="disclaimer">Källa: Traficom (CC BY 4.0). Ej för navigering, uppfyller inte kraven för officiella sjökort. Använd alltid uppdaterade officiella sjökort.</div>`, "layers");
-  $("#ly-snd").onchange = e => { S.layers.soundings = e.target.checked; save(); applyLayers(); };
+  const on = (id, ev, f) => { const el = $(id); if (el) el[ev] = f; };
+  on("#ly-snd", "onchange", e => { S.layers.soundings = e.target.checked; save(); applyLayers(); });
   $("#ly-ais").onchange = e => setAis(e.target.checked);
-  $("#ly-det").onchange = e => { S.layers.detail = e.target.checked; save(); applyLayers(); };
+  on("#ly-det", "onchange", e => { S.layers.detail = e.target.checked; save(); applyLayers(); });
   $("#ly-prop").onchange = e => { S.layers.props = e.target.checked; save(); applyLayers(); if (e.target.checked && map.getZoom() < 15) toast("Fastighetsgränser visas när du zoomar in närmare", 2200); };
   $("#ly-mml-save").onclick = () => {
     S.mmlKey = $("#ly-mml").value.trim(); save();
     map.setStyle(baseStyle(), { diff: false });
     toast(S.mmlKey ? "Nyckeln är sparad" : "Nyckeln är borttagen", 1600); setTimeout(openLayers, 300);
   };
-  $("#ly-dz").onchange = e => { S.layers.detailZoom = +e.target.value; save(); applyLayers(); };
+  on("#ly-dz", "onchange", e => { S.layers.detailZoom = +e.target.value; save(); applyLayers(); });
   document.querySelectorAll("[data-grp]").forEach(x => x.onchange = () => { S.layers.groups = { ...(S.layers.groups || {}), [x.dataset.grp]: x.checked }; save(); applyLayers(); });
-  $("#ly-sea").onchange = e => { S.layers.seamarks = e.target.checked; save(); applyLayers(); };
-  document.querySelectorAll("input[name=base]").forEach(x => x.onchange = () => { S.layers.base = x.value; save(); applyLayers(); });
+  document.querySelectorAll("input[name=base]").forEach(x => x.onchange = () => { S.layers.base = x.value; save(); applyLayers(); const y = $("#sh-body").scrollTop; openLayers(); $("#sh-body").scrollTop = y; });
 }
 $("#b-layers").onclick = openLayers;
 $("#b-detail").onclick = () => {
+  if (S.layers.base !== "chart") { toast("Detaljkortet finns bara i läget Sjökort", 2000); return; }
   S.layers.detail = !S.layers.detail; save(); applyLayers();
   toast(S.layers.detail ? (map.getZoom() < dz() ? "Grynnor visas när du zoomar in närmare" : "Detaljkort med grynnor och stenar") : "Vektorsjökort", 1800);
 };
