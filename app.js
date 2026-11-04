@@ -330,6 +330,7 @@ function followBoat(jump) {
   else if (moving) { const r = rad(gps.cog - map.getBearing()); opts.offset = [-Math.sin(r) * k, Math.cos(r) * k]; }
   map.easeTo(opts);
 }
+map.on("movestart", e => { if (e.originalEvent && depthPop) { depthPop.remove(); depthPop = null; } });
 map.on("dragstart", e => { lastTouch = Date.now(); if (follow && e.originalEvent) setFollow(false, true); });
 map.on("rotatestart", e => { if (e.originalEvent) { lastTouch = Date.now(); if (courseUp) { courseUp = false; $("#b-locate").classList.remove("course"); } } });
 $("#b-zin").onclick = () => map.easeTo({ zoom: map.getZoom() + 1, duration: 250, ...(follow && gps ? { center: lnglat(gps) } : {}) });
@@ -655,13 +656,17 @@ function stopPlanning(keep) {
 let depthPop = null;
 map.on("click", e => {
   if (!planning && S.layers.base === "sat" && !e.defaultPrevented) {
+    // ett tryck när rutan är öppen stänger den bara
+    if (depthPop) { depthPop.remove(); depthPop = null; return; }
     const hits = map.queryRenderedFeatures(e.point, { layers: ["depare-sat"].filter(id => map.getLayer(id)) });
-    if (depthPop) { depthPop.remove(); depthPop = null; }
     if (hits.length) {
       const p = hits[0].properties, lo = p.d1 ?? 0, hi = p.d2;
       const txt = lo < 0 ? "Torrfallande" : hi != null ? `${String(lo).replace(".", ",")}–${String(hi).replace(".", ",")} m` : `över ${String(lo).replace(".", ",")} m`;
       const warn = lo < needDepth() ? `<div style="color:#d22b2b;font-weight:600">För grunt för ${esc(boat().name)}</div>` : "";
       depthPop = new maplibregl.Popup({ closeButton: false, offset: 10, className: "wp-pop" }).setLngLat(e.lngLat).setHTML(`<div style="font:600 15px var(--f-ui);color:#14232e">Djup ${txt}</div>${warn}<div style="font-size:11px;color:#5d6b73">Enligt sjökortet. Stenar kan finnas.</div>`).addTo(map);
+      const pop = depthPop, el = pop.getElement();
+      el.style.cursor = "pointer"; el.addEventListener("click", ev => { ev.stopPropagation(); pop.remove(); if (depthPop === pop) depthPop = null; });
+      setTimeout(() => { pop.remove(); if (depthPop === pop) depthPop = null; }, 8000);
     }
   }
   if (!planning) return;
