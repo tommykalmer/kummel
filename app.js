@@ -339,6 +339,9 @@ $("#b-locate").onclick = () => {
 };
 $("#b-follow").onclick = () => setFollow(true);
 $("#nav-stop").onclick = () => stopNav("Navigeringen avslutad");
+$("#nav-rr-yes").onclick = reroute;
+$("#nav-rr-no").onclick = () => { if (nav) nav.snooze = Date.now() + 5 * 60000; $("#nav-reroute").classList.add("hidden"); };
+document.querySelector(".nav-eta").onclick = setArrivalSheet;
 
 /* shallow-water warning: what lies ahead within 3 minutes */
 let lastAlarm = 0;
@@ -673,15 +676,13 @@ function simplify(pts, tolM) {   // Ramer–Douglas–Peucker i lokala meter
   }
   return pts.filter((_, i) => keep[i]);
 }
-async function autoRoute(from, to) {
-  if (!S.autoAck) return autoDisclaimer(() => autoRoute(from, to));
-  if (!from || !to) return;
-  let G; try { G = await loadFairways(); } catch (e) { toast("Farledsnätet kunde inte laddas. Försök igen om en stund."); return; }
+async function computeAutoRoute(from, to) {
+  let G; try { G = await loadFairways(); } catch (e) { return { err: "Farledsnätet kunde inte laddas. Försök igen om en stund." }; }
   const b = boat(), ok = d => d === 0 || d / 10 >= (+b.draft || 0);
   const s = nearestFw(G, from, ok), t = nearestFw(G, to, ok);
-  if (s < 0 || t < 0) { toast("Hittade ingen farled i närheten."); return; }
+  if (s < 0 || t < 0) return { err: "Hittade ingen farled i närheten." };
   const path = s === t ? [s] : fwSearch(G, s, t, ok);
-  if (!path) { toast(`Ingen sammanhängande farled där djupet räcker för ${b.name} (${b.draft} m).`, 4500); return; }
+  if (!path) return { err: `Ingen sammanhängande farled där djupet räcker för ${b.name} (${b.draft} m).` };
   const mid = simplify(path.map(G.pt), 12);
   const out = [ll(from)], off = [];
   const sOff = distNm(from, mid[0]) * NM > 25, tOff = distNm(to, mid[mid.length - 1]) * NM > 25;
@@ -695,10 +696,16 @@ async function autoRoute(from, to) {
     const w = distNm(G.pt(path[i - 1]), G.pt(path[i])); onNm += w; if (d === 0) unknownNm += w; else minDraft = Math.min(minDraft, d / 10);
   }
   const offNm = (sOff ? distNm(from, mid[0]) : 0) + (tOff ? distNm(to, mid[mid.length - 1]) : 0);
-  wps = out; wpsOff = off.slice(0, out.length - 1);
-  autoInfo = { onNm, offNm, unknownNm, minDraft: isFinite(minDraft) ? minDraft : null };
+  return { pts: out, off: off.slice(0, out.length - 1), info: { onNm, offNm, unknownNm, minDraft: isFinite(minDraft) ? minDraft : null } };
+}
+async function autoRoute(from, to) {
+  if (!S.autoAck) return autoDisclaimer(() => autoRoute(from, to));
+  if (!from || !to) return;
+  const r = await computeAutoRoute(from, to);
+  if (r.err) { toast(r.err, 4500); return; }
+  wps = r.pts; wpsOff = r.off; autoInfo = r.info;
   if (!planning) startPlanning(wps); else renderRoute();
-  if (offNm > 3) toast("Långt till närmaste farled. Rita den biten själv.", 4000);
+  if (r.info.offNm > 3) toast("Långt till närmaste farled. Rita den biten själv.", 4000);
 }
 function autoDisclaimer(next) {
   openSheet("Ruttförslag", `
@@ -767,6 +774,50 @@ function updateNav(pos) {
   $("#nav-rest").innerHTML = `${rest.toFixed(1)} nm kvar · ${fmtDur(h)} i ${spd.toFixed(1)} kn ${late}`;
   $("#nav-xte").textContent = Math.abs(xte) > 25 ? `Ur kurs ${Math.round(Math.abs(xte))} m åt ${xte > 0 ? "styrbord" : "babord"}` : "";
   setData("navto", lineFC([lnglat(pos), lnglat(next)]));
+  // fartrådgivare: vilken fart ger ankomst exakt på önskad tid
+  let adv = "";
+  if (t) {
+    const left = (t - Date.now()) / 3600000, need = rest / Math.max(left, .005);
+    if (left <= 0) adv = "Önskad ankomsttid har passerat.";
+    else if (need > b.speed * 1.3) adv = `Hinns inte: det kräver ${need.toFixed(1)} kn.`;
+    else if (need < 2) adv = `Gott om tid: du är framme ${hm(t)} även i låg fart.`;
+    else {
+      const cur = nav.sog && nav.sog > 1 ? nav.sog : null, diff = cur != null ? need - cur : null;
+      adv = `Håll <b>${need.toFixed(1)} kn</b> för att vara framme ${hm(t)}` + (diff == null ? "" : Math.abs(diff) < .5 ? " · du ligger rätt" : diff > 0 ? ` · öka ${diff.toFixed(1)} kn` : ` · du kan sänka ${(-diff).toFixed(1)} kn och spara bränsle`);
+    }
+  }
+  $("#nav-adv").innerHTML = adv;
+  // långt från rutten: erbjud omräkning längs farlederna
+  let off = Infinity;
+  for (let k = nav.i; k < P.length; k++) off = Math.min(off, segDistM(pos, P[k - 1], P[k]));
+  if (off > 900 && gps) {
+    nav.offSince = nav.offSince || Date.now();
+    if (Date.now() - nav.offSince > 30000 && Date.now() > (nav.snooze || 0)) {
+      $("#nav-reroute-txt").textContent = `Du är ${(off / NM).toFixed(1)} nm från rutten.`;
+      $("#nav-reroute").classList.remove("hidden");
+    }
+  } else { nav.offSince = null; $("#nav-reroute").classList.add("hidden"); }
+}
+function segDistM(p, a, b) {   // avstånd i meter från punkt till sträcka
+  const k = Math.cos(rad(p.lat)) * 111320, X = q => [(q.lng - p.lng) * k, (q.lat - p.lat) * 111320];
+  const [ax, ay] = X(a), [bx, by] = X(b), dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy;
+  const u = L ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / L)) : 0;
+  return Math.hypot(ax + u * dx, ay + u * dy);
+}
+async function reroute() {
+  if (!nav || !gps) return;
+  $("#nav-reroute").classList.add("hidden");
+  const r = await computeAutoRoute(ll(gps), nav.pts[nav.pts.length - 1]);
+  if (r.err) { toast(r.err, 4000); nav.snooze = Date.now() + 5 * 60000; return; }
+  startNav(r.pts); toast("Rutten är omräknad", 1800);
+}
+function setArrivalSheet() {
+  openSheet("Ankomsttid", `
+    <label class="f">Vill vara framme kl<input type="time" id="na-t" value="${S.arrTime || ""}"></label>
+    <div class="muted">Navigeringsraden visar då vilken fart som ger ankomst på minuten, och om du kan sänka farten för att spara bränsle.</div>
+    <div class="row"><button class="btn pri" id="na-ok">Klar</button><button class="btn" id="na-clr">Ingen önskad tid</button></div>`, "arrival");
+  $("#na-ok").onclick = () => { S.arrTime = $("#na-t").value; save(); closeSheet(); if (nav) updateNav(gps || ll(map.getCenter())); };
+  $("#na-clr").onclick = () => { S.arrTime = ""; save(); closeSheet(); if (nav) updateNav(gps || ll(map.getCenter())); };
 }
 
 function routeWindNote() {
