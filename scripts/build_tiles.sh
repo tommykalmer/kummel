@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Bygger data/chart-aland.pmtiles av alla hämtade lager (ett vektorlager per fil).
+# Bygger data/chart-aland.pmtiles av hämtade lager. Skippar filen om den blir för stor för GitHub.
 set -euo pipefail
 shopt -s nullglob
 files=(build/geojson/*.geojsonl)
@@ -9,11 +9,12 @@ for f in "${files[@]}"; do
   name=$(basename "$f" .geojsonl)
   args+=(-L "${name}:${f}")
 done
-tippecanoe -o data/chart-aland.pmtiles --force -P \
-  -Z5 -z14 \
+tippecanoe -o build/chart-aland.pmtiles --force -P \
+  -Z5 -z14 --simplification=4 \
   --drop-densest-as-needed --extend-zooms-if-still-dropping \
   --name "Kummel sjökort Åland" \
-  --attribution "Traficom, CC BY 4.0. Ej för navigering." \
-  "${args[@]}" 2>&1 | tail -20
-ls -la data/
-echo "- Tiles byggda: $(du -h data/chart-aland.pmtiles | cut -f1)" >> data/chart-log.md
+  --attribution "Traficom, Väylävirasto, CC BY 4.0. Ej för navigering." \
+  "${args[@]}" 2>&1 | grep -v "%" | tail -20
+size=$(stat -c %s build/chart-aland.pmtiles)
+echo "- Tiles byggda: $((size/1024/1024)) MB" >> data/chart-log.md
+if [ "$size" -lt 95000000 ]; then cp build/chart-aland.pmtiles data/; else echo "- För stor för repot, sparas inte" >> data/chart-log.md; fi

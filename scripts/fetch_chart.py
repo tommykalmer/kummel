@@ -11,7 +11,15 @@ from xml.etree import ElementTree as ET
 SERVICES = {
     "avoin": "https://julkinen.traficom.fi/inspirepalvelu/avoin/wfs",
     "rajoitettu": "https://julkinen.traficom.fi/inspirepalvelu/rajoitettu/wfs",
+    # Väylävirasto: farleder, prickar, fyrar, ledlinjer (CC BY 4.0)
+    "vayla": "https://avoinapi.vaylapilvi.fi/vaylatiedot/ows",
 }
+# lager som inte hör hemma i ett sjökort (bladindelning, ekonomisk zon …)
+SKIP = ("tuotejako", "ExclusiveEconomicZone", "d_alueet", "StraightTerritorialSeaBaseline", "TerritorialSeaArea")
+def wanted(svc, name):
+    if any(s.lower() in name.lower() for s in SKIP): return False
+    if svc == "vayla": return name.lower().startswith("vesivaylatiedot:") or "vesivayla" in name.lower()
+    return True
 # Åland med omgivande skärgård (lon/lat)
 BBOX = tuple(float(x) for x in os.environ.get("CHART_BBOX", "19.0,59.65,21.35,60.65").split(","))
 PAGE = 5000
@@ -88,7 +96,10 @@ def main():
         except Exception as e:
             log.append(f"\n## {svc}: kunde inte läsa GetCapabilities: {e}\n"); continue
         log.append(f"\n## {svc} ({len(types)} lager)\n")
+        skipped = [n for n, _ in types if not wanted(svc, n)]
+        if skipped: log.append(f"Hoppade över {len(skipped)} lager: " + ", ".join(f"`{n}`" for n in skipped[:60]))
         for name, title in types:
+            if not wanted(svc, name): continue
             feats, err = [], None
             for variant in ("lonlat", "latlon"):
                 try:
@@ -124,6 +135,19 @@ def main():
             log.append(f"- `{name}` → lager **{layer}** ({title}): {len(feats)} objekt, {gtypes}{' (axlar vända)' if swapped else ''}")
             log.append("  - fält: " + "; ".join(f"`{k}` = {json.dumps(v, ensure_ascii=False)[:120]}" for k, v in keys.items()))
             print(name, len(feats), flush=True)
+    try:  # vilka tile-set finns i Traficoms rasterkarta (för valfritt kartbildslager)
+        root = ET.fromstring(get("https://julkinen.traficom.fi/rasteripalvelu/wmts?SERVICE=WMTS&REQUEST=GetCapabilities"))
+        sets = []
+        for el in root.iter():
+            if el.tag.endswith("TileMatrixSet") and len(el):
+                ident = next((c.text for c in el if c.tag.endswith("Identifier")), None)
+                crs = next((c.text for c in el if c.tag.endswith("SupportedCRS")), None)
+                mats = [c for c in el if c.tag.endswith("TileMatrix")]
+                first = next((x.text for x in mats[0] if x.tag.endswith("Identifier")), None) if mats else None
+                if ident: sets.append(f"`{ident}` ({crs}, {len(mats)} nivåer, första `{first}`)")
+        log.append("\n## WMTS tile-set\n" + "\n".join(f"- {s}" for s in sets))
+    except Exception as e:
+        log.append(f"\n## WMTS: {e}")
     with open("data/chart-layers.json", "w") as fh:
         json.dump(layers, fh, ensure_ascii=False, indent=1)
     with open("data/chart-log.md", "w") as fh:
