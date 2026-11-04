@@ -10,6 +10,7 @@ on:
       - "scripts/fetch_chart.py"
       - "scripts/build_tiles.sh"
       - "scripts/prepare_layers.py"
+      - "scripts/fetch_mml.py"
       - ".github/workflows/chart.yml"
 
 permissions:
@@ -37,6 +38,9 @@ jobs:
 
       - name: Hämta Traficoms data
         run: python3 scripts/fetch_chart.py
+
+      - name: Hämta stenar och grund (Maanmittauslaitos)
+        run: python3 scripts/fetch_mml.py
 
       - name: Bygg vektortiles
         run: bash scripts/build_tiles.sh
