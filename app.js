@@ -13,12 +13,12 @@ const KEY = "kummel.v1";
 const DEFAULT_STATE = {
   mode: "tur",
   view: { lat: 60.08, lng: 19.94, z: 11, bearing: 0 },
-  layers: { base: "chart", detail: true, detailZoom: 13, seamarks: false, soundings: true, groups: {} },
+  layers: { base: "chart", detail: false, detailZoom: 13, seamarks: false, soundings: true, groups: {} },
   theme: "day",
   fishDepth: [4, 12],
   boats: [{ id: "b1", name: "Min båt", type: "motor", length: 6.5, beam: 2.4, draft: 0.6, air: 2.0, speed: 20, fuel: 18, margin: 0.5, maxWind: 10 }],
   boatId: "b1",
-  places: [], routes: [], tracks: [], catches: [], v2: 1
+  places: [], routes: [], tracks: [], catches: [], v2: 1, v3: 1
 };
 let S = load();
 function load() {
@@ -27,6 +27,7 @@ function load() {
     if (s) {
       const st = Object.assign(structuredClone(DEFAULT_STATE), s);
       if (!s.v2) { st.layers = structuredClone(DEFAULT_STATE.layers); st.v2 = 1; } // v0.1 hade gatukarta som standard
+      if (!s.v3) { st.layers.detail = false; st.v3 = 1; } // vektorkortet är standard, detaljkortet på egen knapp
       return st;
     }
   } catch (e) {}
@@ -192,7 +193,8 @@ function applyLayers() {
   vis("sat", base === "sat");
   KummelChart.layerIds().forEach(id => vis(id, base === "chart" || (base === "sat" && KummelChart.isOverlay(id))));
   KummelChart.soundingIds().forEach(id => vis(id, (base === "chart" || (base === "sat" && id === "soundg-shallow")) && S.layers.soundings));
-  KummelChart.detailIds().forEach(id => { vis(id, base === "chart" && S.layers.detail !== false); if (map.getLayer(id)) map.setLayerZoomRange(id, id === "detail-harbour" ? Math.max(14, dz()) : dz(), 24); });
+  $("#b-detail").setAttribute("aria-pressed", !!S.layers.detail);
+  KummelChart.detailIds().forEach(id => { vis(id, base === "chart" && !!S.layers.detail); if (map.getLayer(id)) map.setLayerZoomRange(id, id === "detail-harbour" ? Math.max(14, dz()) : dz(), 24); });
   const G = KummelChart.groups(), on = g => (S.layers.groups || {})[g] !== false;
   Object.entries(G).forEach(([g, ids]) => { if (!on(g)) ids.forEach(id => vis(id, false)); });
   vis("seamarks", S.layers.seamarks);
@@ -604,7 +606,7 @@ function renderRoute() {
     ${st.fuel ? `<div class="muted">Beräknad bränsleåtgång: <b class="num">${st.fuel.toFixed(0)} l</b> (${b.fuel} l/h)</div>` : ""}
     ${wps.length >= 2 && !autoInfo ? `<button class="btn pri" id="rt-auto">Föreslå rutt längs farleder</button><div class="muted">Använder första och sista punkten som start och mål.</div>` : ""}
     ${wps.length < 2 ? `<div class="muted">Tryck ut start och mål, och låt appen föreslå vägen längs farlederna. Eller tryck ut hela rutten själv.</div>` : ""}
-    ${autoInfo ? `<div class="callout ${autoInfo.offNm > .3 ? "bad" : "ok"}">Ruttförslag längs farleder: <b>${autoInfo.onNm.toFixed(1)} nm i farled</b>${autoInfo.minDraft ? `, minsta farledsdjup ${autoInfo.minDraft.toFixed(1)} m` : ""}${autoInfo.unknownNm > .1 ? `, varav ${autoInfo.unknownNm.toFixed(1)} nm med okänt farledsdjup` : ""}.${autoInfo.offNm > .02 ? ` <b>${autoInfo.offNm.toFixed(2)} nm utanför farled</b> (orange): kontrollera själv mot sjökortet.` : ""}</div>` : ""}
+    ${autoInfo ? `<div class="callout ${autoInfo.offNm > .3 ? "bad" : "ok"}">Ruttförslag längs farleder: <b>${autoInfo.onNm.toFixed(1)} nm i farled</b>${autoInfo.minDraft ? `, minsta farledsdjup ${autoInfo.minDraft.toFixed(1)} m` : ""}${autoInfo.unknownNm > .1 ? `, varav ${autoInfo.unknownNm.toFixed(1)} nm med okänt farledsdjup` : ""}.${autoInfo.offNm > .02 ? ` <b>${autoInfo.offNm.toFixed(2)} nm utanför farled</b> (orange)${autoInfo.unchecked ? ": appen hittade ingen väg i tillräckligt djupt vatten där, rita den själv" : autoInfo.shallow ? ": vägen dit passerar vatten som enligt sjökortet kan vara grundare än din båt behöver, kör försiktigt och kontrollera" : ": vägen går runt land och kända grund men stenar finns inte i datan, kontrollera mot sjökortet"}.` : ""}</div>` : ""}
     ${shTxt}${dark}${routeWindNote()}
     <div>${st.legs.map((l, i) => `<div class="leg"><span class="pill">${i + 1}→${i + 2}</span><span>${compass(l.brg)}</span><span class="num">${String(Math.round(l.brg)).padStart(3, "0")}°</span><span class="num">${l.d.toFixed(2)} nm</span></div>`).join("") || `<div class="muted">Tryck på en punkt för att ta bort den. Dra för att flytta.</div>`}</div>
     ${wps.length > 1 ? `<div class="card"><h3>Ankomsttid</h3>
@@ -688,27 +690,165 @@ function simplify(pts, tolM) {   // Ramer–Douglas–Peucker i lokala meter
   }
   return pts.filter((_, i) => keep[i]);
 }
+/* ---------- vatten ur kartfilen: djupområden avkodade direkt ur vektortiles ----------
+   Används för att hitta väg runt öar och grund på sträckan mellan farled och brygga. */
+const chartPM = new pmtiles.PMTiles(CHART_URL.replace("pmtiles://", ""));
+const depCache = new Map(), depData = new Map(), DZ = 14;
+function pbfReader(buf) {
+  const u8 = new Uint8Array(buf), dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength); let pos = 0;
+  const varint = () => { let r = 0, s = 0, b; do { b = u8[pos++]; r += (b & 0x7f) * 2 ** s; s += 7; } while (b & 0x80); return r; };
+  return {
+    get end() { return pos >= u8.length; }, varint,
+    tag() { const t = varint(); return [t >> 3, t & 7]; },
+    bytes() { const n = varint(), s = u8.subarray(pos, pos + n); pos += n; return s; },
+    str() { return new TextDecoder().decode(this.bytes()); },
+    f32() { const v = dv.getFloat32(pos, true); pos += 4; return v; },
+    f64() { const v = dv.getFloat64(pos, true); pos += 8; return v; },
+    packed() { const end = varint() + pos, out = []; while (pos < end) out.push(varint()); return out; },
+    skip(w) { if (w === 0) varint(); else if (w === 1) pos += 8; else if (w === 2) pos += varint(); else if (w === 5) pos += 4; }
+  };
+}
+function decodeDepare(buf, z, x, y) {
+  const T = pbfReader(buf), polys = [];
+  while (!T.end) {
+    const [f, w] = T.tag(); if (f !== 3) { T.skip(w); continue; }
+    const L = pbfReader(T.bytes()); let name = "", extent = 4096; const keys = [], vals = [], feats = [];
+    while (!L.end) {
+      const [lf, lw] = L.tag();
+      if (lf === 1) name = L.str(); else if (lf === 2) feats.push(L.bytes()); else if (lf === 3) keys.push(L.str());
+      else if (lf === 4) { const V = pbfReader(L.bytes()); let v = null; while (!V.end) { const [vf, vw] = V.tag(); if (vf === 1) v = V.str(); else if (vf === 2) v = V.f32(); else if (vf === 3) v = V.f64(); else if (vf === 4 || vf === 5) v = V.varint(); else if (vf === 6) { const n = V.varint(); v = (n % 2 ? -(n + 1) / 2 : n / 2); } else if (vf === 7) v = !!V.varint(); else V.skip(vw); } vals.push(v); }
+      else if (lf === 5) extent = L.varint(); else L.skip(lw);
+    }
+    if (name !== "depare") continue;
+    const n2 = 2 ** z, toLL = (px, py) => { const X = (x + px / extent) / n2, Y = (y + py / extent) / n2; return [X * 360 - 180, deg(Math.atan(Math.sinh(Math.PI * (1 - 2 * Y))))]; };
+    for (const fb of feats) {
+      const F = pbfReader(fb); let tags = [], geom = [], type = 0;
+      while (!F.end) { const [ff, fw] = F.tag(); if (ff === 2) tags = F.packed(); else if (ff === 3) type = F.varint(); else if (ff === 4) geom = F.packed(); else F.skip(fw); }
+      if (type !== 3) continue;
+      let d1 = null; for (let k = 0; k < tags.length; k += 2) if (keys[tags[k]] === "d1") d1 = vals[tags[k + 1]];
+      const rings = []; let ring = null, cx = 0, cy = 0, minX = 999, minY = 999, maxX = -999, maxY = -999;
+      for (let k = 0; k < geom.length;) {
+        const c = geom[k++], id = c & 7, cnt = c >> 3;
+        if (id === 7) { if (ring) rings.push(ring); ring = null; continue; }
+        for (let m = 0; m < cnt; m++) {
+          const dx = geom[k++], dy = geom[k++]; cx += dx % 2 ? -(dx + 1) / 2 : dx / 2; cy += dy % 2 ? -(dy + 1) / 2 : dy / 2;
+          const p = toLL(cx, cy);
+          if (id === 1) { if (ring) rings.push(ring); ring = [p]; } else ring.push(p);
+          if (p[0] < minX) minX = p[0]; if (p[0] > maxX) maxX = p[0]; if (p[1] < minY) minY = p[1]; if (p[1] > maxY) maxY = p[1];
+        }
+      }
+      if (ring) rings.push(ring);
+      polys.push({ d1: d1 ?? 0, rings, bb: [minX, minY, maxX, maxY] });
+    }
+  }
+  return polys;
+}
+const tileOf = (p, z) => { const n = 2 ** z; return [Math.floor((p.lng + 180) / 360 * n), Math.floor((1 - Math.log(Math.tan(rad(p.lat)) + 1 / Math.cos(rad(p.lat))) / Math.PI) / 2 * n)]; };
+function depTile(x, y) {
+  const k = x + "/" + y;
+  if (!depCache.has(k)) depCache.set(k, chartPM.getZxy(DZ, x, y).then(t => ({ polys: t ? decodeDepare(t.data, DZ, x, y) : [] })).catch(() => ({ polys: [] })));
+  return depCache.get(k);
+}
+async function loadDepth(bb) {
+  const [x0, y1] = tileOf({ lat: bb[1], lng: bb[0] }, DZ), [x1, y0] = tileOf({ lat: bb[3], lng: bb[2] }, DZ);
+  if ((x1 - x0 + 1) * (y1 - y0 + 1) > 120) return false;
+  const jobs = []; for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) jobs.push(depTile(x, y).then(r => depData.set(x + "/" + y, r)));
+  await Promise.all(jobs); return true;
+}
+function waterDepth(p) {   // grundaste djup för punkten enligt djupområdena, null = land/okänt
+  const [x, y] = tileOf(p, DZ), t = depData.get(x + "/" + y); if (!t || !t.polys) return null;
+  for (const P of t.polys) {
+    if (p.lng < P.bb[0] || p.lng > P.bb[2] || p.lat < P.bb[1] || p.lat > P.bb[3]) continue;
+    let inside = false;
+    for (const r of P.rings) for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+      const [xi, yi] = r[i], [xj, yj] = r[j];
+      if ((yi > p.lat) !== (yj > p.lat) && p.lng < (xj - xi) * (p.lat - yi) / (yj - yi) + xi) inside = !inside;
+    }
+    if (inside) return P.d1;
+  }
+  return null;
+}
+async function waterPath(a, b, need, free) {
+  const lerp = (p, q, t) => ({ lat: p.lat + (q.lat - p.lat) * t, lng: p.lng + (q.lng - p.lng) * t });
+  const isFree = p => free.some(f => distNm(f, p) * NM < 120);   // bryggor och hamnar: närmaste biten räknas fri
+  // 1 = djupt nog, 2 = vatten men grundare än båten behöver (dyrt, undviks), 0 = land
+  const cls = p => { if (isFree(p)) return 1; const d = waterDepth(p); return d == null ? 0 : d >= need ? 1 : 2; };
+  const los = (p, q) => { const n = Math.max(2, Math.ceil(distNm(p, q) * NM / 10)); for (let i = 1; i < n; i++) if (cls(lerp(p, q, i / n)) !== 1) return false; return true; };
+  const padLat = .006, padLng = .012;
+  const bb = [Math.min(a.lng, b.lng) - padLng, Math.min(a.lat, b.lat) - padLat, Math.max(a.lng, b.lng) + padLng, Math.max(a.lat, b.lat) + padLat];
+  if (!(await loadDepth(bb))) return { pts: [a, b], ok: false };
+  if (los(a, b)) return { pts: [a, b], ok: true, nm: distNm(a, b) };
+  const k = Math.cos(rad((a.lat + b.lat) / 2)) * 111320, Wm = (bb[2] - bb[0]) * k, Hm = (bb[3] - bb[1]) * 111320;
+  const cell = Math.max(12, Math.hypot(Wm, Hm) / 170), nx = Math.ceil(Wm / cell), ny = Math.ceil(Hm / cell);
+  const at = (i, j) => ({ lng: bb[0] + (i + .5) * cell / k, lat: bb[1] + (j + .5) * cell / 111320 });
+  const ok = new Uint8Array(nx * ny); for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) ok[j * nx + i] = cls(at(i, j));
+  const idx = p => [Math.min(nx - 1, Math.max(0, Math.floor((p.lng - bb[0]) * k / cell))), Math.min(ny - 1, Math.max(0, Math.floor((p.lat - bb[1]) * 111320 / cell)))];
+  const [si, sj] = idx(a), [ti, tj] = idx(b), S0 = sj * nx + si, T0 = tj * nx + ti; ok[S0] = ok[T0] = 1;
+  const g = new Float32Array(nx * ny).fill(Infinity), prev = new Int32Array(nx * ny).fill(-1), open = [[0, S0]]; g[S0] = 0;
+  const push = it => { open.push(it); let i = open.length - 1; while (i) { const p = (i - 1) >> 1; if (open[p][0] <= open[i][0]) break; [open[p], open[i]] = [open[i], open[p]]; i = p; } };
+  const pop = () => { const top = open[0], last = open.pop(); if (open.length) { open[0] = last; let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < open.length && open[l][0] < open[m][0]) m = l; if (r < open.length && open[r][0] < open[m][0]) m = r; if (m === i) break; [open[m], open[i]] = [open[i], open[m]]; i = m; } } return top; };
+  const closed = new Uint8Array(nx * ny);
+  const h = c => { const dx = Math.abs(c % nx - ti), dy = Math.abs(Math.floor(c / nx) - tj); return Math.max(dx, dy) + .414 * Math.min(dx, dy); };
+  let found = false, guard = 0;
+  while (open.length && guard++ < 200000) {
+    const [, c] = pop(); if (closed[c]) continue; closed[c] = 1;
+    if (c === T0) { found = true; break; }
+    const ci = c % nx, cj = Math.floor(c / nx);
+    for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+      if (!di && !dj) continue; const i2 = ci + di, j2 = cj + dj; if (i2 < 0 || j2 < 0 || i2 >= nx || j2 >= ny) continue;
+      const n = j2 * nx + i2; if (!ok[n]) continue; if (di && dj && (!ok[cj * nx + i2] || !ok[j2 * nx + ci])) continue;
+      const ng = g[c] + (di && dj ? 1.414 : 1) * (ok[n] === 2 ? 8 : 1);
+      if (ng < g[n]) { g[n] = ng; prev[n] = c; push([ng + h(n), n]); }
+    }
+  }
+  if (!found) return { pts: [a, b], ok: false };
+  const cells = []; let shallow = false; for (let c = T0; c !== -1; c = prev[c]) { cells.push(at(c % nx, Math.floor(c / nx))); if (ok[c] === 2) shallow = true; }
+  const raw = [a, ...cells.reverse().slice(1, -1), b], out = [a];
+  for (let i = 0; i < raw.length - 1;) { let j = raw.length - 1; while (j > i + 1 && !los(raw[i], raw[j])) j--; out.push(raw[j]); i = j; }
+  let nm = 0; for (let i = 1; i < out.length; i++) nm += distNm(out[i - 1], out[i]);
+  return { pts: out, ok: true, nm, shallow };
+}
+function nearestFwList(G, p, ok, n) {
+  const list = [];
+  for (let m = 0; m < G.nodes.length; m++) {
+    const A = G.adj[m]; let usable = false; for (let k = 2; k < A.length; k += 3) if (ok(A[k])) { usable = true; break; } if (!usable) continue;
+    const dy = G.nodes[m][1] - p.lat, dx = (G.nodes[m][0] - p.lng) * Math.cos(rad(p.lat)), d = dx * dx + dy * dy;
+    if (list.length < n || d < list[list.length - 1][0]) { list.push([d, m]); list.sort((x, y) => x[0] - y[0]); if (list.length > n) list.pop(); }
+  }
+  return list.map(x => x[1]);
+}
+/* bästa anslutning mellan en punkt och farledsnätet, via vatten som är djupt nog */
+async function connect(G, p, other, ok, need) {
+  let best = null;
+  for (const m of nearestFwList(G, p, ok, 6)) {
+    const q = G.pt(m);
+    if (distNm(p, q) * NM < 25) return { node: m, pts: [p, q], ok: true, nm: 0, near: true };
+    const w = await waterPath(p, q, need, [p]);
+    const cost = (w.ok ? w.nm : distNm(p, q) * 3 + 50) + distNm(q, other) * .5;
+    if (!best || cost < best.cost) best = { node: m, ...w, cost, nm: w.ok ? w.nm : distNm(p, q) };
+  }
+  return best;
+}
 async function computeAutoRoute(from, to) {
   let G; try { G = await loadFairways(); } catch (e) { return { err: "Farledsnätet kunde inte laddas. Försök igen om en stund." }; }
-  const b = boat(), ok = d => d === 0 || d / 10 >= (+b.draft || 0);
-  const s = nearestFw(G, from, ok), t = nearestFw(G, to, ok);
-  if (s < 0 || t < 0) return { err: "Hittade ingen farled i närheten." };
-  const path = s === t ? [s] : fwSearch(G, s, t, ok);
+  const b = boat(), ok = d => d === 0 || d / 10 >= (+b.draft || 0), need = needDepth();
+  const cs = await connect(G, from, to, ok, need), ct = await connect(G, to, from, ok, need);
+  if (!cs || !ct) return { err: "Hittade ingen farled i närheten." };
+  const path = cs.node === ct.node ? [cs.node] : fwSearch(G, cs.node, ct.node, ok);
   if (!path) return { err: `Ingen sammanhängande farled där djupet räcker för ${b.name} (${b.draft} m).` };
   const mid = simplify(path.map(G.pt), 12);
   const out = [ll(from)], off = [];
-  const sOff = distNm(from, mid[0]) * NM > 25, tOff = distNm(to, mid[mid.length - 1]) * NM > 25;
-  if (sOff) { out.push(mid[0]); off.push(true); }
-  for (let i = sOff ? 1 : 0; i < mid.length; i++) { out.push(mid[i]); off.push(false); }
-  if (tOff) { out.push(ll(to)); off.push(true); } else { out[out.length - 1] = ll(to); }
-  // statistik
+  if (!cs.near) for (const p of cs.pts.slice(1)) { out.push(ll(p)); off.push(true); }
+  for (let i = cs.near ? 0 : 1; i < mid.length; i++) { out.push(mid[i]); off.push(false); }
+  if (!ct.near) { for (const p of ct.pts.slice().reverse().slice(1)) { out.push(ll(p)); off.push(true); } }
+  else out[out.length - 1] = ll(to);
   let onNm = 0, unknownNm = 0, minDraft = Infinity;
   for (let i = 1; i < path.length; i++) {
     const A = G.adj[path[i - 1]]; let d = 0; for (let k = 0; k < A.length; k += 3) if (A[k] === path[i]) { d = A[k + 2]; break; }
     const w = distNm(G.pt(path[i - 1]), G.pt(path[i])); onNm += w; if (d === 0) unknownNm += w; else minDraft = Math.min(minDraft, d / 10);
   }
-  const offNm = (sOff ? distNm(from, mid[0]) : 0) + (tOff ? distNm(to, mid[mid.length - 1]) : 0);
-  return { pts: out, off: off.slice(0, out.length - 1), info: { onNm, offNm, unknownNm, minDraft: isFinite(minDraft) ? minDraft : null } };
+  const offNm = (cs.near ? 0 : cs.nm) + (ct.near ? 0 : ct.nm);
+  return { pts: out, off: off.slice(0, out.length - 1), info: { onNm, offNm, unknownNm, minDraft: isFinite(minDraft) ? minDraft : null, unchecked: (!cs.near && !cs.ok) || (!ct.near && !ct.ok), shallow: !!(cs.shallow || ct.shallow) } };
 }
 async function autoRoute(from, to) {
   if (!S.autoAck) return autoDisclaimer(() => autoRoute(from, to));
@@ -1201,7 +1341,7 @@ function openLayers() {
   openSheet("Kartlager", `
     <div class="card"><h3>Karta</h3>${r("chart", "Sjökort")}${r("sat", "Flygfoto med farleder och sjömärken")}${r("osm", "Gatukarta")}</div>
     <div class="card"><h3>Grynnor och stenar</h3>
-      <label class="row"><input type="checkbox" id="ly-det" ${S.layers.detail !== false ? "checked" : ""}> Visa detaljkortet när jag zoomar in</label>
+      <label class="row"><input type="checkbox" id="ly-det" ${S.layers.detail ? "checked" : ""}> Visa detaljkortet när jag zoomar in</label>
       <label class="f">Visa detaljkortet från<select id="ly-dz">${[[11, "Översikt (ca 2 nm över skärmen)"], [12, "Mellan (ca 1 nm)"], [13, "Nära (ca 0,5 nm), rekommenderas"], [14, "Mycket nära (ca 0,25 nm)"]].map(([z, t]) => `<option value="${z}" ${dz() === z ? "selected" : ""}>${t}</option>`).join("")}</select></label>
       <div class="muted">Grynnor och stenar finns bara i Traficoms detaljkort. Längre ut blir det svårläst eftersom kortet förminskas.</div>
     </div>
@@ -1222,6 +1362,10 @@ function openLayers() {
   document.querySelectorAll("input[name=base]").forEach(x => x.onchange = () => { S.layers.base = x.value; save(); applyLayers(); });
 }
 $("#b-layers").onclick = openLayers;
+$("#b-detail").onclick = () => {
+  S.layers.detail = !S.layers.detail; save(); applyLayers();
+  toast(S.layers.detail ? (map.getZoom() < dz() ? "Grynnor visas när du zoomar in närmare" : "Detaljkort med grynnor och stenar") : "Vektorsjökort", 1800);
+};
 
 /* ---------- menu ---------- */
 function openMenu() {
