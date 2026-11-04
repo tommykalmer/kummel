@@ -1,226 +1,26 @@
-# Diagnostik Wed Nov  4 12:10:54 UTC 2026
-## Oskari GetHierarchicalMapLayerGroups&lang=fi
-  storlek 60013 namn: 217
-  - Aerodrome Node
-  - Ahti_Limit_L
-  - Air Route Link
-  - Air Space Area
-  - Aluejaot
-  - Aluemeren raja
-  - Aluemeri
-  - Aluemeri (alue)
-  - Aluemeri (viiva)
-  - Berths_L
-  - CTR
-  - CTR_ALUE
-  - DW-reitti
-  - Dam_A
-  - Dam_L
-  - DeepWaterRoutePart_A
-  - Default
-  - Default Line1
-  - Default Point
-  - Default Polygon
-  - DepthArea_A
-  - DepthContour_L
-  - Designated Point
-  - DredgedArea_A
-  - ENC Approach
-  - ENC Berthing
-  - ENC Coastal
-  - ENC Coverage Layer
-  - ENC General
-  - ENC Harbour
-  - ENC Layer
-  - ExclusiveEconomicZone_A
-  - ExclusiveEconomicZone_L
-  - Full
-  - Full - Transparent Land
-  - Gate_L
-  - Generic1
-  - Highlight
-  - Instrument Approach Procedure
-  - Kaikki kartat
-  - Kaksisuuntaisen reitin osa
-  - Karttakeskus, L4356
-  - Kohtaamis- ja ohittamiskieltoalueet
-  - Kuntarajat
-  - Label
-  - Laiturit (viiva)
-  - Lentoliikenne
-  - Liikennejakovyöhyke (alue)
-  - Liikennejakovyöhyke (viiva)
-  - Luotsinkohtauspaikka
-  - MML Taustakarttasarja
-  - Maanmittauslaitos
-  - Matkustaja-alusten D-alueet
-  - Merikarttasarjat
-  - Merirajat
-  - Merituulivoima-alueet
-  - Merivaroitukset
-  - Merivaroitukset (alue)
-  - Merivaroitukset (piste)
-  - Merivaroitukset (viiva)
-  - Mittaamaton alue
-  - N2000-alueet
-  - Navaid
-  - PilotBoardingPlace_P
-  - Pontoon_A
-  - Pontoon_L
-  - Ponttoni (alue)
-  - Ponttoni (viiva)
-  - PrecautionaryArea_A
-  - Procedure Link
-  - Radioilmoittautumislinja
-  - Radioilmoittautumispiste
-  - Rannikkokartat
-  - Rantarakenne
-  - Rantarakenteet
-  - Rantarakenteet (piste)
-  - Rantarakenteet (viiva)
-  - Rdocal_L
-  - Rdocal_P
-  - Reittijakojärjestelmä
-  - Reittijakojärjestelmän liikennekaistan osa
-  - Reittijakojärjestelmän reunaviiva
-  - Runway Area
-  - Runway Centerline Point
-  - Ruoppausalue
-  - Satamakartat
-  - ShorelineConstruction_L
-  - ShorelineConstruction_P
-  - Single Color
-  - Sisäisten aluevesien ulkoraja
-  - Sisävesikartat
-  - Sounding_P
-  - Standard
-  - Standard - Transparent Land
-  - Standard Instrument Arrival
-  - Standard Instrument Departure
-  - StraightTerritorialSeaBaseline_L
-  - Sulku tai pato
-  - Sulkuportti
-  - Sulut ja kanavat (alue)
-  - Sulut ja kanavat (viiva)
-  - Suomalaiset merikartat, tuotejako
-  - Surface Composition
-  - Syvyysalue
-  - Syvyysalueet
-  - Syvyyskayra tyyli
-  - Syvyyskäyrät
-  - Syvyyspiste label
-  - Syvyyspiste_point
-  - Syvyyspisteet
-  - Syvyystiedot
-  - TN_AERODROMENODE
-  - TN_AIRROUTELINK
-  - TN_AIRSPACEAREA
-  - TN_DESIGNATEDPOINT
-  - TN_INSTRUMENTAPPROACHPROCEDURE
-  - TN_NAVAID
-  - TN_PROCEDURELINK
-  - TN_RUNWAYAREA
-  - TN_RUNWAYCENTERLINEPOINT
-  - TN_STANDARDINSTRUMENTARRIVAL
-  - TN_STANDARDINSTRUMENTDEPARTURE
-  - TN_SURFACECOMPOSITION
-  - Talousvyohyke_a
-  - Talousvyöhyke
-  - Talousvyöhykkeen merituulivoima-alueet
-  - Talousvyöhykkeen raja
-  - Taustakartat (ei ladattavissa)
-  - TerritorialSeaArea_A
-  - TerritorialSeaArea_L
-  - Tieliikenne
-  - TrafficSeparationLine_L
-  - TrafficSeparationSchemeBoundary_L
-  - TrafficSeparationSchemeLanePart_A
-  - TrafficSeparationZone_A
-  - Traficom
-  - Traficom:Merikarttasarjat public
-  - Traficom:Rannikkokartat public
-  - Traficom:Satamakartat
-  - Traficom:Veneilykartat public
-  - Traficom:Yleiskartat 250k public
-  - Tutkimusluvat
-  - TwoWayRoutePart_A
-  - UnsurveyedArea_A
-  - Utm100
-  - Utm200
-  - Utm50
-  - VTS AREA
-  - VTS-alueet
-  - VTSArea_A
-  - VTS_AREA_A
-  - Valtakunnan_raja_a
-  - Valtioiden välinen raja
-  - Varoalue
-  - Veneilykartat
-  - Vesiliikenne
-  - Voimassa olevat hyödyntämisluvat
-  - Voimassa olevat hyödyntämisluvat 
-  - Voimassa olevat tutkimusluvat
-  - Yleiskartat
-  - Yleiskartat 250k
-  - aluemeri_raja_a
-  - aluemeri_raja_v
-  - cells
-  - coverage
-  - d_alueet
-  - default
-  - default line style
-  - generic
-  - highlight
-  - kohtaamis_ja_ohittamiskieltoalueet
-  - kuntarajat
-  - label
-  - line
-  - navigational_warnings_a
-  - navigational_warnings_l
-  - navigational_warnings_p
-  - point
-  - polygon
-  - polygon_raja
-  - rantarakenteet
-  - reittijakojarjestelma_a
-  - singlecolor
-  - sisavesi_raja_v
-  - sisavesien_vertaustasot
-  - style-id-200
-  - style-id-201
-  - style-id-202
-  - style-id-203
-  - sulut_a
-  - sulut_v
-  - syvyysalue_a
-  - syvyyskayra
-  - talousvyohyke_a
-  - talousvyohyke_v
-  - talousvyohykkeen_merituulivoima_alueet
-  - taustakartta
-  - tuotejako_enc_approach
-  - tuotejako_enc_berthing
-  - tuotejako_enc_coastal
-  - tuotejako_enc_general
-  - tuotejako_enc_harbour
-  - tuotejako_kaikki
-  - tuotejako_merikarttasarjat
-  - tuotejako_rannikkokartat
-  - tuotejako_satamakartat
-  - tuotejako_sisavesikartat 
-  - tuotejako_veneilykartat
-  - tuotejako_yleiskartat
-  - tutkimusluvat
-  - utm100
-  - utm200
-  - utm50
-  - valtakunnan_raja_a
-  - valtakunnan_raja_v
-  - voimassa_olevat_hyodyntamisluvat
-  - voimassa_olevat_tutkimusluvat
-## Oskari GetMapLayers&lang=fi&epsg=EPSG:3067
-  storlek 51 namn: 0
-## Åland karttjänster
-- https://kartor.regeringen.ax/geoserver/ows?service=WMS&request=GetCapabilities → 404 
-- https://geodata.regeringen.ax/geoserver/ows?service=WMS&request=GetCapabilities → 000 
-- https://karta.ax/geoserver/ows?service=WMS&request=GetCapabilities → 403 
+# Diagnostik Wed Nov  4 12:11:48 UTC 2026
+  RAW {"realtime": false, "orgName": "Traficom", "created": "nullTnullZ", "isQueryable": true, "type": "wmslayer", "version": "1.3.0", "url": "/oskari/action?action_route=GetLayerTile&id=74", "srs_name": "EPSG:3067", "refreshRate": 0, "srs": ["EPSG:3067"], "baseLayerId": -1, "permissions": {}, "subtitle": "", "name": "Veneilykartat", "options": {"legends": {"legendImage": ""}}, "attributes": {"forceProxy": true}, "styles": [], "id": 74, "layerName": "tuotejako_veneilykartat", "opacity": 100, "metadataUuid": "d165cd1c-d2fd-4bf3-ad39-a6e61ea51a73", "updated": "nullTnullZ", "dataproviderId": 5}
+  RAW {"realtime": false, "orgName": "Traficom", "created": "nullTnullZ", "type": "wmtslayer", "version": "1.0.0", "url": "/oskari/action?action_route=GetLayerTile&id=113", "srs_name": "EPSG:3067", "refreshRate": 0, "srs": ["EPSG:3067"], "baseLayerId": -1, "permissions": {}, "subtitle": "", "name": "Veneilykartat", "options": {"requestEncoding": "KVP", "legends": {"legendImage": ""}}, "attributes": {"forceProxy": true, "geometry": "GEOM"}, "styles": [{"legend": "", "name": "", "title": ""}], "id": 113, "layerName": "Traficom:Veneilykartat public", "opacity": 100, "updated": "nullTnullZ", "dataprovid
+  RAW {"realtime": false, "orgName": "Traficom", "created": "nullTnullZ", "isQueryable": true, "type": "wmslayer", "version": "1.3.0", "url": "/oskari/action?action_route=GetLayerTile&id=46", "srs_name": "EPSG:3067", "refreshRate": 0, "baseLayerId": -1, "permissions": {}, "subtitle": "", "name": "ENC Layer", "options": {"legends": {"legendImage": ""}}, "attributes": {"forceProxy": true, "basemap": true}, "style": "style-id-202", "styles": [{"legend": "/oskari/action?action_route=GetLayerTile&legend=true&style=style-id-201&id=46", "name": "style-id-201", "title": "Standard - Transparent Land"}, {"leg
+  RAW {"realtime": false, "orgName": "Traficom", "created": "nullTnullZ", "isQueryable": true, "type": "wmslayer", "version": "1.1.1", "url": "/oskari/action?action_route=GetLayerTile&id=63", "srs_name": "EPSG:3067", "refreshRate": 0, "srs": ["EPSG:3067"], "baseLayerId": -1, "permissions": {}, "subtitle": "", "name": "Kaikki kartat", "options": {"legends": {"legendImage": ""}}, "attributes": {"forceProxy": true, "geometry": "GEOM"}, "styles": [], "id": 63, "layerName": "tuotejako_kaikki", "opacity": 100, "metadataUuid": "d165cd1c-d2fd-4bf3-ad39-a6e61ea51a73", "updated": "nullTnullZ", "dataproviderId
+  RAW {"realtime": false, "orgName": "Traficom", "created": "nullTnullZ", "isQueryable": true, "type": "wmslayer", "version": "1.1.1", "url": "/oskari/action?action_route=GetLayerTile&id=64", "srs_name": "EPSG:3067", "refreshRate": 0, "srs": ["EPSG:3067"], "baseLayerId": -1, "permissions": {}, "subtitle": "", "name": "ENC General", "options": {"legends": {"legendImage": ""}}, "attributes": {"forceProxy": true, "geometry": "GEOM"}, "styles": [], "id": 64, "layerName": "tuotejako_enc_general", "opacity": 100, "metadataUuid": "d165cd1c-d2fd-4bf3-ad39-a6e61ea51a73", "updated": "nullTnullZ", "dataprovide
+  RAW {"realtime": false, "orgName": "Traficom", "created": "nullTnullZ", "isQueryable": true, "type": "wmslayer", "version": "1.1.1", "url": "/oskari/action?action_route=GetLayerTile&id=65", "srs_name": "EPSG:3067", "refreshRate": 0, "srs": ["EPSG:3067"], "baseLayerId": -1, "permissions": {}, "subtitle": "", "name": "ENC Coastal", "options": {"legends": {"legendImage": ""}}, "attributes": {"forceProxy": true, "geometry": "GEOM"}, "styles": [], "id": 65, "layerName": "tuotejako_enc_coastal", "opacity": 100, "metadataUuid": "d165cd1c-d2fd-4bf3-ad39-a6e61ea51a73", "updated": "nullTnullZ", "dataprovide
+  RAW {"realtime": false, "orgName": "Traficom", "created": "nullTnullZ", "isQueryable": true, "type": "wmslayer", "version": "1.1.1", "url": "/oskari/action?action_route=GetLayerTile&id=66", "srs_name": "EPSG:3067", "refreshRate": 0, "srs": ["EPSG:3067"], "baseLayerId": -1, "permissions": {}, "subtitle": "", "name": "ENC Approach", "options": {"legends": {"legendImage": ""}}, "attributes": {"forceProxy": true, "geometry": "GEOM"}, "styles": [], "id": 66, "layerName": "tuotejako_enc_approach", "opacity": 100, "metadataUuid": "d165cd1c-d2fd-4bf3-ad39-a6e61ea51a73", "updated": "nullTnullZ", "dataprovi
+  RAW {"realtime": false, "orgName": "Traficom", "created": "nullTnullZ", "isQueryable": true, "type": "wmslayer", "version": "1.1.1", "url": "/oskari/action?action_route=GetLayerTile&id=68", "srs_name": "EPSG:3067", "refreshRate": 0, "srs": ["EPSG:3067"], "baseLayerId": -1, "permissions": {}, "subtitle": "", "name": "ENC Berthing", "options": {"legends": {"legendImage": ""}}, "attributes": {"forceProxy": true, "geometry": "GEOM"}, "styles": [], "id": 68, "layerName": "tuotejako_enc_berthing", "opacity": 100, "metadataUuid": "d165cd1c-d2fd-4bf3-ad39-a6e61ea51a73", "updated": "nullTnullZ", "dataprovi
+  RAW {"realtime": false, "orgName": "Traficom", "created": "nullTnullZ", "isQueryable": true, "type": "wmslayer", "version": "1.1.1", "url": "/oskari/action?action_route=GetLayerTile&id=67", "srs_name": "EPSG:3067", "refreshRate": 0, "srs": ["EPSG:3067"], "baseLayerId": -1, "permissions": {}, "subtitle": "", "name": "ENC Harbour", "options": {"legends": {"legendImage": ""}}, "attributes": {"forceProxy": true, "geometry": "GEOM"}, "styles": [], "id": 67, "layerName": "tuotejako_enc_harbour", "opacity": 100, "metadataUuid": "d165cd1c-d2fd-4bf3-ad39-a6e61ea51a73", "updated": "nullTnullZ", "dataprovide
+  RAW {"realtime": false, "orgName": "Traficom", "created": "nullTnullZ", "isQueryable": true, "type": "wmslayer", "version": "1.3.0", "url": "/oskari/action?action_route=GetLayerTile&id=45", "srs_name": "EPSG:3067", "refreshRate": 0, "baseLayerId": -1, "permissions": {}, "subtitle": "", "name": "ENC Coverage Layer", "options": {"legends": {"legendImage": ""}}, "attributes": {"forceProxy": true, "basemap": true}, "style": "default", "styles": [{"legend": "", "name": "highlight", "title": "Highlight"}, {"legend": "", "name": "default", "title": "Default"}, {"legend": "", "name": "singlecolor", "title
+  ids ['45', '46', '64', '65', '66', '67', '68']
+## DescribeLayer 45
+{"id":"45","name":"ENC Coverage Layer"}
+## DescribeLayer 46
+{"id":"46","name":"ENC Layer"}
+## DescribeLayer 64
+{"id":"64","name":"ENC General"}
+## DescribeLayer 65
+{"id":"65","name":"ENC Coastal"}
+## DescribeLayer 66
+{"id":"66","name":"ENC Approach"}
+## DescribeLayer 67
+{"id":"67","name":"ENC Harbour"}
+## DescribeLayer 68
+{"id":"68","name":"ENC Berthing"}
