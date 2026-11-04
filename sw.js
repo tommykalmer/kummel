@@ -1,11 +1,12 @@
 /* Kummel service worker – app shell offline + cache of chart tiles you have viewed */
-const SHELL = "kummel-shell-v3";
+const SHELL = "kummel-shell-v4";
 const TILES = "kummel-tiles-v1";
 const MAX_TILES = 6000;
-const SHELL_FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png",
-  "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js",
-  "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"];
-const TILE_HOSTS = ["julkinen.traficom.fi", "tiles.openseamap.org", "tile.openstreetmap.org", "basemaps.cartocdn.com", "server.arcgisonline.com"];
+const SHELL_FILES = ["./", "./index.html", "./app.js", "./chartstyle.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png",
+  "https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js",
+  "https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.css",
+  "https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"];
+const TILE_HOSTS = ["tiles.openfreemap.org", "julkinen.traficom.fi", "tiles.openseamap.org", "tile.openstreetmap.org", "basemaps.cartocdn.com", "server.arcgisonline.com"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(SHELL).then(c => c.addAll(SHELL_FILES)).then(() => self.skipWaiting()));
@@ -26,7 +27,9 @@ async function trimTiles() {
 self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET") return;
-  if (TILE_HOSTS.some(h => url.hostname.endsWith(h))) {
+  // sjökortsfilen läses med range-anrop; webbläsarens egen cache hanterar den
+  if (url.pathname.endsWith(".pmtiles") || e.request.headers.has("range")) return;
+  if (TILE_HOSTS.some(h => url.hostname.endsWith(h)) && (/\/\d+\/\d+\/\d+/.test(url.pathname) || url.pathname.includes("/fonts/"))) {
     // cache-first for map tiles (opaque responses are fine for <img>)
     e.respondWith(caches.open(TILES).then(async c => {
       const hit = await c.match(e.request);

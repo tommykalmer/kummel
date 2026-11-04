@@ -83,7 +83,8 @@ for f in read("valosektorit_uusi"):
     a, b = num(p.get("alkukulma")), num(p.get("loppukulma"))
     if a is None or b is None: continue
     if b <= a: b += 360
-    full = b - a >= 359.9
+    if b - a >= 359.9: continue   # runtomlysande fyr: ingen båge, som på papperskortet
+    full = False
     r = 260
     steps = max(4, int((b - a) / 4))
     arc = [dest(lon, lat, (a + (b - a) * i / steps + 180) % 360, r) for i in range(steps + 1)]
