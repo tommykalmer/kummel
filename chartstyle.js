@@ -22,7 +22,7 @@ const KummelChart = (() => {
       d0: "#173b57", d3: "#112c42", d6: "#0b1e2f", d10: "#05101a",
       unsafe: "#2a6c9b", drying: "#26361f", unsurv: "#3c464c", dredged: "#16232c",
       contour: "#3f7fae", safety: "#8fd0ff", sounding: "#7f97a8", soundingShallow: "#f2f8ff",
-      nav: "#e6edf2", fwyName: "#c4a6e6", fwyArea: "#8c6aa8", waterName: "#7fb2d6", shore: "#c9bf98", secLeg: "#7d8b93",
+      nav: "#f4f8fb", fwyName: "#d2b8f0", fwyArea: "#8c6aa8", waterName: "#7fb2d6", shore: "#c9bf98", secLeg: "#7d8b93",
       magenta: "#f06ad8", red: "#ff5c5c", green: "#3fe08a", yellow: "#ffd84a", ink: "#f2f2f2", paper: "#05101a",
       fish: "#2ee59a", fishLine: "#9ff5d0"
     }
@@ -64,6 +64,8 @@ const KummelChart = (() => {
 
       /* djupområden */
       { id: "depare", type: "fill", source: CH, "source-layer": "depare", paint: { "fill-color": depthFill(need), "fill-antialias": false } },
+      /* sömmar mellan djupområden (sjökortens cellgränser) täcks med områdets egen färg */
+      { id: "depare-seam", type: "line", source: CH, "source-layer": "depare", paint: { "line-color": depthFill(need), "line-width": 1.5 } },
       /* på flygfotot: djupet som genomskinlig färg, så att grunt syns direkt */
       { id: "depare-sat", type: "fill", source: CH, "source-layer": "depare", layout: { visibility: "none" }, paint: { "fill-color": ["case", ["<", d1, need], "#7fd0ff", ["<", d1, 6], "#b9e4ff", "rgba(0,0,0,0)"], "fill-opacity": ["case", ["<", d1, need], .45, .22] } },
       { id: "unsurv", type: "fill", source: CH, "source-layer": "unsurv", paint: { "fill-color": C.unsurv, "fill-opacity": .25 } },
@@ -89,9 +91,10 @@ const KummelChart = (() => {
 
       /* farleder */
       { id: "fwyarea", type: "line", source: CH, "source-layer": "fwyarea", minzoom: 12, paint: { "line-color": C.fwyArea, "line-width": .6, "line-opacity": .6 } },
-      { id: "leadline", type: "line", source: CH, "source-layer": "leadline", paint: { "line-color": C.nav, "line-width": 1, "line-dasharray": [6, 3] } },
-      { id: "navline", type: "line", source: CH, "source-layer": "navline", paint: { "line-color": C.nav, "line-width": ["interpolate", ["linear"], ["zoom"], 9, .7, 14, 1.6] } },
-      { id: "navline-lbl", type: "symbol", source: CH, "source-layer": "navline", minzoom: 12, filter: [">", ["coalesce", ["get", "draft"], 0], 0], layout: { "symbol-placement": "line-center", "text-field": ["concat", ["number-format", ["get", "draft"], { "min-fraction-digits": 1, "max-fraction-digits": 1 }], " m"], "text-font": FONT_B, "text-size": 11, "text-keep-upright": true, "text-offset": [0, -.8] }, paint: { "text-color": C.nav, "text-halo-color": C.halo, "text-halo-width": 2 } },
+      { id: "leadline", type: "line", source: MK, filter: ["==", ["get", "L"], "leadline"], paint: { "line-color": C.nav, "line-width": 1, "line-dasharray": [6, 3] } },
+      { id: "navline-case", type: "line", source: MK, filter: ["==", ["get", "L"], "navline"], layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": C.halo, "line-opacity": .55, "line-width": ["interpolate", ["linear"], ["zoom"], 9, 2.2, 14, 4.2] } },
+      { id: "navline", type: "line", source: MK, filter: ["==", ["get", "L"], "navline"], layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": C.nav, "line-width": ["interpolate", ["linear"], ["zoom"], 9, .9, 14, 2] } },
+      { id: "navline-lbl", type: "symbol", source: MK, minzoom: 12, filter: ["all", ["==", ["get", "L"], "navline"], [">", ["coalesce", ["get", "draft"], 0], 0]], layout: { "symbol-placement": "line-center", "text-field": ["concat", ["number-format", ["get", "draft"], { "min-fraction-digits": 1, "max-fraction-digits": 1 }], " m"], "text-font": FONT_B, "text-size": 11, "text-keep-upright": true, "text-offset": [0, -.8] }, paint: { "text-color": C.nav, "text-halo-color": C.halo, "text-halo-width": 2 } },
       { id: "fwyname", type: "symbol", source: CH, "source-layer": "fwyname", minzoom: 11, layout: { "symbol-placement": "line", "symbol-spacing": 600, "text-field": ["get", "name"], "text-font": FONT_I, "text-size": 11, "text-keep-upright": true, "text-offset": [0, 1] }, paint: { "text-color": C.fwyName, "text-halo-color": C.halo, "text-halo-width": 1.5 } },
 
       /* ljussektorer */
@@ -132,7 +135,7 @@ const KummelChart = (() => {
   }
 
   const GROUPS = {
-    fairways: ["navline", "navline-lbl", "leadline", "fwyarea", "fwyname"],
+    fairways: ["navline-case", "navline", "navline-lbl", "leadline", "fwyarea", "fwyname"],
     marks: ["aids", "lights", "daymarks", "signs", "pilot", "faults"],
     sectors: ["sectors", "seclegs"],
     soundings: ["soundg", "soundg-shallow"],
@@ -141,10 +144,11 @@ const KummelChart = (() => {
     land: ["ofm-place", "ofm-water-name", "ofm-road", "ofm-building"]
   };
   const ALL = layers({ need: 1 }).map(l => l.id).filter(id => !DETAIL_IDS.includes(id) && id !== "depare-sat");
-  const OVERLAY = ["depcnt", "depcnt-safety", "depcnt-lbl", "soundg", "navline", "navline-lbl", "leadline", "fwyname", "sectors", "seclegs", "lights", "aids", "faults", "speed", "speed-lbl", "restrict", "tss-line", "pilot", "signs", "soundg-shallow", "fishband", "fishband-line"];
+  const OVERLAY = ["depcnt", "depcnt-safety", "depcnt-lbl", "soundg", "navline-case", "navline", "navline-lbl", "leadline", "fwyname", "sectors", "seclegs", "lights", "aids", "faults", "speed", "speed-lbl", "restrict", "tss-line", "pilot", "signs", "soundg-shallow", "fishband", "fishband-line"];
 
   function setNeed(map, need) {
     if (map.getLayer("depare")) map.setPaintProperty("depare", "fill-color", depthFill(need));
+    if (map.getLayer("depare-seam")) map.setPaintProperty("depare-seam", "line-color", depthFill(need));
     if (map.getLayer("depcnt-safety")) map.setFilter("depcnt-safety", ["==", ["get", "v"], safetyContour(need)]);
     if (map.getLayer("soundg")) map.setFilter("soundg", [">=", ["get", "d"], need]);
     if (map.getLayer("soundg-shallow")) map.setFilter("soundg-shallow", ["<", ["get", "d"], need]);
