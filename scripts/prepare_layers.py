@@ -126,3 +126,60 @@ for name, feats in out.items():
     print(f"{name}: {len(feats)}")
 with open("data/chart-log.md", "a") as fh:
     fh.write("\n## Kartlager i tiles\n" + "\n".join(f"- {n}: {len(f)}" for n, f in out.items()) + "\n")
+
+# --- farledsnät för ruttförslag ----------------------------------------------
+# Noder = punkter längs farledernas navigeringslinjer, sammanslagna inom 15 m.
+# Kanter = sträckor mellan punkterna med farledens dimensionerande djupgående (dm, 0 = okänt).
+SNAP = 15.0
+KX = 111320 * math.cos(math.radians(60.2)); KY = 111320
+nodes, cells, edges = [], {}, {}
+def node(lon, lat):
+    x, y = lon * KX, lat * KY
+    cx, cy = int(x // SNAP), int(y // SNAP)
+    for i in (-1, 0, 1):
+        for j in (-1, 0, 1):
+            for n in cells.get((cx + i, cy + j), ()):
+                nx, ny = nodes[n][0] * KX, nodes[n][1] * KY
+                if (nx - x) ** 2 + (ny - y) ** 2 <= SNAP * SNAP: return n
+    nodes.append([round(lon, 5), round(lat, 5)]); n = len(nodes) - 1
+    cells.setdefault((cx, cy), []).append(n); return n
+def add_line(coords, draft):
+    prev = None
+    for c in coords:
+        n = node(c[0], c[1])
+        if prev is not None and prev != n:
+            k = (min(prev, n), max(prev, n))
+            edges[k] = max(edges.get(k, 0), draft)
+        prev = n
+def lines_of(g):
+    if not g: return []
+    if g["type"] == "LineString": return [g["coordinates"]]
+    if g["type"] == "MultiLineString": return g["coordinates"]
+    return []
+def dm(v):
+    v = num(v); return int(round(v * 10)) if v and v > 0 else 0
+for f in read("navigointilinjat_uusi"):
+    for line in lines_of(f.get("geometry")): add_line(line, dm(f["properties"].get("mitoitussyvays")))
+for f in read("vaylat_uusi"):   # farledernas mittlinjer, bl.a. båtleder utan navigeringslinjer
+    for line in lines_of(f.get("geometry")): add_line(line, dm(f["properties"].get("mitoitussyvays")))
+# laga små glapp: ändpunkter som ligger nära en annan nod kopplas ihop
+deg = {}
+for a, b in edges: deg[a] = deg.get(a, 0) + 1; deg[b] = deg.get(b, 0) + 1
+gaps = 0
+for n, d in list(deg.items()):
+    if d != 1: continue
+    x, y = nodes[n][0] * KX, nodes[n][1] * KY
+    cx, cy = int(x // SNAP), int(y // SNAP)
+    best, bd = None, 60.0 ** 2
+    for i in range(-4, 5):
+        for j in range(-4, 5):
+            for m in cells.get((cx + i, cy + j), ()):
+                if m == n or (min(m, n), max(m, n)) in edges: continue
+                dd = (nodes[m][0] * KX - x) ** 2 + (nodes[m][1] * KY - y) ** 2
+                if dd < bd: best, bd = m, dd
+    if best is not None: edges[(min(n, best), max(n, best))] = 0; gaps += 1
+with open("data/fairways.json", "w") as fh:
+    json.dump({"nodes": nodes, "edges": [[a, b, d] for (a, b), d in edges.items()]}, fh, separators=(",", ":"))
+with open("data/chart-log.md", "a") as fh:
+    fh.write(f"\n## Farledsnät\n- {len(nodes)} noder, {len(edges)} sträckor, {gaps} glapp lagade\n")
+print("farledsnät:", len(nodes), "noder", len(edges), "sträckor")
