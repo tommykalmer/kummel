@@ -118,6 +118,9 @@ body.plan #cross{opacity:1}
 #nav-xte{color:var(--signal);font-weight:600;font-size:13px}#nav-xte:empty{display:none}
 body:has(#navbar:not(.hidden)) #wxbar{top:calc(170px + var(--sat))}
 body:has(#navbar:not(.hidden)) .toast{top:auto;bottom:calc(130px + var(--sab))}
+#satlegend{position:fixed;z-index:505;left:calc(10px + var(--sal));bottom:calc(112px + var(--sab));display:flex;flex-wrap:wrap;gap:4px 10px;max-width:calc(100% - 100px);background:rgba(5,16,26,.78);color:#fff;border-radius:10px;padding:6px 10px;font-size:11.5px;align-items:center}
+#satlegend b{font:700 12px var(--f-num);letter-spacing:.05em;text-transform:uppercase}#satlegend span{white-space:nowrap}#satlegend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+body.sheet-open #satlegend{visibility:hidden}
 /* sheet / panel */
 #sheet{position:fixed;z-index:600;left:0;right:0;bottom:0;max-height:72%;background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   border-radius:18px 18px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.2);transform:translateY(105%);transition:transform .28s ease;display:flex;flex-direction:column;
@@ -234,6 +237,7 @@ body.night{filter:brightness(.65)}
   <div id="nav-reroute" class="hidden"><span id="nav-reroute-txt"></span> <button class="btn" id="nav-rr-yes">Räkna om</button><button class="btn" id="nav-rr-no">Nej</button></div>
 </div>
 <div id="wxbar" class="hidden"><div class="wxb-top"><b id="wxb-time">Nu</b><span class="wxb-modes"><button data-wxm="wind" aria-pressed="true">Vind</button><button data-wxm="water" aria-pressed="false">Vatten°</button></span><button class="x" id="wxb-close" aria-label="Stäng väderlagret">×</button></div><input type="range" id="wxb-range" min="0" max="47" step="1" value="0" aria-label="Tid för prognosen"><div id="wxb-sub" class="muted" style="font-size:12px"></div><div class="wxb-legend" id="wxb-legend-wind"><span><i style="background:var(--stbd)"></i>under din gräns</span><span><i style="background:var(--signal)"></i>nära</span><span><i style="background:var(--port)"></i>över</span><span><b>Stor pil</b> = uppmätt nu</span></div><div class="wxb-legend hidden" id="wxb-legend-water"><span class="sst-scale"></span><span>0°</span><span>8°</span><span>16°</span><span>24°</span><span><b>Mörk ring</b> = uppmätt</span></div></div>
+<div id="satlegend" hidden></div>
 <div id="fab">
   <button class="fab mob hidden" id="b-mob" title="Man överbord">MOB</button>
   <button class="fab fish hidden" id="b-fish"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 12c3-4 7-6 11-6 4 0 7 3 8 6-1 3-4 6-8 6-4 0-8-2-11-6zm15-1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM2 12 0 8v8z"/></svg>Fisk!</button>
@@ -249,8 +253,8 @@ body.night{filter:brightness(.65)}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script src="config.js?v=202611042046"></script>
-<script src="chartstyle.js?v=202611042046"></script>
-<script src="app.js?v=202611042046"></script>
+<script src="config.js?v=202611042059"></script>
+<script src="chartstyle.js?v=202611042059"></script>
+<script src="app.js?v=202611042059"></script>
 </body>
 </html>

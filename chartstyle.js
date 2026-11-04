@@ -46,6 +46,8 @@ const KummelChart = (() => {
   const rasterPaint = () => themeName === "dark"
     ? { "raster-fade-duration": 250, "raster-brightness-min": .82, "raster-brightness-max": .04, "raster-hue-rotate": 180, "raster-saturation": .1 }
     : { "raster-fade-duration": 250 };
+  /* flygfoto: tydliga steg, rött där båten inte går fram */
+  const satFill = need => ["case", ["<", d1, need], "#ff5a5a", ["<", d1, 3], "#7fd6ff", ["<", d1, 6], "#3d9ed6", ["<", d1, 10], "#1f5f9a", "rgba(0,0,0,0)"];
   const dangerFilter = need => ["<", ["coalesce", ["get", "d1"], 0], need];
   const WMTS = layer => `https://julkinen.traficom.fi/rasteripalvelu/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${encodeURIComponent(layer)}&STYLE=&FORMAT=image%2Fpng&TILEMATRIXSET=WGS84_Pseudo-Mercator&TILEMATRIX=WGS84_Pseudo-Mercator%3A{z}&TILEROW={y}&TILECOL={x}`;
   const FI = [19, 59.3, 32, 70.2];
@@ -67,7 +69,9 @@ const KummelChart = (() => {
       /* sömmar mellan djupområden (sjökortens cellgränser) täcks med områdets egen färg */
       { id: "depare-seam", type: "line", source: CH, "source-layer": "depare", paint: { "line-color": depthFill(need), "line-width": 1.5 } },
       /* på flygfotot: djupet som genomskinlig färg, så att grunt syns direkt */
-      { id: "depare-sat", type: "fill", source: CH, "source-layer": "depare", layout: { visibility: "none" }, paint: { "fill-color": ["case", ["<", d1, need], "#7fd0ff", ["<", d1, 6], "#b9e4ff", "rgba(0,0,0,0)"], "fill-opacity": ["case", ["<", d1, need], .45, .22] } },
+      { id: "depare-sat", type: "fill", source: CH, "source-layer": "depare", layout: { visibility: "none" }, paint: { "fill-color": satFill(need), "fill-opacity": .5 } },
+      { id: "depare-sat-line", type: "line", source: CH, "source-layer": "depare", minzoom: 12, layout: { visibility: "none" }, filter: ["<", d1, 10], paint: { "line-color": "#ffffff", "line-opacity": .35, "line-width": .6 } },
+      { id: "depare-sat-lbl", type: "symbol", source: CH, "source-layer": "depare", minzoom: 13, layout: { visibility: "none", "symbol-placement": "point", "text-field": ["case", ["has", "d2"], ["concat", ["number-format", d1, { "max-fraction-digits": 1 }], "–", ["number-format", ["get", "d2"], { "max-fraction-digits": 1 }], " m"], ["concat", ">", ["number-format", d1, { "max-fraction-digits": 1 }], " m"]], "text-font": FONT_B, "text-size": 12, "text-padding": 30, "text-allow-overlap": false }, paint: { "text-color": "#ffffff", "text-halo-color": "rgba(5,16,26,.85)", "text-halo-width": 2 } },
       { id: "unsurv", type: "fill", source: CH, "source-layer": "unsurv", paint: { "fill-color": C.unsurv, "fill-opacity": .25 } },
       { id: "dredged", type: "fill", source: CH, "source-layer": "dredged", paint: { "fill-color": C.dredged, "fill-outline-color": C.secLeg } },
 
@@ -145,11 +149,11 @@ const KummelChart = (() => {
     sectors: ["sectors", "seclegs"],
     soundings: ["soundg", "soundg-shallow"],
     contours: ["depcnt", "depcnt-safety", "depcnt-lbl"],
-    satdepth: ["depare-sat"],
+    satdepth: ["depare-sat", "depare-sat-line", "depare-sat-lbl"],
     limits: ["speed", "speed-lbl", "restrict", "tss-fill", "tss-line"],
     land: ["ofm-place", "ofm-water-name", "ofm-road", "ofm-building"]
   };
-  const ALL = layers({ need: 1 }).map(l => l.id).filter(id => !DETAIL_IDS.includes(id) && id !== "depare-sat");
+  const ALL = layers({ need: 1 }).map(l => l.id).filter(id => !DETAIL_IDS.includes(id) && !id.startsWith("depare-sat"));
   const OVERLAY = ["rocks", "rock-area-line", "depcnt", "depcnt-safety", "depcnt-lbl", "soundg", "navline-case", "navline", "navline-lbl", "leadline", "fwyname", "sectors", "seclegs", "lights", "aids", "faults", "speed", "speed-lbl", "restrict", "tss-line", "pilot", "signs", "soundg-shallow", "fishband", "fishband-line"];
 
   function setNeed(map, need) {
@@ -159,6 +163,7 @@ const KummelChart = (() => {
     if (map.getLayer("soundg")) map.setFilter("soundg", [">=", ["get", "d"], need]);
     if (map.getLayer("soundg-shallow")) map.setFilter("soundg-shallow", ["<", ["get", "d"], need]);
     if (map.getLayer("danger-ovl")) map.setFilter("danger-ovl", dangerFilter(need));
+    if (map.getLayer("depare-sat")) map.setPaintProperty("depare-sat", "fill-color", satFill(need));
   }
   function setFishBand(map, band) {
     const f = band ? ["all", ["<", ["coalesce", ["get", "d1"], 0], band[1]], [">", ["coalesce", ["get", "d2"], 999], band[0]], [">=", ["coalesce", ["get", "d1"], 0], band[0] - 5]] : ["==", ["get", "d1"], -9999];

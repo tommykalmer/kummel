@@ -200,6 +200,12 @@ function circlePoly(c, m, n = 48) {
 }
 
 const dz = () => +S.layers.detailZoom || 13;
+function renderSatLegend(on) {
+  const el = $("#satlegend"); if (!el) return;
+  el.hidden = !on; if (!on) return;
+  const n = needDepth().toFixed(1).replace(".", ",");
+  el.innerHTML = `<b>Djup</b><span><i style="background:#ff5a5a"></i>under ${n} m</span><span><i style="background:#7fd6ff"></i>till 3 m</span><span><i style="background:#3d9ed6"></i>3–6 m</span><span><i style="background:#1f5f9a"></i>6–10 m</span><span><i style="background:transparent;border:1px solid #fff"></i>över 10 m</span>`;
+}
 function applyLayers() {
   if (!mapReady) return;
   const vis = (id, on) => map.getLayer(id) && map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
@@ -208,7 +214,8 @@ function applyLayers() {
   vis("sat", base === "sat" && !mmlKey());
   vis("mml-orto", base === "sat" && !!mmlKey());
   vis("mml-prop", !!S.layers.props);
-  vis("depare-sat", base === "sat");
+  ["depare-sat", "depare-sat-line", "depare-sat-lbl"].forEach(id => vis(id, base === "sat"));
+  renderSatLegend(base === "sat" && (S.layers.groups || {}).satdepth !== false);
   KummelChart.layerIds().forEach(id => vis(id, base === "chart" || (base === "sat" && KummelChart.isOverlay(id))));
   KummelChart.soundingIds().forEach(id => vis(id, (base === "chart" || (base === "sat" && id === "soundg-shallow")) && S.layers.soundings));
   $("#b-detail").setAttribute("aria-pressed", !!S.layers.detail);
@@ -579,7 +586,18 @@ function stopPlanning(keep) {
   planning = false; document.body.classList.remove("plan"); $("#b-route").setAttribute("aria-pressed", "false");
   if (!keep) { wps = []; wpsOff = []; autoInfo = null; drawWps(); }
 }
+let depthPop = null;
 map.on("click", e => {
+  if (!planning && S.layers.base === "sat" && !e.defaultPrevented) {
+    const hits = map.queryRenderedFeatures(e.point, { layers: ["depare-sat"].filter(id => map.getLayer(id)) });
+    if (depthPop) { depthPop.remove(); depthPop = null; }
+    if (hits.length) {
+      const p = hits[0].properties, lo = p.d1 ?? 0, hi = p.d2;
+      const txt = lo < 0 ? "Torrfallande" : hi != null ? `${String(lo).replace(".", ",")}–${String(hi).replace(".", ",")} m` : `över ${String(lo).replace(".", ",")} m`;
+      const warn = lo < needDepth() ? `<div style="color:#d22b2b;font-weight:600">För grunt för ${esc(boat().name)}</div>` : "";
+      depthPop = new maplibregl.Popup({ closeButton: false, offset: 10, className: "wp-pop" }).setLngLat(e.lngLat).setHTML(`<div style="font:600 15px var(--f-ui);color:#14232e">Djup ${txt}</div>${warn}<div style="font-size:11px;color:#5d6b73">Enligt sjökortet. Stenar kan finnas.</div>`).addTo(map);
+    }
+  }
   if (!planning) return;
   if (e.defaultPrevented) return;
   closeWpMenu();
@@ -1470,7 +1488,7 @@ map.on("moveend", () => { if (S.layers.ais) { clearTimeout(loadAis.t); loadAis.t
 /* ---------- boats ---------- */
 const BTYPES = { motor: "Motorbåt", segel: "Segelbåt", rib: "RIB", kajak: "Kajak / kanot", ovrig: "Annan" };
 const BDEF = { motor: { speed: 20, fuel: 18, maxWind: 10, draft: .6 }, segel: { speed: 5.5, fuel: 1.5, maxWind: 13, draft: 1.6 }, rib: { speed: 28, fuel: 25, maxWind: 9, draft: .5 }, kajak: { speed: 3, fuel: 0, maxWind: 6, draft: .2 }, ovrig: { speed: 6, fuel: 3, maxWind: 8, draft: .8 } };
-function boatChanged() { if (mapReady) KummelChart.setNeed(map, needDepth()); if (wx) renderChip(); }
+function boatChanged() { if (mapReady) { KummelChart.setNeed(map, needDepth()); renderSatLegend(S.layers.base === "sat" && (S.layers.groups || {}).satdepth !== false); } if (wx) renderChip(); }
 function openBoats() {
   openSheet("Båtar", `
     <div class="list">${S.boats.map(b => `<div class="card ${b.id === S.boatId ? "sel" : ""}">
