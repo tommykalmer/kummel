@@ -4,8 +4,8 @@ key=$(grep -o 'mmlKey: "[^"]*"' config.js | cut -d'"' -f2)
 mkdir -p data/diag
 python3 - > /tmp/tiles <<'PY'
 import math
-for lat,lon in [(60.0350,19.905),(60.030,19.898)]:
-  for z in (13,14):
+for lat,lon in [(60.025,19.895),(60.018,19.88)]:
+  for z in (11,12):
     n=2**z; x=int((lon+180)/360*n); y=int((1-math.log(math.tan(math.radians(lat))+1/math.cos(math.radians(lat)))/math.pi)/2*n)
     print(z,x,y)
 PY
