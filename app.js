@@ -250,8 +250,9 @@ map.on("mouseenter", "catches", () => map.getCanvas().style.cursor = "pointer");
 map.on("mouseleave", "catches", () => map.getCanvas().style.cursor = "");
 
 /* ---------- modes ---------- */
-const MODES = { tur: "Utflykt", fiske: "Fiske", segling: "Segling", paddling: "Paddling" };
+const MODES = { tur: "Båttur", fiske: "Fiske" };
 function setMode(m) {
+  if (!MODES[m]) m = "tur";   // äldre sparade lägen (segling, paddling) blir Båttur
   S.mode = m; save();
   document.querySelectorAll(".modes button").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === m));
   $("#b-fish").classList.toggle("hidden", m !== "fiske");
