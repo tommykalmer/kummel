@@ -1,26 +1,13 @@
-# Diagnostik Wed Nov  4 12:11:48 UTC 2026
-  RAW {"realtime": false, "orgName": "Traficom", "created": "nullTnullZ", "isQueryable": true, "type": "wmslayer", "version": "1.3.0", "url": "/oskari/action?action_route=GetLayerTile&id=74", "srs_name": "EPSG:3067", "refreshRate": 0, "srs": ["EPSG:3067"], "baseLayerId": -1, "permissions": {}, "subtitle": "", "name": "Veneilykartat", "options": {"legends": {"legendImage": ""}}, "attributes": {"forceProxy": true}, "styles": [], "id": 74, "layerName": "tuotejako_veneilykartat", "opacity": 100, "metadataUuid": "d165cd1c-d2fd-4bf3-ad39-a6e61ea51a73", "updated": "nullTnullZ", "dataproviderId": 5}
-  RAW {"realtime": false, "orgName": "Traficom", "created": "nullTnullZ", "type": "wmtslayer", "version": "1.0.0", "url": "/oskari/action?action_route=GetLayerTile&id=113", "srs_name": "EPSG:3067", "refreshRate": 0, "srs": ["EPSG:3067"], "baseLayerId": -1, "permissions": {}, "subtitle": "", "name": "Veneilykartat", "options": {"requestEncoding": "KVP", "legends": {"legendImage": ""}}, "attributes": {"forceProxy": true, "geometry": "GEOM"}, "styles": [{"legend": "", "name": "", "title": ""}], "id": 113, "layerName": "Traficom:Veneilykartat public", "opacity": 100, "updated": "nullTnullZ", "dataprovid
-  RAW {"realtime": false, "orgName": "Traficom", "created": "nullTnullZ", "isQueryable": true, "type": "wmslayer", "version": "1.3.0", "url": "/oskari/action?action_route=GetLayerTile&id=46", "srs_name": "EPSG:3067", "refreshRate": 0, "baseLayerId": -1, "permissions": {}, "subtitle": "", "name": "ENC Layer", "options": {"legends": {"legendImage": ""}}, "attributes": {"forceProxy": true, "basemap": true}, "style": "style-id-202", "styles": [{"legend": "/oskari/action?action_route=GetLayerTile&legend=true&style=style-id-201&id=46", "name": "style-id-201", "title": "Standard - Transparent Land"}, {"leg
-  RAW {"realtime": false, "orgName": "Traficom", "created": "nullTnullZ", "isQueryable": true, "type": "wmslayer", "version": "1.1.1", "url": "/oskari/action?action_route=GetLayerTile&id=63", "srs_name": "EPSG:3067", "refreshRate": 0, "srs": ["EPSG:3067"], "baseLayerId": -1, "permissions": {}, "subtitle": "", "name": "Kaikki kartat", "options": {"legends": {"legendImage": ""}}, "attributes": {"forceProxy": true, "geometry": "GEOM"}, "styles": [], "id": 63, "layerName": "tuotejako_kaikki", "opacity": 100, "metadataUuid": "d165cd1c-d2fd-4bf3-ad39-a6e61ea51a73", "updated": "nullTnullZ", "dataproviderId
-  RAW {"realtime": false, "orgName": "Traficom", "created": "nullTnullZ", "isQueryable": true, "type": "wmslayer", "version": "1.1.1", "url": "/oskari/action?action_route=GetLayerTile&id=64", "srs_name": "EPSG:3067", "refreshRate": 0, "srs": ["EPSG:3067"], "baseLayerId": -1, "permissions": {}, "subtitle": "", "name": "ENC General", "options": {"legends": {"legendImage": ""}}, "attributes": {"forceProxy": true, "geometry": "GEOM"}, "styles": [], "id": 64, "layerName": "tuotejako_enc_general", "opacity": 100, "metadataUuid": "d165cd1c-d2fd-4bf3-ad39-a6e61ea51a73", "updated": "nullTnullZ", "dataprovide
-  RAW {"realtime": false, "orgName": "Traficom", "created": "nullTnullZ", "isQueryable": true, "type": "wmslayer", "version": "1.1.1", "url": "/oskari/action?action_route=GetLayerTile&id=65", "srs_name": "EPSG:3067", "refreshRate": 0, "srs": ["EPSG:3067"], "baseLayerId": -1, "permissions": {}, "subtitle": "", "name": "ENC Coastal", "options": {"legends": {"legendImage": ""}}, "attributes": {"forceProxy": true, "geometry": "GEOM"}, "styles": [], "id": 65, "layerName": "tuotejako_enc_coastal", "opacity": 100, "metadataUuid": "d165cd1c-d2fd-4bf3-ad39-a6e61ea51a73", "updated": "nullTnullZ", "dataprovide
-  RAW {"realtime": false, "orgName": "Traficom", "created": "nullTnullZ", "isQueryable": true, "type": "wmslayer", "version": "1.1.1", "url": "/oskari/action?action_route=GetLayerTile&id=66", "srs_name": "EPSG:3067", "refreshRate": 0, "srs": ["EPSG:3067"], "baseLayerId": -1, "permissions": {}, "subtitle": "", "name": "ENC Approach", "options": {"legends": {"legendImage": ""}}, "attributes": {"forceProxy": true, "geometry": "GEOM"}, "styles": [], "id": 66, "layerName": "tuotejako_enc_approach", "opacity": 100, "metadataUuid": "d165cd1c-d2fd-4bf3-ad39-a6e61ea51a73", "updated": "nullTnullZ", "dataprovi
-  RAW {"realtime": false, "orgName": "Traficom", "created": "nullTnullZ", "isQueryable": true, "type": "wmslayer", "version": "1.1.1", "url": "/oskari/action?action_route=GetLayerTile&id=68", "srs_name": "EPSG:3067", "refreshRate": 0, "srs": ["EPSG:3067"], "baseLayerId": -1, "permissions": {}, "subtitle": "", "name": "ENC Berthing", "options": {"legends": {"legendImage": ""}}, "attributes": {"forceProxy": true, "geometry": "GEOM"}, "styles": [], "id": 68, "layerName": "tuotejako_enc_berthing", "opacity": 100, "metadataUuid": "d165cd1c-d2fd-4bf3-ad39-a6e61ea51a73", "updated": "nullTnullZ", "dataprovi
-  RAW {"realtime": false, "orgName": "Traficom", "created": "nullTnullZ", "isQueryable": true, "type": "wmslayer", "version": "1.1.1", "url": "/oskari/action?action_route=GetLayerTile&id=67", "srs_name": "EPSG:3067", "refreshRate": 0, "srs": ["EPSG:3067"], "baseLayerId": -1, "permissions": {}, "subtitle": "", "name": "ENC Harbour", "options": {"legends": {"legendImage": ""}}, "attributes": {"forceProxy": true, "geometry": "GEOM"}, "styles": [], "id": 67, "layerName": "tuotejako_enc_harbour", "opacity": 100, "metadataUuid": "d165cd1c-d2fd-4bf3-ad39-a6e61ea51a73", "updated": "nullTnullZ", "dataprovide
-  RAW {"realtime": false, "orgName": "Traficom", "created": "nullTnullZ", "isQueryable": true, "type": "wmslayer", "version": "1.3.0", "url": "/oskari/action?action_route=GetLayerTile&id=45", "srs_name": "EPSG:3067", "refreshRate": 0, "baseLayerId": -1, "permissions": {}, "subtitle": "", "name": "ENC Coverage Layer", "options": {"legends": {"legendImage": ""}}, "attributes": {"forceProxy": true, "basemap": true}, "style": "default", "styles": [{"legend": "", "name": "highlight", "title": "Highlight"}, {"legend": "", "name": "default", "title": "Default"}, {"legend": "", "name": "singlecolor", "title
-  ids ['45', '46', '64', '65', '66', '67', '68']
-## DescribeLayer 45
-{"id":"45","name":"ENC Coverage Layer"}
-## DescribeLayer 46
-{"id":"46","name":"ENC Layer"}
-## DescribeLayer 64
-{"id":"64","name":"ENC General"}
-## DescribeLayer 65
-{"id":"65","name":"ENC Coastal"}
-## DescribeLayer 66
-{"id":"66","name":"ENC Approach"}
-## DescribeLayer 67
-{"id":"67","name":"ENC Harbour"}
-## DescribeLayer 68
-{"id":"68","name":"ENC Berthing"}
+# Diagnostik Wed Nov  4 12:27:54 UTC 2026
+- Mariehamn z15 ortokuva → 200 37552 Access-Control-Allow-Origin: https://tommykalmer.github.io
+- Mariehamn z15 kiinteistojaotus → 200 25570 Access-Control-Allow-Origin: https://tommykalmer.github.io
+- Mariehamn z16 ortokuva → 200 32188 Access-Control-Allow-Origin: https://tommykalmer.github.io
+- Mariehamn z16 kiinteistojaotus → 200 14118 Access-Control-Allow-Origin: https://tommykalmer.github.io
+- Föglö z15 ortokuva → 200 30031 Access-Control-Allow-Origin: https://tommykalmer.github.io
+- Föglö z15 kiinteistojaotus → 200 6073 Access-Control-Allow-Origin: https://tommykalmer.github.io
+- Föglö z16 ortokuva → 200 30868 Access-Control-Allow-Origin: https://tommykalmer.github.io
+- Föglö z16 kiinteistojaotus → 200 3505 Access-Control-Allow-Origin: https://tommykalmer.github.io
+- Helsingfors z15 ortokuva → 200 24885 Access-Control-Allow-Origin: https://tommykalmer.github.io
+- Helsingfors z15 kiinteistojaotus → 200 15420 Access-Control-Allow-Origin: https://tommykalmer.github.io
+- Helsingfors z16 ortokuva → 200 21302 Access-Control-Allow-Origin: https://tommykalmer.github.io
+- Helsingfors z16 kiinteistojaotus → 200 9109 Access-Control-Allow-Origin: https://tommykalmer.github.io
