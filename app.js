@@ -87,9 +87,10 @@ const CHART_URL = "pmtiles://" + new URL("data/chart-aland.pmtiles", location.hr
 
 const EMPTY = { type: "FeatureCollection", features: [] };
 /* Lantmäteriverket i Finland (Maanmittauslaitos): flygbild och fastighetsgränser, kräver egen gratis API-nyckel */
-const MML = (layer, fmt) => `https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts/1.0.0/${layer}/default/WGS84_Pseudo-Mercator/{z}/{y}/{x}.${fmt}?api-key=${encodeURIComponent(S.mmlKey || "")}`;
+const mmlKey = () => S.mmlKey || (window.KUMMEL_CONFIG && window.KUMMEL_CONFIG.mmlKey) || "";
+const MML = (layer, fmt) => `https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts/1.0.0/${layer}/default/WGS84_Pseudo-Mercator/{z}/{y}/{x}.${fmt}?api-key=${encodeURIComponent(mmlKey())}`;
 function mmlSources() {
-  if (!S.mmlKey) return {};
+  if (!mmlKey()) return {};
   return {
     "mml-orto": { type: "raster", tiles: [MML("ortokuva", "jpg")], tileSize: 256, maxzoom: 16, bounds: [19, 59.3, 32, 70.2], attribution: "Flygbild © Maanmittauslaitos" },
     "mml-prop": { type: "raster", tiles: [MML("kiinteistojaotus", "png")], tileSize: 256, minzoom: 12, maxzoom: 16, bounds: [19, 59.3, 32, 70.2], attribution: "Fastighetsgränser © Maanmittauslaitos" }
@@ -112,9 +113,9 @@ function baseStyle() {
       { id: "bg", type: "background", paint: { "background-color": KummelChart.colors().land } },
       { id: "osm", type: "raster", source: "osm", paint: { "raster-opacity": 1 }, layout: { visibility: "none" } },
       { id: "sat", type: "raster", source: "sat", layout: { visibility: "none" } },
-      ...(S.mmlKey ? [{ id: "mml-orto", type: "raster", source: "mml-orto", layout: { visibility: "none" } }] : []),
+      ...(mmlKey() ? [{ id: "mml-orto", type: "raster", source: "mml-orto", layout: { visibility: "none" } }] : []),
       ...KummelChart.layers({ need: needDepth(), fish: null, soundings: S.layers.soundings }),
-      ...(S.mmlKey ? [{ id: "mml-prop", type: "raster", source: "mml-prop", minzoom: 12, layout: { visibility: "none" }, paint: { "raster-opacity": .9 } }] : []),
+      ...(mmlKey() ? [{ id: "mml-prop", type: "raster", source: "mml-prop", minzoom: 12, layout: { visibility: "none" }, paint: { "raster-opacity": .9 } }] : []),
       { id: "seamarks", type: "raster", source: "seamarks", layout: { visibility: "none" } }
     ]
   };
@@ -202,8 +203,8 @@ function applyLayers() {
   const vis = (id, on) => map.getLayer(id) && map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
   const base = chartMissing && S.layers.base === "chart" ? "osm" : S.layers.base;
   vis("osm", base === "osm");
-  vis("sat", base === "sat" && !S.mmlKey);
-  vis("mml-orto", base === "sat" && !!S.mmlKey);
+  vis("sat", base === "sat" && !mmlKey());
+  vis("mml-orto", base === "sat" && !!mmlKey());
   vis("mml-prop", !!S.layers.props);
   KummelChart.layerIds().forEach(id => vis(id, base === "chart" || (base === "sat" && KummelChart.isOverlay(id))));
   KummelChart.soundingIds().forEach(id => vis(id, (base === "chart" || (base === "sat" && id === "soundg-shallow")) && S.layers.soundings));
@@ -1413,9 +1414,9 @@ function openLayers() {
   openSheet("Kartlager", `
     <div class="card"><h3>Karta</h3>${r("chart", "Sjökort")}${r("sat", "Flygfoto med farleder och sjömärken")}${r("osm", "Gatukarta")}</div>
     <div class="card"><h3>Flygbild och fastighetsgränser</h3>
-      <label class="row"><input type="checkbox" id="ly-prop" ${S.layers.props ? "checked" : ""} ${S.mmlKey ? "" : "disabled"}> Fastighetsgränser (vid inzoomning)</label>
-      <label class="f">API-nyckel från Maanmittauslaitos<input id="ly-mml" value="${esc(S.mmlKey || "")}" placeholder="Klistra in nyckeln här" autocomplete="off" spellcheck="false"></label>
-      <div class="muted">${S.mmlKey ? "Flygfotot använder Lantmäteriverkets bilder i Finland och på Åland." : "Med en gratis nyckel från Lantmäteriverket i Finland blir flygfotot skarpare och fastighetsgränser kan visas. Skapa den på omatili.maanmittauslaitos.fi. Nyckeln sparas bara på den här enheten."}</div>
+      <label class="row"><input type="checkbox" id="ly-prop" ${S.layers.props ? "checked" : ""} ${mmlKey() ? "" : "disabled"}> Fastighetsgränser (vid inzoomning)</label>
+      <label class="f">${window.KUMMEL_CONFIG?.mmlKey ? "Egen API-nyckel (valfritt, appen har en inbyggd)" : "API-nyckel från Maanmittauslaitos"}<input id="ly-mml" value="${esc(S.mmlKey || "")}" placeholder="Klistra in nyckeln här" autocomplete="off" spellcheck="false"></label>
+      <div class="muted">${mmlKey() ? "Flygfotot använder Lantmäteriverkets bilder i Finland och på Åland." : "Med en gratis nyckel från Lantmäteriverket i Finland blir flygfotot skarpare och fastighetsgränser kan visas. Skapa den på omatili.maanmittauslaitos.fi. Nyckeln sparas bara på den här enheten."}</div>
       <button class="btn" id="ly-mml-save">Spara nyckel</button>
     </div>
     <div class="card"><h3>Grynnor och stenar</h3>
