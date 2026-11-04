@@ -112,17 +112,28 @@ const map = new maplibregl.Map({
   container: "map", style: baseStyle(), center: [S.view.lng, S.view.lat], zoom: S.view.z, bearing: S.view.bearing || 0,
   maxZoom: 18.5, minZoom: 4, attributionControl: false, dragRotate: true, pitchWithRotate: false, touchPitch: false, hash: false
 });
-map.on("styleimagemissing", e => KummelChart.image(map, e.id));
+map.on("styleimagemissing", e => {
+  if (e.id === "wind") { // vindpil som pekar dit vinden blåser, färgas i lagret (SDF)
+    const c = document.createElement("canvas"); c.width = c.height = 48; const g = c.getContext("2d");
+    g.fillStyle = "#fff"; g.beginPath(); g.moveTo(24, 3); g.lineTo(38, 30); g.lineTo(28, 25); g.lineTo(28, 45); g.lineTo(20, 45); g.lineTo(20, 25); g.lineTo(10, 30); g.closePath(); g.fill();
+    if (!map.hasImage("wind")) map.addImage("wind", g.getImageData(0, 0, 48, 48), { sdf: true, pixelRatio: 2 });
+    return;
+  }
+  KummelChart.image(map, e.id);
+});
 map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
 map.addControl(new maplibregl.ScaleControl({ unit: "nautical", maxWidth: 110 }), "bottom-left");
 map.touchZoomRotate.enableRotation();
 let mapReady = false;
 
 /* overlay sources (route, track, boat …) */
-const SRC = ["route", "track", "live", "shown", "heading", "acc", "catches", "fishzone", "mob"];
+const SRC = ["route", "track", "live", "shown", "heading", "acc", "catches", "fishzone", "mob", "wxgrid", "wxobs"];
 function addOverlays() {
   SRC.forEach(id => { if (!map.getSource(id)) map.addSource(id, { type: "geojson", data: EMPTY }); });
   const add = l => { if (!map.getLayer(l.id)) map.addLayer(l); };
+  const wxColor = ["case", [">", ["get", "g"], ["get", "lim"]], "#d64545", [">", ["get", "g"], ["*", .75, ["get", "lim"]]], "#e2a90c", "#2f8f5b"];
+  add({ id: "wx-grid", type: "symbol", source: "wxgrid", layout: { "icon-image": "wind", "icon-size": ["interpolate", ["linear"], ["get", "w"], 0, .8, 15, 1.5], "icon-rotate": ["get", "rot"], "icon-rotation-alignment": "map", "icon-allow-overlap": true, "text-field": ["get", "lbl"], "text-font": ["Noto Sans Medium"], "text-size": 11, "text-offset": [0, 1.7], "text-allow-overlap": true }, paint: { "icon-color": wxColor, "icon-halo-color": "rgba(255,255,255,.85)", "icon-halo-width": 1.2, "text-color": "#14232e", "text-halo-color": "rgba(255,255,255,.9)", "text-halo-width": 1.6 } });
+  add({ id: "wx-obs", type: "symbol", source: "wxobs", layout: { "icon-image": "wind", "icon-size": 1.6, "icon-rotate": ["get", "rot"], "icon-rotation-alignment": "map", "icon-allow-overlap": true, "text-field": ["get", "lbl"], "text-font": ["Noto Sans Medium"], "text-size": 13, "text-offset": [0, 1.9], "text-allow-overlap": true }, paint: { "icon-color": wxColor, "icon-halo-color": "#0f2a3d", "icon-halo-width": 2, "text-color": "#0f2a3d", "text-halo-color": "#fff", "text-halo-width": 2 } });
   add({ id: "acc-fill", type: "fill", source: "acc", paint: { "fill-color": "#1d6fa3", "fill-opacity": .08 } });
   add({ id: "acc-line", type: "line", source: "acc", paint: { "line-color": "#1d6fa3", "line-width": 1 } });
   add({ id: "shown", type: "line", source: "shown", paint: { "line-color": "#1d6fa3", "line-width": 4, "line-opacity": .85 } });
@@ -139,6 +150,7 @@ map.on("style.load", () => { // inte "load": den väntar på alla källor, och e
   if (wps.length) drawWps();
   if (mob) setData("mob", { type: "FeatureCollection", features: [{ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: lnglat(mob) } }] });
   if (gps) setData("acc", circlePoly(gps, gps.acc || 1));
+  if (wxOn) renderWxLayer();
 });
 map.on("error", e => console.warn("Karta:", String(e && e.error && e.error.message || e)));
 /* finns sjökortsfilen? annars gatukarta för stunden (sparas inte som val) */
@@ -236,7 +248,26 @@ function updateCross() {
 }
 map.on("move", () => { updateCross(); $("#north").style.transform = `rotate(${-map.getBearing()}deg)`; $("#b-north").classList.toggle("hidden", Math.abs(map.getBearing()) < 1 && !courseUp); });
 map.on("moveend", () => { const c = map.getCenter(); S.view = { lat: c.lat, lng: c.lng, z: map.getZoom(), bearing: map.getBearing() }; save(); scheduleWx(); });
-map.on("dragstart", () => { if (follow) { follow = false; $("#b-locate").setAttribute("aria-pressed", "false"); } });
+/* följ båten: att dra i kartan pausar, under gång återupptas följningen själv efter en stund */
+let followWanted = false, lastTouch = 0;
+function setFollow(on, quiet) {
+  follow = on; if (on) followWanted = true; else courseUp = false;
+  $("#b-locate").setAttribute("aria-pressed", follow);
+  $("#b-locate").classList.toggle("course", courseUp);
+  $("#b-follow").classList.toggle("hidden", follow || !followWanted || !gps);
+  if (on && gps) { followBoat(true); $("#g-pos").innerHTML = fmtPos(gps); $("#g-poslbl").textContent = "GPS"; }
+  if (!on && !quiet) updateCross();
+}
+function followBoat(jump) {
+  const c = map.getContainer(), k = Math.min(c.clientWidth, c.clientHeight) * .22;
+  const moving = gps.sog > 2 && gps.cog != null;
+  const opts = { center: lnglat(gps), duration: jump ? 600 : 900, easing: t => t };
+  if (courseUp && moving) { opts.bearing = gps.cog; opts.offset = [0, k]; }
+  else if (moving) { const r = rad(gps.cog - map.getBearing()); opts.offset = [-Math.sin(r) * k, Math.cos(r) * k]; }
+  map.easeTo(opts);
+}
+map.on("dragstart", e => { lastTouch = Date.now(); if (follow && e.originalEvent) setFollow(false, true); });
+map.on("rotatestart", e => { if (e.originalEvent) { lastTouch = Date.now(); if (courseUp) { courseUp = false; $("#b-locate").classList.remove("course"); } } });
 $("#b-north").onclick = () => {
   if (courseUp) { courseUp = false; map.easeTo({ bearing: 0 }); toast("Norr upp", 1200); }
   else map.easeTo({ bearing: 0 });
@@ -282,13 +313,10 @@ function onFix(p) {
   setData("heading", cog != null && gps.sog > 0.5 ? lineFC([lnglat(pos), lnglat(dest(pos, cog, gps.sog * 10 / 60))]) : EMPTY);
   $("#g-sog").textContent = gps.sog.toFixed(1);
   $("#g-cog").textContent = cog != null ? String(Math.round(cog)).padStart(3, "0") : "–";
-  if (follow) {
-    const opts = { center: lnglat(pos), duration: 800 };
-    if (first) opts.zoom = Math.max(map.getZoom(), 13);
-    if (courseUp && cog != null && gps.sog > 1) opts.bearing = cog;
-    map.easeTo(opts);
-    $("#g-pos").innerHTML = fmtPos(pos); $("#g-poslbl").textContent = "GPS";
-  }
+  if (first && follow) map.jumpTo({ center: lnglat(pos), zoom: Math.max(map.getZoom(), 13) });
+  if (!follow && followWanted && gps.sog > 1.5 && Date.now() - lastTouch > 20000) { setFollow(true); toast("Följer båten igen", 1500); }
+  if (follow) { followBoat(false); $("#g-pos").innerHTML = fmtPos(pos); $("#g-poslbl").textContent = "GPS"; }
+  $("#b-follow").classList.toggle("hidden", follow || !followWanted);
   if (recording) addTrackPoint(pos, t, gps.sog);
   if (mob && sheetView === "mob") updateMob();
   if (gps.sog > 0.5) depthAlarm(pos);
@@ -296,14 +324,14 @@ function onFix(p) {
 $("#b-locate").onclick = () => {
   startGps();
   if (!follow) {
-    follow = true;
+    setFollow(true);
     if (gps) map.easeTo({ center: lnglat(gps), zoom: Math.max(map.getZoom(), 13) });
     else toast("Söker GPS-position …");
-  } else if (!courseUp) { courseUp = true; toast("Kurs upp: kartan vrids efter båtens kurs", 2000); }
-  else { follow = false; courseUp = false; map.easeTo({ bearing: 0 }); }
-  $("#b-locate").setAttribute("aria-pressed", follow);
-  $("#b-locate").classList.toggle("course", courseUp);
+    toast("Kartan följer båten. Tryck igen för kurs upp.", 2200);
+  } else if (!courseUp) { courseUp = true; setFollow(true); toast("Kurs upp: kartan vrids efter båtens kurs", 2000); }
+  else { followWanted = false; setFollow(false); map.easeTo({ bearing: 0 }); toast("Fri karta", 1200); }
 };
+$("#b-follow").onclick = () => setFollow(true);
 
 /* shallow-water warning: what lies ahead within 3 minutes */
 let lastAlarm = 0;
@@ -336,6 +364,7 @@ $("#b-rec").onclick = () => {
     recording = true; curTrack = { id: uid(), start: Date.now(), pts: [], max: 0, mode: S.mode, boat: boat().name };
     setLive();
     $("#b-rec").classList.add("on"); $("#b-rec span").textContent = "Stoppa";
+    if (!follow) setFollow(true);
     toast("Spårinspelning startad. Håll skärmen på.");
   } else {
     recording = false; $("#b-rec").classList.remove("on"); $("#b-rec span").textContent = "Spela in";
@@ -676,6 +705,83 @@ function openWx() {
 $("#wxchip").onclick = () => sheetView === "wx" ? closeSheet() : openWx();
 scheduleWx();
 setInterval(() => loadWx(true), 15 * 60000);
+
+/* ---------- sjöväder på kartan ---------- */
+let wxOn = false, wxGrid = null, wxObs = [], wxStep = 0, wxGridT = null, wxGridKey = "";
+function wxPoints() {
+  const b = map.getBounds(), c = map.getContainer();
+  const cols = c.clientWidth > 700 ? 7 : 4, rows = Math.round(cols * c.clientHeight / c.clientWidth);
+  const pts = [];
+  const n = b.getNorth(), s = b.getSouth(), w = b.getWest(), e = b.getEast();
+  for (let r = 0; r < rows; r++) for (let k = 0; k < cols; k++)
+    pts.push({ lat: +(s + (n - s) * (r + .5) / rows).toFixed(3), lng: +(w + (e - w) * (k + .5) / cols).toFixed(3) });
+  return pts;
+}
+async function loadWxGrid() {
+  if (!wxOn) return;
+  const pts = wxPoints(), key = pts.map(p => p.lat.toFixed(2) + p.lng.toFixed(2)).join();
+  if (key === wxGridKey && wxGrid && Date.now() - wxGrid.at < 20 * 60000) return renderWxLayer();
+  const la = pts.map(p => p.lat).join(","), lo = pts.map(p => p.lng).join(",");
+  try {
+    const [f, m] = await Promise.all([
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=ms&forecast_days=3&timezone=auto`).then(r => r.json()),
+      fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${la}&longitude=${lo}&hourly=wave_height&forecast_days=3&timezone=auto`).then(r => r.ok ? r.json() : null).catch(() => null)
+    ]);
+    const F = Array.isArray(f) ? f : [f], M = m ? (Array.isArray(m) ? m : [m]) : [];
+    if (!F[0] || !F[0].hourly) throw new Error("ingen prognos");
+    wxGrid = { at: Date.now(), pts, F, M, t0: hourIndex(F[0]) };
+    wxGridKey = key;
+    renderWxLayer();
+  } catch (e) { toast("Sjövädret kunde inte hämtas just nu."); }
+}
+function renderWxLayer() {
+  if (!wxOn || !wxGrid) return;
+  const lim = boat().maxWind || 10, i = wxGrid.t0 + wxStep, H = wxGrid.F[0].hourly;
+  if (i >= H.time.length) return;
+  setData("wxgrid", { type: "FeatureCollection", features: wxGrid.pts.map((p, k) => {
+    const h = wxGrid.F[k]?.hourly; if (!h) return null;
+    const w = h.wind_speed_10m[i], g = h.wind_gusts_10m[i], d = h.wind_direction_10m[i], wave = wxGrid.M[k]?.hourly?.wave_height?.[i];
+    return { type: "Feature", properties: { w, g, lim, rot: (d + 180) % 360, lbl: `${Math.round(w)} (${Math.round(g)})${wave != null ? "\n" + wave.toFixed(1) + " m" : ""}` }, geometry: { type: "Point", coordinates: [p.lng, p.lat] } };
+  }).filter(Boolean) });
+  const t = new Date(H.time[i]);
+  $("#wxb-time").textContent = wxStep === 0 ? "Nu" : `${t.toDateString() === new Date().toDateString() ? "Idag" : DAYS[t.getDay()]} ${pad(t.getHours())}:00`;
+  $("#wxb-sub").textContent = `Vind m/s (byar) och våghöjd · ${wxObs.length && wxStep === 0 ? "kuststationer uppmätta" : "prognos"}`;
+  setData("wxobs", { type: "FeatureCollection", features: wxStep === 0 ? wxObs.map(o => ({ type: "Feature", properties: { w: o.w, g: o.g ?? o.w, lim, rot: (o.d + 180) % 360, lbl: `${Math.round(o.w)}${o.g != null ? ` (${Math.round(o.g)})` : ""}` }, geometry: { type: "Point", coordinates: [o.lng, o.lat] } })) : [] });
+}
+/* uppmätt vind från Meteorologiska institutets kuststationer (öppen data) */
+async function loadWxObs() {
+  const bb = map.getBounds(), dx = (bb.getEast() - bb.getWest()) * .3, dy = (bb.getNorth() - bb.getSouth()) * .3;
+  const b = { getWest: () => bb.getWest() - dx, getEast: () => bb.getEast() + dx, getSouth: () => bb.getSouth() - dy, getNorth: () => bb.getNorth() + dy }, start = new Date(Date.now() - 40 * 60000).toISOString().slice(0, 16) + ":00Z";
+  const url = `https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=fmi::observations::weather::simple&bbox=${b.getWest().toFixed(2)},${b.getSouth().toFixed(2)},${b.getEast().toFixed(2)},${b.getNorth().toFixed(2)}&parameters=windspeedms,winddirection,windgust&starttime=${start}&timestep=10`;
+  try {
+    const xml = new DOMParser().parseFromString(await (await fetch(url)).text(), "text/xml");
+    const st = {};
+    for (const el of xml.getElementsByTagNameNS("*", "BsWfsElement")) {
+      const pos = el.getElementsByTagNameNS("*", "pos")[0]?.textContent.trim(); if (!pos) continue;
+      const name = el.getElementsByTagNameNS("*", "ParameterName")[0]?.textContent, val = parseFloat(el.getElementsByTagNameNS("*", "ParameterValue")[0]?.textContent);
+      const t = el.getElementsByTagNameNS("*", "Time")[0]?.textContent;
+      if (isNaN(val)) continue;
+      const o = st[pos] || (st[pos] = { t: "" });
+      if (!o[name + "_t"] || t > o[name + "_t"]) { o[name] = val; o[name + "_t"] = t; }
+    }
+    wxObs = Object.entries(st).filter(([, o]) => o.windspeedms != null && o.winddirection != null).map(([pos, o]) => {
+      const [lat, lng] = pos.split(/\s+/).map(Number); return { lat, lng, w: o.windspeedms, g: o.windgust ?? null, d: o.winddirection };
+    });
+    renderWxLayer();
+  } catch (e) { wxObs = []; }
+}
+function setWx(on) {
+  wxOn = on;
+  $("#b-wx").setAttribute("aria-pressed", on);
+  $("#wxbar").classList.toggle("hidden", !on);
+  if (on) { wxStep = 0; $("#wxb-range").value = 0; loadWxGrid(); loadWxObs(); }
+  else { setData("wxgrid", EMPTY); setData("wxobs", EMPTY); }
+}
+$("#b-wx").onclick = () => setWx(!wxOn);
+$("#wxb-close").onclick = () => setWx(false);
+$("#wxb-range").oninput = e => { wxStep = +e.target.value; renderWxLayer(); };
+map.on("moveend", () => { if (!wxOn) return; clearTimeout(wxGridT); wxGridT = setTimeout(() => { loadWxGrid(); if (wxStep === 0) loadWxObs(); }, 600); });
+setInterval(() => { if (wxOn) { wxGrid = null; loadWxGrid(); loadWxObs(); } }, 10 * 60000);
 
 /* ---------- boats ---------- */
 const BTYPES = { motor: "Motorbåt", segel: "Segelbåt", rib: "RIB", kajak: "Kajak / kanot", ovrig: "Annan" };

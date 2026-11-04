@@ -102,6 +102,11 @@ body.plan #cross{opacity:1}
 .fab.mob{background:var(--port);color:#fff;min-height:44px;font-size:15px;padding:0 14px}
 .fab svg{width:22px;height:22px}
 
+#b-follow{position:fixed;z-index:520;left:50%;transform:translateX(-50%);bottom:calc(120px + var(--sab));border:0;border-radius:24px;padding:12px 20px;background:var(--accent);color:#fff;font:700 16px var(--f-num);letter-spacing:.05em;text-transform:uppercase;box-shadow:var(--shadow);cursor:pointer}
+#wxbar{position:fixed;z-index:510;top:calc(64px + var(--sat));left:calc(10px + var(--sal));right:calc(70px + var(--sar));max-width:520px;background:var(--panel);border-radius:var(--r);box-shadow:var(--shadow);padding:8px 12px;display:flex;flex-direction:column;gap:4px}
+.wxb-top{display:flex;align-items:center;gap:8px}.wxb-top b{font:700 17px var(--f-num)}.wxb-top .x{margin-left:auto;width:30px;height:30px}
+#wxb-range{width:100%;accent-color:var(--accent)}
+.wxb-legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--muted)}.wxb-legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px}
 /* sheet / panel */
 #sheet{position:fixed;z-index:600;left:0;right:0;bottom:0;max-height:72%;background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   border-radius:18px 18px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.2);transform:translateY(105%);transition:transform .28s ease;display:flex;flex-direction:column;
@@ -190,6 +195,7 @@ body.night{filter:brightness(.65)}
   <button class="rb" id="b-route" title="Planera rutt" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><path d="M7 18c6-1 2-9 10-11"/></svg></button>
   <button class="rb hidden" id="b-depth" title="Djupintervall"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6c3 0 3 2 6 2s3-2 6-2 3 2 6 2"/><path d="M6 12h12M8 17h8"/></svg></button>
   <button class="rb" id="b-place" title="Ny plats vid korset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s7-7 7-12a7 7 0 0 0-14 0c0 5 7 12 7 12z"/><path d="M12 7v6M9 10h6"/></svg></button>
+  <button class="rb" id="b-wx" title="Sjöväder på kartan" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h11a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h7"/></svg></button>
   <button class="rb" id="b-layers" title="Kartlager"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg></button>
   <button class="rb" id="b-menu" title="Meny"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   <button class="rb" id="b-night" title="Nattläge" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg></button>
@@ -201,6 +207,8 @@ body.night{filter:brightness(.65)}
   <div class="gauge pos"><b id="g-pos">–</b><span id="g-poslbl">Kors</span></div>
 </div>
 
+<button id="b-follow" class="hidden">Följ båten</button>
+<div id="wxbar" class="hidden"><div class="wxb-top"><b id="wxb-time">Nu</b><span id="wxb-sub" class="muted"></span><button class="x" id="wxb-close" aria-label="Stäng väderlagret">×</button></div><input type="range" id="wxb-range" min="0" max="47" step="1" value="0" aria-label="Tid för prognosen"><div class="wxb-legend"><span><i style="background:var(--stbd)"></i>under din gräns</span><span><i style="background:var(--signal)"></i>nära</span><span><i style="background:var(--port)"></i>över</span><span><b>Fet</b> = uppmätt nu</span></div></div>
 <div id="fab">
   <button class="fab mob hidden" id="b-mob" title="Man överbord">MOB</button>
   <button class="fab fish hidden" id="b-fish"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 12c3-4 7-6 11-6 4 0 7 3 8 6-1 3-4 6-8 6-4 0-8-2-11-6zm15-1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM2 12 0 8v8z"/></svg>Fisk!</button>
