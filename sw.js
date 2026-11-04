@@ -1,12 +1,12 @@
 /* Kummel service worker – app shell offline + cache of chart tiles you have viewed */
-const SHELL = "kummel-shell-v14";
+const SHELL = "kummel-shell-v15";
 const TILES = "kummel-tiles-v1";
 const MAX_TILES = 6000;
 const SHELL_FILES = ["./", "./index.html", "./app.js", "./chartstyle.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png",
   "https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js",
   "https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.css",
   "https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"];
-const TILE_HOSTS = ["tiles.openfreemap.org", "julkinen.traficom.fi", "tiles.openseamap.org", "tile.openstreetmap.org", "basemaps.cartocdn.com", "server.arcgisonline.com"];
+const TILE_HOSTS = ["avoin-karttakuva.maanmittauslaitos.fi", "tiles.openfreemap.org", "julkinen.traficom.fi", "tiles.openseamap.org", "tile.openstreetmap.org", "basemaps.cartocdn.com", "server.arcgisonline.com"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(SHELL).then(c => c.addAll(SHELL_FILES)).then(() => self.skipWaiting()));

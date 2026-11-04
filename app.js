@@ -86,6 +86,15 @@ maplibregl.addProtocol("pmtiles", protocol.tile);
 const CHART_URL = "pmtiles://" + new URL("data/chart-aland.pmtiles", location.href).href;
 
 const EMPTY = { type: "FeatureCollection", features: [] };
+/* Lantmäteriverket i Finland (Maanmittauslaitos): flygbild och fastighetsgränser, kräver egen gratis API-nyckel */
+const MML = (layer, fmt) => `https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts/1.0.0/${layer}/default/WGS84_Pseudo-Mercator/{z}/{y}/{x}.${fmt}?api-key=${encodeURIComponent(S.mmlKey || "")}`;
+function mmlSources() {
+  if (!S.mmlKey) return {};
+  return {
+    "mml-orto": { type: "raster", tiles: [MML("ortokuva", "jpg")], tileSize: 256, maxzoom: 16, bounds: [19, 59.3, 32, 70.2], attribution: "Flygbild © Maanmittauslaitos" },
+    "mml-prop": { type: "raster", tiles: [MML("kiinteistojaotus", "png")], tileSize: 256, minzoom: 12, maxzoom: 16, bounds: [19, 59.3, 32, 70.2], attribution: "Fastighetsgränser © Maanmittauslaitos" }
+  };
+}
 function baseStyle() {
   return {
     version: 8,
@@ -93,6 +102,7 @@ function baseStyle() {
     sources: {
       osm: { type: "raster", tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], tileSize: 256, maxzoom: 19, attribution: "© OpenStreetMap" },
       sat: { type: "raster", tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"], tileSize: 256, maxzoom: 18, attribution: "Bild © Esri" },
+      ...mmlSources(),
       ...KummelChart.rasterSources(),
       seamarks: { type: "raster", tiles: ["https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"], tileSize: 256, maxzoom: 18, attribution: "© OpenSeaMap" },
       ofm: { type: "vector", url: "https://tiles.openfreemap.org/planet", attribution: "OpenFreeMap © OpenStreetMap" },
@@ -102,7 +112,9 @@ function baseStyle() {
       { id: "bg", type: "background", paint: { "background-color": KummelChart.colors().land } },
       { id: "osm", type: "raster", source: "osm", paint: { "raster-opacity": 1 }, layout: { visibility: "none" } },
       { id: "sat", type: "raster", source: "sat", layout: { visibility: "none" } },
+      ...(S.mmlKey ? [{ id: "mml-orto", type: "raster", source: "mml-orto", layout: { visibility: "none" } }] : []),
       ...KummelChart.layers({ need: needDepth(), fish: null, soundings: S.layers.soundings }),
+      ...(S.mmlKey ? [{ id: "mml-prop", type: "raster", source: "mml-prop", minzoom: 12, layout: { visibility: "none" }, paint: { "raster-opacity": .9 } }] : []),
       { id: "seamarks", type: "raster", source: "seamarks", layout: { visibility: "none" } }
     ]
   };
@@ -190,7 +202,9 @@ function applyLayers() {
   const vis = (id, on) => map.getLayer(id) && map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
   const base = chartMissing && S.layers.base === "chart" ? "osm" : S.layers.base;
   vis("osm", base === "osm");
-  vis("sat", base === "sat");
+  vis("sat", base === "sat" && !S.mmlKey);
+  vis("mml-orto", base === "sat" && !!S.mmlKey);
+  vis("mml-prop", !!S.layers.props);
   KummelChart.layerIds().forEach(id => vis(id, base === "chart" || (base === "sat" && KummelChart.isOverlay(id))));
   KummelChart.soundingIds().forEach(id => vis(id, (base === "chart" || (base === "sat" && id === "soundg-shallow")) && S.layers.soundings));
   $("#b-detail").setAttribute("aria-pressed", !!S.layers.detail);
@@ -1398,6 +1412,12 @@ function openLayers() {
   const r = (k, v) => `<label class="row"><input type="radio" name="base" value="${k}" ${S.layers.base === k ? "checked" : ""}> ${v}</label>`;
   openSheet("Kartlager", `
     <div class="card"><h3>Karta</h3>${r("chart", "Sjökort")}${r("sat", "Flygfoto med farleder och sjömärken")}${r("osm", "Gatukarta")}</div>
+    <div class="card"><h3>Flygbild och fastighetsgränser</h3>
+      <label class="row"><input type="checkbox" id="ly-prop" ${S.layers.props ? "checked" : ""} ${S.mmlKey ? "" : "disabled"}> Fastighetsgränser (vid inzoomning)</label>
+      <label class="f">API-nyckel från Maanmittauslaitos<input id="ly-mml" value="${esc(S.mmlKey || "")}" placeholder="Klistra in nyckeln här" autocomplete="off" spellcheck="false"></label>
+      <div class="muted">${S.mmlKey ? "Flygfotot använder Lantmäteriverkets bilder i Finland och på Åland." : "Med en gratis nyckel från Lantmäteriverket i Finland blir flygfotot skarpare och fastighetsgränser kan visas. Skapa den på omatili.maanmittauslaitos.fi. Nyckeln sparas bara på den här enheten."}</div>
+      <button class="btn" id="ly-mml-save">Spara nyckel</button>
+    </div>
     <div class="card"><h3>Grynnor och stenar</h3>
       <label class="row"><input type="checkbox" id="ly-det" ${S.layers.detail ? "checked" : ""}> Visa detaljkortet när jag zoomar in</label>
       <label class="f">Visa detaljkortet från<select id="ly-dz">${[[11, "Översikt (ca 2 nm över skärmen)"], [12, "Mellan (ca 1 nm)"], [13, "Nära (ca 0,5 nm), rekommenderas"], [14, "Mycket nära (ca 0,25 nm)"]].map(([z, t]) => `<option value="${z}" ${dz() === z ? "selected" : ""}>${t}</option>`).join("")}</select></label>
@@ -1414,6 +1434,12 @@ function openLayers() {
   $("#ly-snd").onchange = e => { S.layers.soundings = e.target.checked; save(); applyLayers(); };
   $("#ly-ais").onchange = e => setAis(e.target.checked);
   $("#ly-det").onchange = e => { S.layers.detail = e.target.checked; save(); applyLayers(); };
+  $("#ly-prop").onchange = e => { S.layers.props = e.target.checked; save(); applyLayers(); if (e.target.checked && map.getZoom() < 12) toast("Fastighetsgränser visas när du zoomar in närmare", 2200); };
+  $("#ly-mml-save").onclick = () => {
+    S.mmlKey = $("#ly-mml").value.trim(); save();
+    map.setStyle(baseStyle(), { diff: false });
+    toast(S.mmlKey ? "Nyckeln är sparad" : "Nyckeln är borttagen", 1600); setTimeout(openLayers, 300);
+  };
   $("#ly-dz").onchange = e => { S.layers.detailZoom = +e.target.value; save(); applyLayers(); };
   document.querySelectorAll("[data-grp]").forEach(x => x.onchange = () => { S.layers.groups = { ...(S.layers.groups || {}), [x.dataset.grp]: x.checked }; save(); applyLayers(); });
   $("#ly-sea").onchange = e => { S.layers.seamarks = e.target.checked; save(); applyLayers(); };
