@@ -1,13 +1,9 @@
-# Diagnostik Wed Nov  4 12:27:54 UTC 2026
-- Mariehamn z15 ortokuva → 200 37552 Access-Control-Allow-Origin: https://tommykalmer.github.io
-- Mariehamn z15 kiinteistojaotus → 200 25570 Access-Control-Allow-Origin: https://tommykalmer.github.io
-- Mariehamn z16 ortokuva → 200 32188 Access-Control-Allow-Origin: https://tommykalmer.github.io
-- Mariehamn z16 kiinteistojaotus → 200 14118 Access-Control-Allow-Origin: https://tommykalmer.github.io
-- Föglö z15 ortokuva → 200 30031 Access-Control-Allow-Origin: https://tommykalmer.github.io
-- Föglö z15 kiinteistojaotus → 200 6073 Access-Control-Allow-Origin: https://tommykalmer.github.io
-- Föglö z16 ortokuva → 200 30868 Access-Control-Allow-Origin: https://tommykalmer.github.io
-- Föglö z16 kiinteistojaotus → 200 3505 Access-Control-Allow-Origin: https://tommykalmer.github.io
-- Helsingfors z15 ortokuva → 200 24885 Access-Control-Allow-Origin: https://tommykalmer.github.io
-- Helsingfors z15 kiinteistojaotus → 200 15420 Access-Control-Allow-Origin: https://tommykalmer.github.io
-- Helsingfors z16 ortokuva → 200 21302 Access-Control-Allow-Origin: https://tommykalmer.github.io
-- Helsingfors z16 kiinteistojaotus → 200 9109 Access-Control-Allow-Origin: https://tommykalmer.github.io
+total 72
+drwxr-xr-x 2 runner runner  4096 Nov  4 12:46 .
+drwxr-xr-x 3 runner runner  4096 Nov  4 12:46 ..
+-rw-r--r-- 1 runner runner  7504 Nov  4 12:46 esri_13_4548_2377.jpg
+-rw-r--r-- 1 runner runner  9088 Nov  4 12:46 esri_14_9097_4754.jpg
+-rw-r--r-- 1 runner runner  6651 Nov  4 12:46 esri_14_9097_4755.jpg
+-rw-r--r-- 1 runner runner  8868 Nov  4 12:46 orto_13_4548_2377.jpg
+-rw-r--r-- 1 runner runner 12763 Nov  4 12:46 orto_14_9097_4754.jpg
+-rw-r--r-- 1 runner runner  7994 Nov  4 12:46 orto_14_9097_4755.jpg
