@@ -106,7 +106,7 @@ body.plan #cross{opacity:1}
 .fab.mob{background:var(--port);color:#fff;min-height:44px;font-size:15px;padding:0 14px}
 .fab svg{width:22px;height:22px}
 
-#b-follow{position:fixed;z-index:520;left:50%;transform:translateX(-50%);bottom:calc(120px + var(--sab));border:0;border-radius:24px;padding:12px 20px;background:var(--accent);color:#fff;font:700 16px var(--f-num);letter-spacing:.05em;text-transform:uppercase;box-shadow:var(--shadow);cursor:pointer}
+#b-follow{position:fixed;z-index:520;left:50%;transform:translateX(-50%);bottom:calc(120px + var(--sab));white-space:nowrap;border:0;border-radius:24px;padding:12px 20px;background:var(--accent);color:#fff;font:700 16px var(--f-num);letter-spacing:.05em;text-transform:uppercase;box-shadow:var(--shadow);cursor:pointer}
 #wxbar{position:fixed;z-index:510;top:calc(64px + var(--sat));left:calc(10px + var(--sal));right:calc(70px + var(--sar));max-width:520px;background:var(--panel);border-radius:var(--r);box-shadow:var(--shadow);padding:8px 12px;display:flex;flex-direction:column;gap:4px}
 .wxb-top{display:flex;align-items:center;gap:8px}.wxb-top b{font:700 17px var(--f-num)}.wxb-top .x{margin-left:auto;width:30px;height:30px}
 #wxb-range{width:100%;accent-color:var(--accent)}
@@ -125,6 +125,7 @@ body:has(#navbar:not(.hidden)) .toast{top:auto;bottom:calc(130px + var(--sab))}
 #satlegend{position:fixed;z-index:505;left:calc(10px + var(--sal));bottom:calc(112px + var(--sab));display:flex;flex-wrap:wrap;gap:4px 10px;max-width:calc(100% - 100px);background:rgba(5,16,26,.78);color:#fff;border-radius:10px;padding:6px 10px;font-size:11.5px;align-items:center}
 #satlegend b{font:700 12px var(--f-num);letter-spacing:.05em;text-transform:uppercase}#satlegend span{white-space:nowrap}#satlegend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px}
 body.sheet-open #satlegend{visibility:hidden}
+body:has(#satlegend:not([hidden])) #b-follow{bottom:calc(112px + var(--legend-h, 80px) + 12px + var(--sab))}
 /* sheet / panel */
 #sheet{position:fixed;z-index:600;left:0;right:0;bottom:0;max-height:72%;background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   border-radius:18px 18px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.2);transform:translateY(105%);transition:transform .28s ease;display:flex;flex-direction:column;
@@ -179,7 +180,7 @@ label.f input,label.f select,label.f textarea{border:1px solid var(--line);borde
 .chart{width:100%;overflow-x:auto}
 .callout{border-radius:12px;padding:10px 12px;background:var(--paper);border-left:4px solid var(--accent)}
 .callout.ok{border-color:var(--stbd)}.callout.bad{border-color:var(--port)}
-.leg{display:grid;grid-template-columns:28px 1fr auto auto;gap:6px;font-variant-numeric:tabular-nums;font-size:14px;align-items:center;padding:4px 0;border-bottom:1px dashed var(--line)}
+.leg{display:grid;grid-template-columns:auto 1fr auto auto;gap:6px;font-variant-numeric:tabular-nums;font-size:14px;align-items:center;padding:4px 0;border-bottom:1px dashed var(--line)}
 .toast{position:fixed;z-index:900;left:50%;top:calc(70px + var(--sat));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;box-shadow:var(--shadow);font-weight:600;max-width:90vw}
 #night{position:fixed;inset:0;z-index:2000;pointer-events:none;background:#b00000;mix-blend-mode:multiply;display:none}
 body.night #night{display:block}
@@ -259,8 +260,8 @@ body.night{filter:brightness(.65)}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script src="config.js?v=202611042242"></script>
-<script src="chartstyle.js?v=202611042242"></script>
-<script src="app.js?v=202611042242"></script>
+<script src="config.js?v=202611042306"></script>
+<script src="chartstyle.js?v=202611042306"></script>
+<script src="app.js?v=202611042306"></script>
 </body>
 </html>

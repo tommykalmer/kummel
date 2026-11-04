@@ -203,6 +203,7 @@ function renderSatLegend(on) {
   el.hidden = !on; if (!on) return;
   const n = needDepth().toFixed(1).replace(".", ",");
   el.innerHTML = `<b>Djup</b><span><i style="background:#ff5a5a"></i>under ${n} m</span><span><i style="background:#7fd6ff"></i>till 3 m</span><span><i style="background:#3d9ed6"></i>3–6 m</span><span><i style="background:#1f5f9a"></i>6–10 m</span><span><i style="background:transparent;border:1px solid #fff"></i>över 10 m</span>`;
+  requestAnimationFrame(() => document.documentElement.style.setProperty("--legend-h", el.offsetHeight + "px"));
 }
 function applyLayers() {
   if (!mapReady) return;
@@ -629,7 +630,7 @@ $("#b-depth").onclick = () => {
 };
 
 /* ---------- route planning ---------- */
-let planning = false, wps = [], wpMarkers = [], wpsOff = [], autoInfo = null;
+let planning = false, wps = [], wpMarkers = [], wpsOff = [], autoInfo = null, routeId = null, routeName = "";
 function startPlanning(initial) {
   planning = true; wps = (initial || []).map(ll);
   document.body.classList.add("plan"); $("#b-route").setAttribute("aria-pressed", "true");
@@ -639,7 +640,7 @@ function startPlanning(initial) {
 function stopPlanning(keep) {
   closeWpMenu();
   planning = false; document.body.classList.remove("plan"); $("#b-route").setAttribute("aria-pressed", "false");
-  if (!keep) { wps = []; wpsOff = []; autoInfo = null; drawWps(); }
+  if (!keep) { wps = []; wpsOff = []; autoInfo = null; routeId = null; routeName = ""; drawWps(); }
 }
 let depthPop = null;
 map.on("click", e => {
@@ -734,15 +735,17 @@ function renderRoute() {
     ${shTxt}${dark}${routeWindNote()}
     <div>${st.legs.map((l, i) => `<div class="leg"><span class="pill">${i + 1}→${i + 2}</span><span>${compass(l.brg)}</span><span class="num">${String(Math.round(l.brg)).padStart(3, "0")}°</span><span class="num">${l.d.toFixed(2)} nm</span></div>`).join("") || `<div class="muted">Tryck på kartan för att lägga till punkter.</div>`}</div>
     ${wps.length > 1 ? `<div class="card"><h3>Ankomsttid</h3>
-      <label class="f">Vill vara framme kl<input type="time" id="rt-arr" value="${S.arrTime || ""}"></label>
+      <label class="f">Vill vara framme kl<span class="row" style="flex-wrap:nowrap"><input type="time" id="rt-arr" value="${S.arrTime || ""}" style="flex:1"><button class="btn" id="rt-arr-clr" type="button">Ingen tid</button></span></label>
       <div id="rt-arrout" class="muted"></div>
       <button class="btn pri" id="rt-go">Starta navigering</button></div>` : ""}
+    ${wps.length > 1 ? `<label class="f">Namn på rutten<input id="rt-name" value="${esc(routeName)}" placeholder="t.ex. Hem – Kökar"></label>` : ""}
     <div class="row"><button class="btn" id="rt-undo">Ångra</button><button class="btn" id="rt-rev">Vänd</button><button class="btn pri" id="rt-save">Spara rutt</button><button class="btn warn" id="rt-clear">Rensa</button></div>
     <div class="muted">Kontrollera alltid djup och faror mot sjökortet längs hela rutten.</div>`, "route");
   const arr = $("#rt-arr");
   if (arr) {
     const upd = () => { S.arrTime = arr.value; save(); $("#rt-arrout").innerHTML = arrivalPlan(st.nm, st.h); };
-    arr.onchange = upd; arr.oninput = upd; upd();
+    arr.onchange = upd; arr.oninput = upd; arr.onblur = upd; upd();
+    $("#rt-arr-clr").onclick = e => { e.preventDefault(); arr.value = ""; upd(); };
     $("#rt-go").onclick = () => startNav(wps.map(ll));
   }
   $("#rt-undo").onclick = () => { wps.pop(); wpsOff = []; autoInfo = null; renderRoute(); };
@@ -750,11 +753,15 @@ function renderRoute() {
   $("#rt-clear").onclick = () => { wps = []; wpsOff = []; autoInfo = null; renderRoute(); };
   const au = $("#rt-auto"); if (au) au.onclick = () => autoRoute(wps[0], wps[wps.length - 1]);
   const show = $("#rt-show"); if (show) show.onclick = () => map.easeTo({ center: lnglat(sh.at), zoom: Math.max(map.getZoom(), 14) });
+  const nm = $("#rt-name"); if (nm) nm.oninput = () => { routeName = nm.value; };
+  $("#rt-save").textContent = routeId ? "Spara ändringar" : "Spara rutt";
   $("#rt-save").onclick = () => {
     if (wps.length < 2) { toast("Lägg till minst två punkter."); return; }
-    const name = `Rutt ${new Date().getDate()}.${new Date().getMonth() + 1} (${st.nm.toFixed(1)} nm)`;
-    S.routes.unshift({ id: uid(), name, pts: wps.map(p => [+p.lat.toFixed(6), +p.lng.toFixed(6)]), created: Date.now() });
-    save(); toast("Rutten sparad");
+    const name = (routeName || "").trim() || `Rutt ${new Date().getDate()}.${new Date().getMonth() + 1} (${st.nm.toFixed(1)} nm)`;
+    const pts = wps.map(p => [+p.lat.toFixed(6), +p.lng.toFixed(6)]), old = routeId && S.routes.find(r => r.id === routeId);
+    if (old) { old.name = name; old.pts = pts; old.updated = Date.now(); }
+    else { routeId = uid(); S.routes.unshift({ id: routeId, name, pts, created: Date.now() }); }
+    routeName = name; save(); toast(`Rutten "${name}" är sparad`); renderRoute();
   };
 }
 /* ---------- ruttförslag längs farleder ----------
@@ -1649,11 +1656,11 @@ function openPlaces() {
 }
 const boundsOf = pts => pts.reduce((b, p) => b.extend([p[1], p[0]]), new maplibregl.LngLatBounds([pts[0][1], pts[0][0]], [pts[0][1], pts[0][0]]));
 function openRoutes() {
-  openSheet("Sparade rutter", `<div class="list">${S.routes.map(r => `<div class="card"><h3>${esc(r.name)}</h3><div class="row"><button class="btn pri" data-nav="${r.id}">Navigera</button><button class="btn" data-open="${r.id}">Öppna</button><button class="btn warn" data-del="${r.id}">Ta bort</button></div></div>`).join("") || `<div class="muted">Inga sparade rutter.</div>`}</div>`, "routes");
+  openSheet("Sparade rutter", `<div class="list">${S.routes.map(r => `<div class="card"><h3>${esc(r.name)}</h3><div class="muted">${routeStats(r.pts.map(p => ({ lat: p[0], lng: p[1] }))).nm.toFixed(1)} nm · ${r.pts.length} punkter</div><div class="row"><button class="btn pri" data-nav="${r.id}">Navigera</button><button class="btn" data-open="${r.id}">Öppna</button><button class="btn warn" data-del="${r.id}">Ta bort</button></div></div>`).join("") || `<div class="muted">Inga sparade rutter.</div>`}</div>`, "routes");
   document.querySelectorAll("[data-open]").forEach(x => x.onclick = () => {
     const r = S.routes.find(q => q.id === x.dataset.open);
     map.fitBounds(boundsOf(r.pts), { padding: 60, duration: 0 });
-    startPlanning(r.pts.map(p => ({ lat: p[0], lng: p[1] })));
+    startPlanning(r.pts.map(p => ({ lat: p[0], lng: p[1] }))); routeId = r.id; routeName = r.name; renderRoute();
   });
   document.querySelectorAll("[data-del]").forEach(x => x.onclick = () => { S.routes = S.routes.filter(q => q.id !== x.dataset.del); save(); openRoutes(); });
   document.querySelectorAll("[data-nav]").forEach(x => x.onclick = () => { const r = S.routes.find(q => q.id === x.dataset.nav); startNav(r.pts.map(p => ({ lat: p[0], lng: p[1] }))); });
