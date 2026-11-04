@@ -124,6 +124,18 @@ for name, feats in out.items():
     with open(f"{OUT}/{name}.geojsonl", "w") as fh:
         for ft in feats: fh.write(json.dumps(ft, ensure_ascii=False, separators=(",", ":")) + "\n")
     print(f"{name}: {len(feats)}")
+# sjömärken som en enda GeoJSON-fil: få objekt, och då gallras inga bort i någon zoomnivå
+mk = []
+for lay in ("aids", "lights", "daymarks", "faults", "signs", "pilot"):
+    for ft in out.get(lay, []):
+        g = ft["geometry"]
+        if g["type"] == "MultiPoint": g = {"type": "Point", "coordinates": g["coordinates"][0]}
+        if g["type"] != "Point": continue
+        g = {"type": "Point", "coordinates": [round(g["coordinates"][0], 6), round(g["coordinates"][1], 6)]}
+        mk.append({"type": "Feature", "geometry": g, "properties": {"L": lay, **ft["properties"]}})
+with open("data/marks.geojson", "w") as fh:
+    json.dump({"type": "FeatureCollection", "features": mk}, fh, ensure_ascii=False, separators=(",", ":"))
+print("sjömärken:", len(mk))
 with open("data/chart-log.md", "a") as fh:
     fh.write("\n## Kartlager i tiles\n" + "\n".join(f"- {n}: {len(f)}" for n, f in out.items()) + "\n")
 
