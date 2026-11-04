@@ -7,7 +7,7 @@ MARKS="aids lights daymarks faults signs pilot navline leadline"   # ligger i da
 # stenar: egen fil där inget gallras från zoom 11 (-B11)
 if [ -f build/rocks.geojsonl ]; then
   tippecanoe -o build/rocks-aland.pmtiles --force -Z11 -z14 -B11 --no-feature-limit --no-tile-size-limit \
-    --name "Kummel stenar Åland" --attribution "Maanmittauslaitos, CC BY 4.0" -L rocks:build/rocks.geojsonl 2>&1 | grep -v "%" | tail -3
+    --name "Kummel stenar Åland" --attribution "Maanmittauslaitos, CC BY 4.0" -L rocks:build/rocks.geojsonl 2>&1 | { grep -v "%" || true; } | tail -3
   cp build/rocks-aland.pmtiles data/
 fi
 files=(build/layers/*.geojsonl)
