@@ -320,6 +320,8 @@ function followBoat(jump) {
 }
 map.on("dragstart", e => { lastTouch = Date.now(); if (follow && e.originalEvent) setFollow(false, true); });
 map.on("rotatestart", e => { if (e.originalEvent) { lastTouch = Date.now(); if (courseUp) { courseUp = false; $("#b-locate").classList.remove("course"); } } });
+$("#b-zin").onclick = () => map.easeTo({ zoom: map.getZoom() + 1, duration: 250, ...(follow && gps ? { center: lnglat(gps) } : {}) });
+$("#b-zout").onclick = () => map.easeTo({ zoom: map.getZoom() - 1, duration: 250, ...(follow && gps ? { center: lnglat(gps) } : {}) });
 $("#b-north").onclick = () => {
   if (courseUp) { courseUp = false; map.easeTo({ bearing: 0 }); toast("Norr upp", 1200); }
   else map.easeTo({ bearing: 0 });
@@ -501,6 +503,11 @@ map.on("touchstart", e => {
 
 /* ---------- fishing ---------- */
 const SPECIES = ["Gädda", "Abborre", "Gös", "Havsöring", "Lax", "Sik", "Strömming", "Torsk", "Braxen", "Annan"];
+(() => { let t = null, long = false; const b = $("#b-fish");
+  b.addEventListener("pointerdown", () => { long = false; t = setTimeout(() => { long = true; try { navigator.vibrate && navigator.vibrate(30); } catch (e) {} newPastCatch(); }, 600); });
+  ["pointerup", "pointerleave", "pointercancel"].forEach(ev => b.addEventListener(ev, () => clearTimeout(t)));
+  b.addEventListener("click", e => { if (long) { e.stopImmediatePropagation(); long = false; } }, true);
+})();
 $("#b-fish").onclick = async () => {
   const pos = gps ? ll(gps) : ll(map.getCenter());
   const c = { id: uid(), t: Date.now(), ...pos, depth: depthAt(pos), species: "", kg: "", lure: "", note: "", wx: null };
@@ -518,6 +525,56 @@ $("#b-fish").onclick = async () => {
     save(); if (sheetView === "catch:" + c.id) openCatch(c.id);
   } catch (e) {}
 };
+/* väder vid en given tidpunkt: prognos med senaste dagarna, eller arkivet för äldre fångster */
+async function wxAt(pos, t) {
+  const days = (Date.now() - t) / 86400000, d = new Date(t), iso = x => x.toISOString().slice(0, 10);
+  const q = `latitude=${pos.lat.toFixed(3)}&longitude=${pos.lng.toFixed(3)}&timezone=auto&wind_speed_unit=ms&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl`;
+  const url = days < 80 ? `https://api.open-meteo.com/v1/forecast?${q}&past_days=${Math.min(92, Math.ceil(days) + 1)}&forecast_days=1`
+    : `https://archive-api.open-meteo.com/v1/archive?${q}&start_date=${iso(new Date(t - 86400000))}&end_date=${iso(d)}`;
+  const [f, m] = await Promise.all([
+    fetch(url).then(r => r.json()),
+    days < 80 ? fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${pos.lat.toFixed(3)}&longitude=${pos.lng.toFixed(3)}&timezone=auto&hourly=sea_surface_temperature&past_days=${Math.min(92, Math.ceil(days) + 1)}&forecast_days=1`).then(r => r.ok ? r.json() : null).catch(() => null) : null
+  ]);
+  const H = f.hourly; if (!H) throw new Error("inget väder");
+  let i = 0, best = Infinity; H.time.forEach((s, k) => { const dd = Math.abs(new Date(s).getTime() - t); if (dd < best) { best = dd; i = k; } });
+  const sstI = m?.hourly?.sea_surface_temperature ? m.hourly.time.findIndex(s => Math.abs(new Date(s).getTime() - t) < 1800001) : -1;
+  return {
+    wind: H.wind_speed_10m[i], gust: H.wind_gusts_10m[i], dir: H.wind_direction_10m[i], temp: H.temperature_2m[i], p: H.pressure_msl[i],
+    pTrend: i >= 3 ? +(H.pressure_msl[i] - H.pressure_msl[i - 3]).toFixed(1) : null,
+    sst: sstI >= 0 ? m.hourly.sea_surface_temperature[sstI] : null, moon: moonPhase(d)
+  };
+}
+/* registrera en fångst i efterhand: tid och plats väljs, vädret hämtas för just då */
+function newPastCatch() {
+  const now = new Date(Date.now() - 60 * 60000), pad2 = n => String(n).padStart(2, "0");
+  const local = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}T${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+  if (S.mode !== "fiske") setMode("fiske");
+  openSheet("Fångst i efterhand", `
+    <div class="callout">Flytta kartan så att <b>korset</b> står där du fick fisken. Du kan dra i kartan medan den här rutan är öppen.</div>
+    <div class="muted" id="pc-pos">${fmtPosTxt(ll(map.getCenter()))}</div>
+    <label class="f">När<input type="datetime-local" id="pc-t" value="${local}" max="${local.slice(0, 10)}T23:59"></label>
+    <div class="grid2">
+      <label class="f">Art<select id="pc-sp"><option value="">Välj</option>${SPECIES.map(s => `<option>${s}</option>`).join("")}</select></label>
+      <label class="f">Vikt (kg)<input id="pc-kg" inputmode="decimal"></label>
+    </div>
+    <label class="f">Bete / metod<input id="pc-lure" placeholder="t.ex. jigg 10 cm"></label>
+    <label class="f">Anteckning<textarea id="pc-note" rows="2"></textarea></label>
+    <div class="row"><button class="btn pri" id="pc-save">Spara fångst här</button></div>
+    <div class="muted">Väder, lufttryck, vattentemperatur och månfas hämtas för den tidpunkt du anger.</div>`, "pastcatch");
+  $("#sheet").classList.add("compact");
+  const upd = () => { const el = $("#pc-pos"); if (el && sheetView === "pastcatch") el.textContent = fmtPosTxt(ll(map.getCenter())); };
+  map.on("move", upd);
+  $("#pc-save").onclick = async () => {
+    map.off("move", upd);
+    const t = new Date($("#pc-t").value).getTime();
+    if (!isFinite(t) || t > Date.now() + 60000) { toast("Ange en tidpunkt som har varit."); return; }
+    const pos = ll(map.getCenter());
+    const c = { id: uid(), t, ...pos, depth: depthAt(pos), species: $("#pc-sp").value, kg: $("#pc-kg").value, lure: $("#pc-lure").value, note: $("#pc-note").value, wx: null, past: true };
+    S.catches.push(c); S.catches.sort((x, y) => y.t - x.t); save(); refreshCatches();
+    toast("Fångsten är sparad"); openCatch(c.id);
+    try { c.wx = await wxAt(pos, t); save(); if (sheetView === "catch:" + c.id) openCatch(c.id); } catch (e) { toast("Vädret för den tiden kunde inte hämtas."); }
+  };
+}
 function openCatch(id) {
   const c = S.catches.find(x => x.id === id); if (!c) return;
   const d = new Date(c.t), w = c.wx;
@@ -1630,7 +1687,9 @@ function openCatches() {
     <div class="list">${S.catches.map(c => { const d = new Date(c.t); return `<div class="card"><h3>${esc(c.species || "Fångst")} ${c.kg ? `· ${esc(c.kg)} kg` : ""}</h3>
       <div class="muted">${DAYS[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1} kl ${hm(d)}${c.depth ? ` · ${esc(c.depth)}` : ""}${c.wx ? ` · ${c.wx.wind.toFixed(0)} m/s ${compass(c.wx.dir)} · ${Math.round(c.wx.p)} hPa · ${c.wx.moon.icon}` : ""}${c.lure ? " · " + esc(c.lure) : ""}</div>
       <div class="row"><button class="btn" data-c="${c.id}">Visa</button></div></div>`; }).join("") || `<div class="muted">Inga fångster ännu. Välj läget Fiske och tryck på Fisk! när det nappar.</div>`}</div>
+    <button class="btn pri" id="ct-past">Lägg till fångst i efterhand</button>
     <div class="muted">Dina fiskeplatser sparas bara på den här enheten och delas aldrig.</div>`, "catches");
+  $("#ct-past").onclick = newPastCatch;
   document.querySelectorAll("[data-c]").forEach(x => x.onclick = () => { const c = S.catches.find(q => q.id === x.dataset.c); if (S.mode !== "fiske") setMode("fiske"); map.easeTo({ center: lnglat(c), zoom: 14 }); openCatch(c.id); });
 }
 function openData() {

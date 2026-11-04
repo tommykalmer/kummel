@@ -76,6 +76,9 @@ button,input,select,textarea{font:inherit;color:inherit}
 
 /* rail */
 #rail{position:fixed;z-index:500;right:calc(10px + var(--sar));top:calc(70px + var(--sat));display:flex;flex-direction:column;gap:8px}
+#lrail{position:fixed;z-index:500;left:calc(10px + var(--sal));top:42%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px}
+.rb.sm{width:44px;height:44px}.rb.sm svg{width:20px;height:20px}
+@media (max-height:760px){#rail{gap:6px}#rail .rb{width:44px;height:44px}}
 .rb{width:48px;height:48px;border-radius:50%;border:0;background:var(--panel);box-shadow:var(--shadow);display:grid;place-items:center;cursor:pointer;color:var(--fg)}
 .rb svg{width:22px;height:22px}
 .rb[aria-pressed="true"]{background:var(--accent);color:#fff}
@@ -96,7 +99,8 @@ body.plan #cross{opacity:1}
 /* big action buttons */
 #fab{position:fixed;z-index:500;right:calc(10px + var(--sar));bottom:calc(36px + var(--sab));display:flex;flex-direction:column;gap:10px;align-items:flex-end}
 .fab{border:0;border-radius:28px;min-height:56px;padding:0 20px;font:700 18px var(--f-num);letter-spacing:.04em;text-transform:uppercase;box-shadow:var(--shadow);cursor:pointer;display:flex;align-items:center;gap:8px}
-.fab.fish{background:var(--signal);color:#1b1500}
+.fab.fish{background:var(--signal);color:#1b1500;width:76px;height:76px;min-height:76px;border-radius:50%;padding:0;flex-direction:column;justify-content:center;gap:0;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.35),0 0 0 4px rgba(242,193,78,.35)}
+.fab.fish svg{width:30px;height:30px}
 .fab.rec{background:var(--panel);color:var(--fg)}
 .fab.rec.on{background:var(--port);color:#fff}
 .fab.mob{background:var(--port);color:#fff;min-height:44px;font-size:15px;padding:0 14px}
@@ -210,14 +214,18 @@ body.night{filter:brightness(.65)}
   <button id="wxchip" aria-label="Väder"><svg class="arrow" viewBox="0 0 24 24"><path d="M12 3 18 20 12 16 6 20Z" fill="currentColor"/></svg><span id="wxtxt">–</span><small id="wxsub">väder</small></button>
 </div>
 
+<div id="lrail">
+  <button class="rb sm" id="b-zin" title="Zooma in" aria-label="Zooma in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg></button>
+  <button class="rb sm" id="b-zout" title="Zooma ut" aria-label="Zooma ut"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14"/></svg></button>
+  <button class="rb sm hidden" id="b-north" title="Norr upp"><svg id="north" viewBox="0 0 24 24"><path d="M12 2 17 13H7Z" fill="#d64545"/><path d="M12 22 7 13h10Z" fill="currentColor" opacity=".45"/></svg></button>
+  <button class="rb sm" id="b-detail" title="Grynnor och stenar (detaljkort)" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5v14"/><path d="M7 7l10 10M17 7 7 17" stroke-width="1.4"/></svg></button>
+  <button class="rb sm hidden" id="b-depth" title="Djupintervall"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6c3 0 3 2 6 2s3-2 6-2 3 2 6 2"/><path d="M6 12h12M8 17h8"/></svg></button>
+</div>
 <div id="rail">
-  <button class="rb hidden" id="b-north" title="Norr upp"><svg id="north" viewBox="0 0 24 24"><path d="M12 2 17 13H7Z" fill="#d64545"/><path d="M12 22 7 13h10Z" fill="currentColor" opacity=".45"/></svg></button>
   <button class="rb" id="b-locate" title="Min position" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>
   <button class="rb" id="b-route" title="Planera rutt" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><path d="M7 18c6-1 2-9 10-11"/></svg></button>
-  <button class="rb hidden" id="b-depth" title="Djupintervall"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6c3 0 3 2 6 2s3-2 6-2 3 2 6 2"/><path d="M6 12h12M8 17h8"/></svg></button>
   <button class="rb" id="b-place" title="Ny plats vid korset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s7-7 7-12a7 7 0 0 0-14 0c0 5 7 12 7 12z"/><path d="M12 7v6M9 10h6"/></svg></button>
   <button class="rb" id="b-wx" title="Sjöväder på kartan" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h11a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h7"/></svg></button>
-  <button class="rb" id="b-detail" title="Grynnor och stenar (detaljkort)" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5v14"/><path d="M7 7l10 10M17 7 7 17" stroke-width="1.4"/></svg></button>
   <button class="rb" id="b-layers" title="Kartlager"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg></button>
   <button class="rb" id="b-menu" title="Meny"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   <button class="rb" id="b-night" title="Nattläge" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg></button>
@@ -240,7 +248,7 @@ body.night{filter:brightness(.65)}
 <div id="satlegend" hidden></div>
 <div id="fab">
   <button class="fab mob hidden" id="b-mob" title="Man överbord">MOB</button>
-  <button class="fab fish hidden" id="b-fish"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 12c3-4 7-6 11-6 4 0 7 3 8 6-1 3-4 6-8 6-4 0-8-2-11-6zm15-1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM2 12 0 8v8z"/></svg>Fisk!</button>
+  <button class="fab fish hidden" id="b-fish" aria-label="Registrera fångst"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 12c3-4 7-6 11-6 4 0 7 3 8 6-1 3-4 6-8 6-4 0-8-2-11-6zm15-1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM2 12 0 8v8z"/></svg><span>Fisk!</span></button>
   <button class="fab rec" id="b-rec"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="currentColor"/></svg><span>Spela in</span></button>
 </div>
 
@@ -253,8 +261,8 @@ body.night{filter:brightness(.65)}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script src="config.js?v=202611042215"></script>
-<script src="chartstyle.js?v=202611042215"></script>
-<script src="app.js?v=202611042215"></script>
+<script src="config.js?v=202611042234"></script>
+<script src="chartstyle.js?v=202611042234"></script>
+<script src="app.js?v=202611042234"></script>
 </body>
 </html>
