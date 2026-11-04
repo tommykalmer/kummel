@@ -13,7 +13,7 @@ const KEY = "kummel.v1";
 const DEFAULT_STATE = {
   mode: "tur",
   view: { lat: 60.08, lng: 19.94, z: 11, bearing: 0 },
-  layers: { base: "chart", detail: false, detailZoom: 13, seamarks: false, soundings: true, groups: {} },
+  layers: { base: "chart", detail: false, detailZoom: 13, soundings: true, groups: {} },
   theme: "day",
   fishDepth: [4, 12],
   boats: [{ id: "b1", name: "Min båt", type: "motor", length: 6.5, beam: 2.4, draft: 0.6, air: 2.0, speed: 20, fuel: 18, margin: 0.5, maxWind: 10 }],
@@ -105,7 +105,6 @@ function baseStyle() {
       sat: { type: "raster", tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"], tileSize: 256, maxzoom: 18, attribution: "Bild © Esri" },
       ...mmlSources(),
       ...KummelChart.rasterSources(),
-      seamarks: { type: "raster", tiles: ["https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"], tileSize: 256, maxzoom: 18, attribution: "© OpenSeaMap" },
       ofm: { type: "vector", url: "https://tiles.openfreemap.org/planet", attribution: "OpenFreeMap © OpenStreetMap" },
       marks: { type: "geojson", data: "data/marks.geojson" },
       rocks: { type: "vector", url: "pmtiles://" + new URL("data/rocks-aland.pmtiles", location.href).href, attribution: "Stenar: Maanmittauslaitos" },
@@ -117,8 +116,7 @@ function baseStyle() {
       { id: "sat", type: "raster", source: "sat", layout: { visibility: "none" } },
       ...(mmlKey() ? [{ id: "mml-orto", type: "raster", source: "mml-orto", layout: { visibility: "none" } }] : []),
       ...KummelChart.layers({ need: needDepth(), fish: null, soundings: S.layers.soundings }),
-      ...(mmlKey() ? [{ id: "mml-prop", type: "raster", source: "mml-prop", minzoom: 15, layout: { visibility: "none" }, paint: { "raster-opacity": .9 } }] : []),
-      { id: "seamarks", type: "raster", source: "seamarks", layout: { visibility: "none" } }
+      ...(mmlKey() ? [{ id: "mml-prop", type: "raster", source: "mml-prop", minzoom: 15, layout: { visibility: "none" }, paint: { "raster-opacity": .9 } }] : [])
     ]
   };
 }
@@ -222,7 +220,6 @@ function applyLayers() {
   KummelChart.detailIds().forEach(id => { vis(id, base === "chart" && !!S.layers.detail); if (map.getLayer(id)) map.setLayerZoomRange(id, id === "detail-harbour" ? Math.max(14, dz()) : dz(), 24); });
   const G = KummelChart.groups(), on = g => (S.layers.groups || {})[g] !== false;
   Object.entries(G).forEach(([g, ids]) => { if (!on(g)) ids.forEach(id => vis(id, false)); });
-  vis("seamarks", S.layers.seamarks);
 }
 
 /* ---------- places (markers) ---------- */
