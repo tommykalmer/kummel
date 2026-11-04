@@ -127,13 +127,16 @@ map.touchZoomRotate.enableRotation();
 let mapReady = false;
 
 /* overlay sources (route, track, boat …) */
-const SRC = ["route", "track", "live", "shown", "heading", "acc", "catches", "fishzone", "mob", "wxgrid", "wxobs"];
+const SRC = ["route", "track", "live", "shown", "heading", "acc", "catches", "fishzone", "mob", "wxgrid", "wxobs", "wxsst"];
 function addOverlays() {
   SRC.forEach(id => { if (!map.getSource(id)) map.addSource(id, { type: "geojson", data: EMPTY }); });
   const add = l => { if (!map.getLayer(l.id)) map.addLayer(l); };
   const wxColor = ["case", [">", ["get", "g"], ["get", "lim"]], "#d64545", [">", ["get", "g"], ["*", .75, ["get", "lim"]]], "#e2a90c", "#2f8f5b"];
   add({ id: "wx-grid", type: "symbol", source: "wxgrid", layout: { "icon-image": "wind", "icon-size": ["interpolate", ["linear"], ["get", "w"], 0, .8, 15, 1.5], "icon-rotate": ["get", "rot"], "icon-rotation-alignment": "map", "icon-allow-overlap": true, "text-field": ["get", "lbl"], "text-font": ["Noto Sans Medium"], "text-size": 11, "text-offset": [0, 1.7], "text-allow-overlap": true }, paint: { "icon-color": wxColor, "icon-halo-color": "rgba(255,255,255,.85)", "icon-halo-width": 1.2, "text-color": "#14232e", "text-halo-color": "rgba(255,255,255,.9)", "text-halo-width": 1.6 } });
   add({ id: "wx-obs", type: "symbol", source: "wxobs", layout: { "icon-image": "wind", "icon-size": 1.6, "icon-rotate": ["get", "rot"], "icon-rotation-alignment": "map", "icon-allow-overlap": true, "text-field": ["get", "lbl"], "text-font": ["Noto Sans Medium"], "text-size": 13, "text-offset": [0, 1.9], "text-allow-overlap": true }, paint: { "icon-color": wxColor, "icon-halo-color": "#0f2a3d", "icon-halo-width": 2, "text-color": "#0f2a3d", "text-halo-color": "#fff", "text-halo-width": 2 } });
+  const sstColor = ["interpolate", ["linear"], ["get", "v"], 0, "#3b4cc0", 4, "#5b8ff9", 8, "#3fb6c7", 12, "#4cc38a", 16, "#e8c547", 20, "#f08a3c", 24, "#d63e3e"];
+  add({ id: "wx-sst", type: "circle", source: "wxsst", paint: { "circle-radius": ["case", ["==", ["get", "obs"], 1], 17, 14], "circle-color": sstColor, "circle-opacity": .9, "circle-stroke-color": ["case", ["==", ["get", "obs"], 1], "#0f2a3d", "#ffffff"], "circle-stroke-width": ["case", ["==", ["get", "obs"], 1], 2.5, 1.5] } });
+  add({ id: "wx-sst-lbl", type: "symbol", source: "wxsst", layout: { "text-field": ["get", "lbl"], "text-font": ["case", ["==", ["get", "obs"], 1], ["literal", ["Noto Sans Medium"]], ["literal", ["Noto Sans Regular"]]], "text-size": ["case", ["==", ["get", "obs"], 1], 12, 10.5], "text-allow-overlap": true }, paint: { "text-color": "#ffffff", "text-halo-color": "rgba(0,0,0,.45)", "text-halo-width": 1 } });
   add({ id: "acc-fill", type: "fill", source: "acc", paint: { "fill-color": "#1d6fa3", "fill-opacity": .08 } });
   add({ id: "acc-line", type: "line", source: "acc", paint: { "line-color": "#1d6fa3", "line-width": 1 } });
   add({ id: "shown", type: "line", source: "shown", paint: { "line-color": "#1d6fa3", "line-width": 4, "line-opacity": .85 } });
@@ -456,7 +459,7 @@ $("#b-fish").onclick = async () => {
       wind: w.current.wind_speed_10m, gust: w.current.wind_gusts_10m, dir: w.current.wind_direction_10m,
       temp: w.current.temperature_2m, p: w.current.pressure_msl,
       pTrend: h >= 3 ? +(w.hourly.pressure_msl[h] - w.hourly.pressure_msl[h - 3]).toFixed(1) : null,
-      sst: w.marine?.current?.sea_surface_temperature ?? null, moon: moonPhase(new Date())
+      sst: (waterNear && distNm(pos, waterNear) * 1.852 < 25 ? waterNear.v : w.marine?.current?.sea_surface_temperature) ?? null, moon: moonPhase(new Date())
     };
     save(); if (sheetView === "catch:" + c.id) openCatch(c.id);
   } catch (e) {}
@@ -613,7 +616,7 @@ async function fetchWx(lat, lng) {
   const q = `latitude=${lat.toFixed(3)}&longitude=${lng.toFixed(3)}&timezone=auto&forecast_days=3`;
   const [f, m] = await Promise.all([
     fetch(`https://api.open-meteo.com/v1/forecast?${q}&wind_speed_unit=ms&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,precipitation,weather_code&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation,pressure_msl&daily=sunrise,sunset`).then(r => r.json()),
-    fetch(`https://marine-api.open-meteo.com/v1/marine?${q}&current=wave_height,sea_surface_temperature&hourly=wave_height`).then(r => r.ok ? r.json() : null).catch(() => null)
+    fetch(`https://marine-api.open-meteo.com/v1/marine?${q}&past_days=1&current=wave_height,sea_surface_temperature&hourly=wave_height,sea_surface_temperature`).then(r => r.ok ? r.json() : null).catch(() => null)
   ]);
   if (f.error) throw new Error(f.reason);
   f.marine = m; f.at = Date.now(); f.lat = lat; f.lng = lng;
@@ -630,14 +633,62 @@ async function loadWx(force) {
     sunInfo = { sunrise: wx.daily.sunrise.map(s => new Date(s)), sunset: wx.daily.sunset.map(s => new Date(s)) };
     renderChip();
     if (sheetView === "wx") openWx();
+    loadWaterNear(c);
   } catch (e) { $("#wxtxt").textContent = "–"; $("#wxsub").textContent = "inget väder"; }
 }
 function renderChip() {
   const c = wx.current;
   $("#wxtxt").textContent = `${c.wind_speed_10m.toFixed(0)} (${c.wind_gusts_10m.toFixed(0)}) m/s`;
-  $("#wxsub").textContent = `${compass(c.wind_direction_10m)} · ${c.temperature_2m.toFixed(0)}°`;
+  const s = sstInfo();
+  $("#wxsub").textContent = S.mode === "fiske" && s ? `${compass(c.wind_direction_10m)} · vatten ${s.v.toFixed(1)}°` : `${compass(c.wind_direction_10m)} · ${c.temperature_2m.toFixed(0)}°`;
   $("#wxchip .arrow").style.transform = `rotate(${(c.wind_direction_10m + 180) % 360}deg)`;
   $("#wxchip").style.color = c.wind_gusts_10m > (boat().maxWind || 10) ? "var(--port)" : "";
+}
+/* vattentemperatur: uppmätt vid närmaste station om den finns inom ca 25 km, annars modell */
+let waterNear = null;
+function sstInfo() {
+  if (waterNear && Date.now() - waterNear.at < 3 * 3600000) return { v: waterNear.v, d: modelTrend(), src: `uppmätt vid station ${waterNear.km.toFixed(0)} km bort` };
+  const mh = wx?.marine?.hourly; if (!mh?.sea_surface_temperature) { const c = wx?.marine?.current?.sea_surface_temperature; return c != null ? { v: c, d: null, src: "modell" } : null; }
+  const i = Math.max(0, mh.time.findIndex(t => new Date(t).getTime() > Date.now()) - 1), v = mh.sea_surface_temperature[i];
+  return v == null ? null : { v, d: modelTrend(), src: "modell" };
+}
+function modelTrend() {
+  const mh = wx?.marine?.hourly; if (!mh?.sea_surface_temperature) return null;
+  const i = Math.max(0, mh.time.findIndex(t => new Date(t).getTime() > Date.now()) - 1);
+  const a = mh.sea_surface_temperature[i], b = i >= 24 ? mh.sea_surface_temperature[i - 24] : null;
+  return a != null && b != null ? a - b : null;
+}
+const trendTxt = d => d == null ? "" : Math.abs(d) < .3 ? "stabilt senaste dygnet" : `${d > 0 ? "+" : "−"}${Math.abs(d).toFixed(1)}° senaste dygnet`;
+/* öppen data från Meteorologiska institutet, "simple"-formatet: senaste värdet per station och parameter */
+async function fmiSimple(query, params, box, minutes) {
+  const start = new Date(Date.now() - minutes * 60000).toISOString().slice(0, 16) + ":00Z";
+  const url = `https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=${query}&bbox=${box.map(v => v.toFixed(2)).join(",")}&parameters=${params}&starttime=${start}`;
+  const xml = new DOMParser().parseFromString(await (await fetch(url)).text(), "text/xml"), st = {};
+  for (const el of xml.getElementsByTagNameNS("*", "BsWfsElement")) {
+    const pos = el.getElementsByTagNameNS("*", "pos")[0]?.textContent.trim(); if (!pos) continue;
+    const name = el.getElementsByTagNameNS("*", "ParameterName")[0]?.textContent, val = parseFloat(el.getElementsByTagNameNS("*", "ParameterValue")[0]?.textContent);
+    const t = el.getElementsByTagNameNS("*", "Time")[0]?.textContent;
+    if (isNaN(val)) continue;
+    const o = st[pos] || (st[pos] = {});
+    if (!o[name + "_t"] || t > o[name + "_t"]) { o[name] = val; o[name + "_t"] = t; }
+  }
+  return Object.entries(st).map(([pos, o]) => { const [lat, lng] = pos.split(/\s+/).map(Number); return { lat, lng, ...o }; });
+}
+async function waterObs(box) {
+  const r = await Promise.all([
+    fmiSimple("fmi::observations::mareograph::simple", "TW_PT1H_AVG", box, 180).catch(() => []),
+    fmiSimple("fmi::observations::wave::simple", "TWATER", box, 180).catch(() => [])
+  ]);
+  return r.flat().map(o => ({ lat: o.lat, lng: o.lng, v: o.TW_PT1H_AVG ?? o.TWATER })).filter(o => o.v != null && o.v > -3 && o.v < 35);
+}
+async function loadWaterNear(c) {
+  try {
+    const obs = await waterObs([c.lng - .6, c.lat - .3, c.lng + .6, c.lat + .3]);
+    const best = obs.map(o => ({ ...o, km: distNm(c, o) * 1.852 })).sort((x, y) => x.km - y.km)[0];
+    waterNear = best && best.km < 25 ? { ...best, at: Date.now() } : null;
+    if (wx) renderChip();
+    if (sheetView === "wx") openWx();
+  } catch (e) {}
 }
 function weatherWindow() {
   const lim = boat().maxWind || 10, h = wx.hourly, i0 = hourIndex(wx);
@@ -680,7 +731,7 @@ function openWx() {
   const today = new Date().toDateString();
   const sr = sunInfo.sunrise.find(d => d.toDateString() === today), ss = sunInfo.sunset.find(d => d.toDateString() === today);
   const i0 = hourIndex(wx), pTrend = i0 >= 3 ? wx.hourly.pressure_msl[i0] - wx.hourly.pressure_msl[i0 - 3] : 0;
-  const moon = moonPhase(new Date()), age = Math.round((Date.now() - wx.at) / 60000);
+  const moon = moonPhase(new Date()), age = Math.round((Date.now() - wx.at) / 60000), sst = sstInfo();
   openSheet("Väder", `
     <div class="wx-now">
       <svg viewBox="0 0 24 24" width="56" height="56" style="transform:rotate(${(c.wind_direction_10m + 180) % 360}deg)"><path d="M12 2 19 21 12 16.5 5 21Z" fill="var(--accent)"/></svg>
@@ -690,14 +741,14 @@ function openWx() {
     <div class="callout ${win.cls}">${win.txt}<div class="muted">Gräns för ${esc(b.name)}: byar ${b.maxWind || 10} m/s</div></div>
     <div class="wx-stats">
       <div><b>${c.temperature_2m.toFixed(0)}°</b><span>Luft</span></div>
-      <div><b>${m?.sea_surface_temperature != null ? m.sea_surface_temperature.toFixed(1) + "°" : "–"}</b><span>Vatten</span></div>
+      <div><b>${sst ? sst.v.toFixed(1) + "°" : "–"}</b><span>Vatten ${sst?.d == null ? "" : sst.d > .3 ? "↑" : sst.d < -.3 ? "↓" : "→"}</span></div>
       <div><b>${m?.wave_height != null ? m.wave_height.toFixed(1) + " m" : "–"}</b><span>Våghöjd</span></div>
       <div><b>${Math.round(c.pressure_msl)}</b><span>hPa ${pTrend > .5 ? "↑" : pTrend < -.5 ? "↓" : "→"}</span></div>
       <div><b>${sr ? hm(sr) : "–"}</b><span>Sol upp</span></div>
       <div><b>${ss ? hm(ss) : "–"}</b><span>Sol ned</span></div>
     </div>
     <div><div class="muted" style="margin-bottom:4px">Vind kommande 48 h · stapel = medelvind, streck = byar, röd linje = din gräns</div><div class="chart">${windChart()}</div></div>
-    ${S.mode === "fiske" ? `<div class="card"><h3>Fiskeförhållanden</h3><div>${moon.icon} ${moon.name} · Tryck ${pTrend > .5 ? "stigande" : pTrend < -.5 ? "fallande" : "stabilt"} (${pTrend >= 0 ? "+" : ""}${pTrend.toFixed(1)} hPa/3 h)</div></div>` : ""}
+    ${S.mode === "fiske" ? `<div class="card"><h3>Fiskeförhållanden</h3>${sst ? `<div><b>Vattnet ${sst.v.toFixed(1)}°</b>${sst.d != null ? `, ${trendTxt(sst.d)}` : ""} <span class="muted">(${sst.src})</span></div>` : ""}<div>${moon.icon} ${moon.name} · Tryck ${pTrend > .5 ? "stigande" : pTrend < -.5 ? "fallande" : "stabilt"} (${pTrend >= 0 ? "+" : ""}${pTrend.toFixed(1)} hPa/3 h)</div></div>` : ""}
     <div class="muted">Prognos för ${fmtPosTxt({ lat: wx.lat, lng: wx.lng })} · uppdaterad för ${age} min sedan. Källa: Open-Meteo.</div>
     <button class="btn" id="wx-ref">Uppdatera</button>`, "wx");
   $("#wx-ref").onclick = () => loadWx(true);
@@ -707,7 +758,7 @@ scheduleWx();
 setInterval(() => loadWx(true), 15 * 60000);
 
 /* ---------- sjöväder på kartan ---------- */
-let wxOn = false, wxGrid = null, wxObs = [], wxStep = 0, wxGridT = null, wxGridKey = "";
+let wxOn = false, wxGrid = null, wxObs = [], wxWater = [], wxStep = 0, wxGridT = null, wxGridKey = "", wxMode = S.wxMode || "wind";
 function wxPoints() {
   const b = map.getBounds(), c = map.getContainer();
   const cols = c.clientWidth > 700 ? 7 : 4, rows = Math.round(cols * c.clientHeight / c.clientWidth);
@@ -725,7 +776,7 @@ async function loadWxGrid() {
   try {
     const [f, m] = await Promise.all([
       fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=ms&forecast_days=3&timezone=auto`).then(r => r.json()),
-      fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${la}&longitude=${lo}&hourly=wave_height&forecast_days=3&timezone=auto`).then(r => r.ok ? r.json() : null).catch(() => null)
+      fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${la}&longitude=${lo}&hourly=wave_height,sea_surface_temperature&forecast_days=3&timezone=auto`).then(r => r.ok ? r.json() : null).catch(() => null)
     ]);
     const F = Array.isArray(f) ? f : [f], M = m ? (Array.isArray(m) ? m : [m]) : [];
     if (!F[0] || !F[0].hourly) throw new Error("ingen prognos");
@@ -738,15 +789,22 @@ function renderWxLayer() {
   if (!wxOn || !wxGrid) return;
   const lim = boat().maxWind || 10, i = wxGrid.t0 + wxStep, H = wxGrid.F[0].hourly;
   if (i >= H.time.length) return;
-  setData("wxgrid", { type: "FeatureCollection", features: wxGrid.pts.map((p, k) => {
+  const water = wxMode === "water";
+  setData("wxgrid", water ? EMPTY : { type: "FeatureCollection", features: wxGrid.pts.map((p, k) => {
     const h = wxGrid.F[k]?.hourly; if (!h) return null;
     const w = h.wind_speed_10m[i], g = h.wind_gusts_10m[i], d = h.wind_direction_10m[i], wave = wxGrid.M[k]?.hourly?.wave_height?.[i];
     return { type: "Feature", properties: { w, g, lim, rot: (d + 180) % 360, lbl: `${Math.round(w)} (${Math.round(g)})${wave != null ? "\n" + wave.toFixed(1) + " m" : ""}` }, geometry: { type: "Point", coordinates: [p.lng, p.lat] } };
   }).filter(Boolean) });
+  setData("wxobs", !water && wxStep === 0 ? { type: "FeatureCollection", features: wxObs.map(o => ({ type: "Feature", properties: { w: o.w, g: o.g ?? o.w, lim, rot: (o.d + 180) % 360, lbl: `${Math.round(o.w)}${o.g != null ? ` (${Math.round(o.g)})` : ""}` }, geometry: { type: "Point", coordinates: [o.lng, o.lat] } })) } : EMPTY);
+  setData("wxsst", water ? { type: "FeatureCollection", features: [
+    ...wxGrid.pts.map((p, k) => { const v = wxGrid.M[k]?.hourly?.sea_surface_temperature?.[i]; return v == null ? null : { type: "Feature", properties: { v, obs: 0, lbl: v.toFixed(1) + "°" }, geometry: { type: "Point", coordinates: [p.lng, p.lat] } }; }).filter(Boolean),
+    ...(wxStep === 0 ? wxWater.map(o => ({ type: "Feature", properties: { v: o.v, obs: 1, lbl: o.v.toFixed(1) + "°" }, geometry: { type: "Point", coordinates: [o.lng, o.lat] } })) : [])
+  ] } : EMPTY);
   const t = new Date(H.time[i]);
   $("#wxb-time").textContent = wxStep === 0 ? "Nu" : `${t.toDateString() === new Date().toDateString() ? "Idag" : DAYS[t.getDay()]} ${pad(t.getHours())}:00`;
-  $("#wxb-sub").textContent = `Vind m/s (byar) och våghöjd · ${wxObs.length && wxStep === 0 ? "kuststationer uppmätta" : "prognos"}`;
-  setData("wxobs", { type: "FeatureCollection", features: wxStep === 0 ? wxObs.map(o => ({ type: "Feature", properties: { w: o.w, g: o.g ?? o.w, lim, rot: (o.d + 180) % 360, lbl: `${Math.round(o.w)}${o.g != null ? ` (${Math.round(o.g)})` : ""}` }, geometry: { type: "Point", coordinates: [o.lng, o.lat] } })) : [] });
+  $("#wxb-sub").textContent = water ? `Vattentemperatur vid ytan${wxStep === 0 ? "" : " · prognos"}` : `Vind m/s (byar) och våghöjd · ${wxObs.length && wxStep === 0 ? "kuststationer uppmätta" : "prognos"}`;
+  document.querySelectorAll("[data-wxm]").forEach(b => b.setAttribute("aria-pressed", b.dataset.wxm === wxMode));
+  $("#wxb-legend-wind").classList.toggle("hidden", water); $("#wxb-legend-water").classList.toggle("hidden", !water);
 }
 /* uppmätt vind från Meteorologiska institutets kuststationer (öppen data) */
 async function loadWxObs() {
@@ -769,16 +827,18 @@ async function loadWxObs() {
     });
     renderWxLayer();
   } catch (e) { wxObs = []; }
+  try { wxWater = await waterObs([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]); renderWxLayer(); } catch (e) { wxWater = []; }
 }
 function setWx(on) {
   wxOn = on;
   $("#b-wx").setAttribute("aria-pressed", on);
   $("#wxbar").classList.toggle("hidden", !on);
   if (on) { wxStep = 0; $("#wxb-range").value = 0; loadWxGrid(); loadWxObs(); }
-  else { setData("wxgrid", EMPTY); setData("wxobs", EMPTY); }
+  else { setData("wxgrid", EMPTY); setData("wxobs", EMPTY); setData("wxsst", EMPTY); }
 }
 $("#b-wx").onclick = () => setWx(!wxOn);
 $("#wxb-close").onclick = () => setWx(false);
+document.querySelectorAll("[data-wxm]").forEach(b => b.onclick = () => { wxMode = S.wxMode = b.dataset.wxm; save(); renderWxLayer(); });
 $("#wxb-range").oninput = e => { wxStep = +e.target.value; renderWxLayer(); };
 map.on("moveend", () => { if (!wxOn) return; clearTimeout(wxGridT); wxGridT = setTimeout(() => { loadWxGrid(); if (wxStep === 0) loadWxObs(); }, 600); });
 setInterval(() => { if (wxOn) { wxGrid = null; loadWxGrid(); loadWxObs(); } }, 10 * 60000);
