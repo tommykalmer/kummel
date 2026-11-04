@@ -4,6 +4,12 @@ set -euo pipefail
 shopt -s nullglob
 python3 scripts/prepare_layers.py
 MARKS="aids lights daymarks faults signs pilot navline leadline"   # ligger i data/marks.geojson
+# stenar: egen fil där inget gallras från zoom 11 (-B11)
+if [ -f build/rocks.geojsonl ]; then
+  tippecanoe -o build/rocks-aland.pmtiles --force -Z11 -z14 -B11 --no-feature-limit --no-tile-size-limit \
+    --name "Kummel stenar Åland" --attribution "Maanmittauslaitos, CC BY 4.0" -L rocks:build/rocks.geojsonl 2>&1 | grep -v "%" | tail -3
+  cp build/rocks-aland.pmtiles data/
+fi
 files=(build/layers/*.geojsonl)
 if [ ${#files[@]} -eq 0 ]; then echo "Inga lager att bygga"; exit 1; fi
 args=()

@@ -55,7 +55,9 @@ for coll, k in (("vesikivikko", 4), ("matalikko", 5)):
         g = f.get("geometry")
         if g and g["type"] in ("Polygon", "MultiPolygon", "Point", "LineString"):
             feats.append({"type": "Feature", "geometry": {"type": g["type"], "coordinates": rnd(g["coordinates"])}, "properties": {"k": k}})
-json.dump({"type": "FeatureCollection", "features": feats}, open("data/rocks.geojson", "w"), separators=(",", ":"))
+import os; os.makedirs("build", exist_ok=True)
+with open("build/rocks.geojsonl", "w") as fh:
+    for ft in feats: fh.write(json.dumps(ft, separators=(",", ":")) + "\n")
 with open("data/chart-log.md", "a") as fh:
     fh.write(f"\n## Stenar och grund (Maanmittauslaitos)\n- {n_rocks} stenar, {len(feats) - n_rocks} stenområden och grund\n")
 print("stenar:", n_rocks, "övrigt:", len(feats) - n_rocks)
