@@ -124,8 +124,13 @@ body:has(#navbar:not(.hidden)) .toast{top:auto;bottom:calc(130px + var(--sab))}
   padding-bottom:var(--sab)}
 #sheet.open{transform:none}
 #sheet.compact{max-height:34%}
+#sheet.full{max-height:calc(100% - 64px - var(--sat))}
+.sh-head{touch-action:none;cursor:grab}
+.wp-menu{display:flex;align-items:center;gap:6px;font:600 14px var(--f-ui);color:#14232e}
+.wp-pop .maplibregl-popup-content{border-radius:12px;padding:8px 10px}
 /* phone: the tool rail stays reachable above an open sheet; sheet content keeps clear of it */
 @media (max-width:899px){
+  .sh-body{padding-bottom:calc(28px + var(--sab) + 64px)}
   #rail{z-index:650}
   body.sheet-open .sh-body,body.sheet-open .sh-head{padding-right:calc(70px + var(--sar))}
   body.sheet-open #fab,body.sheet-open #inst{visibility:hidden}
@@ -134,6 +139,7 @@ body:has(#navbar:not(.hidden)) .toast{top:auto;bottom:calc(130px + var(--sab))}
   #sheet{left:calc(10px + var(--sal));right:auto;top:calc(70px + var(--sat));bottom:calc(10px + var(--sab));width:390px;max-height:none;border-radius:18px;transform:translateX(-110%)}
   #sheet.open{transform:none}
   #sheet.compact{max-height:none}
+  #sheet.full{max-height:none}
   body.sheet-open #inst{left:420px}
 }
 .sh-head{display:flex;align-items:center;gap:8px;padding:12px max(16px,var(--sal)) 8px;border-bottom:1px solid var(--line)}
@@ -171,8 +177,8 @@ label.f input,label.f select,label.f textarea{border:1px solid var(--line);borde
 #night{position:fixed;inset:0;z-index:2000;pointer-events:none;background:#b00000;mix-blend-mode:multiply;display:none}
 body.night #night{display:block}
 body.night{filter:brightness(.65)}
-.wp-dot{width:11px;height:11px;border-radius:50%;background:var(--signal);border:2px solid var(--ink);cursor:pointer}
-.wp-icon{width:22px;height:22px;border-radius:50%;background:var(--signal);color:#1b1500;border:2px solid var(--ink);display:grid;place-items:center;font:700 12px var(--f-num)}
+.wp-dot{width:34px;height:34px;display:grid;place-items:center;cursor:grab;touch-action:none}.wp-dot::after{content:"";width:13px;height:13px;border-radius:50%;background:var(--signal);border:2px solid #0f2a3d;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.wp-icon{touch-action:none;cursor:grab;width:30px;height:30px;border-radius:50%;background:var(--signal);color:#1b1500;border:2px solid var(--ink);display:grid;place-items:center;font:700 12px var(--f-num)}
 .pl-icon{padding:0;cursor:pointer;width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:grid;place-items:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35)}
 .pl-icon span{transform:rotate(45deg);font-size:15px;line-height:1}
 .boat-icon{width:34px;height:34px}

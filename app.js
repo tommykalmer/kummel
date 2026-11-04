@@ -245,19 +245,30 @@ function openSheet(title, html, view) {
   $("#sh-title").textContent = title;
   $("#sh-body").innerHTML = html;
   $("#sheet").classList.add("open");
-  $("#sheet").classList.toggle("compact", view === "route" || view === "depth");
+  if (sheetView !== (view || title)) $("#sheet").classList.remove("full");
+  if (!$("#sheet").classList.contains("full")) $("#sheet").classList.toggle("compact", view === "route" || view === "depth");
   document.body.classList.add("sheet-open");
   sheetView = view || title;
 }
 function closeSheet() {
-  $("#sheet").classList.remove("open"); document.body.classList.remove("sheet-open");
+  $("#sheet").classList.remove("open", "full"); document.body.classList.remove("sheet-open");
   if (sheetView === "route") stopPlanning(false);
   sheetView = null;
 }
 $("#sh-close").onclick = closeSheet;
+/* dra i panelens överkant: upp = helskärm, ner = mindre / stäng */
 let dragY = null;
-$(".grab").addEventListener("touchstart", e => dragY = e.touches[0].clientY, { passive: true });
-$(".grab").addEventListener("touchend", e => { if (dragY !== null && e.changedTouches[0].clientY - dragY > 60) closeSheet(); dragY = null; });
+[".grab", ".sh-head"].forEach(sel => {
+  const el = $(sel);
+  el.addEventListener("touchstart", e => { if (e.target.closest(".x")) return; dragY = e.touches[0].clientY; $("#sheet").style.transition = "none"; }, { passive: true });
+  el.addEventListener("touchmove", e => { if (dragY === null) return; const dy = e.touches[0].clientY - dragY; if (dy > 0) $("#sheet").style.transform = `translateY(${dy}px)`; }, { passive: true });
+  el.addEventListener("touchend", e => {
+    if (dragY === null) return; const dy = e.changedTouches[0].clientY - dragY; dragY = null;
+    const sh = $("#sheet"); sh.style.transition = ""; sh.style.transform = "";
+    if (dy < -40) { sh.classList.add("full"); sh.classList.remove("compact"); }
+    else if (dy > 60) { if (sh.classList.contains("full")) sh.classList.remove("full"); else closeSheet(); }
+  });
+});
 
 /* ---------- crosshair readout, north arrow ---------- */
 function updateCross() {
@@ -546,14 +557,33 @@ function startPlanning(initial) {
   if (!initial) toast("Tryck på kartan för att lägga till punkter", 2200);
 }
 function stopPlanning(keep) {
+  closeWpMenu();
   planning = false; document.body.classList.remove("plan"); $("#b-route").setAttribute("aria-pressed", "false");
   if (!keep) { wps = []; wpsOff = []; autoInfo = null; drawWps(); }
 }
 map.on("click", e => {
   if (!planning) return;
   if (e.defaultPrevented) return;
-  wps.push(ll(e.lngLat)); wpsOff = []; autoInfo = null; renderRoute();
+  closeWpMenu();
+  // tryck på linjen: ny punkt mitt i sträckan, annars ny punkt sist
+  const p = e.point, hit = mapReady && map.getLayer("route") && map.queryRenderedFeatures([[p.x - 14, p.y - 14], [p.x + 14, p.y + 14]], { layers: ["route"] })[0];
+  if (hit && hit.properties.i != null) {
+    const i = +hit.properties.i;
+    wps.splice(i + 1, 0, ll(e.lngLat)); wpsOff.splice(i + 1, 0, !!wpsOff[i]);
+    autoInfo = autoInfo ? { ...autoInfo, edited: true } : null; renderRoute(); return;
+  }
+  wps.push(ll(e.lngLat)); wpsOff = wpsOff.slice(0, Math.max(0, wps.length - 2)); autoInfo = null; renderRoute();
 });
+let wpMenu = null;
+function closeWpMenu() { if (wpMenu) { wpMenu.remove(); wpMenu = null; } }
+function openWpMenu(i) {
+  closeWpMenu();
+  const box = document.createElement("div"); box.className = "wp-menu";
+  box.innerHTML = `<b>Punkt ${i + 1}</b><button class="btn warn" data-a="del">Ta bort</button>${i > 0 && i < wps.length - 1 ? "" : ""}<button class="btn" data-a="close">Stäng</button>`;
+  box.querySelector('[data-a="del"]').onclick = () => { wps.splice(i, 1); wpsOff.splice(Math.max(0, i - 1), 1); if (autoInfo) autoInfo = { ...autoInfo, edited: true }; closeWpMenu(); renderRoute(); };
+  box.querySelector('[data-a="close"]').onclick = closeWpMenu;
+  wpMenu = new maplibregl.Popup({ closeButton: false, offset: 18, className: "wp-pop" }).setLngLat(lnglat(wps[i])).setDOMContent(box).addTo(map);
+}
 function routeStats(points) {
   const b = boat(); let nm = 0; const legs = [];
   for (let i = 1; i < points.length; i++) { const d = distNm(points[i - 1], points[i]); nm += d; legs.push({ d, brg: bearing(points[i - 1], points[i]) }); }
@@ -564,14 +594,16 @@ function drawWps() {
   wpMarkers.forEach(m => m.remove()); wpMarkers = [];
   const st = routeStats(wps);
   const many = wps.length > 12;
-  setData("route", { type: "FeatureCollection", features: wps.slice(1).map((p, i) => ({ type: "Feature", properties: { off: wpsOff[i] ? 1 : 0, label: many ? "" : `${String(Math.round(st.legs[i].brg)).padStart(3, "0")}° ${st.legs[i].d.toFixed(1)} nm` }, geometry: { type: "LineString", coordinates: [lnglat(wps[i]), lnglat(p)] } })) });
+  setData("route", { type: "FeatureCollection", features: wps.slice(1).map((p, i) => ({ type: "Feature", properties: { i, off: wpsOff[i] ? 1 : 0, label: many ? "" : `${String(Math.round(st.legs[i].brg)).padStart(3, "0")}° ${st.legs[i].d.toFixed(1)} nm` }, geometry: { type: "LineString", coordinates: [lnglat(wps[i]), lnglat(p)] } })) });
   wps.forEach((p, i) => {
     const el = document.createElement("div"), end = i === 0 || i === wps.length - 1;
     if (many && !end) el.className = "wp-dot"; else { el.className = "wp-icon"; el.textContent = many ? (i === 0 ? "A" : "B") : i + 1; }
     const m = new maplibregl.Marker({ element: el, draggable: true }).setLngLat(lnglat(p)).addTo(map);
-    m.on("drag", () => { wps[i] = ll(m.getLngLat()); const s2 = routeStats(wps); setData("route", lineFC(wps.map(lnglat))); });
-    m.on("dragend", () => { autoInfo = null; renderRoute(); });
-    el.addEventListener("click", e => { e.stopPropagation(); if (planning) { wps.splice(i, 1); wpsOff = []; autoInfo = null; renderRoute(); } });
+    let dragged = false;
+    m.on("dragstart", () => { dragged = true; closeWpMenu(); });
+    m.on("drag", () => { wps[i] = ll(m.getLngLat()); setData("route", { type: "FeatureCollection", features: wps.slice(1).map((q, k) => ({ type: "Feature", properties: { i: k, off: wpsOff[k] ? 1 : 0, label: "" }, geometry: { type: "LineString", coordinates: [lnglat(wps[k]), lnglat(q)] } })) }); });
+    m.on("dragend", () => { if (autoInfo) autoInfo = { ...autoInfo, edited: true }; renderRoute(); setTimeout(() => dragged = false, 50); });
+    el.addEventListener("click", e => { e.stopPropagation(); if (planning && !dragged) openWpMenu(i); });
     wpMarkers.push(m);
   });
 }
@@ -605,10 +637,11 @@ function renderRoute() {
     </div>
     ${st.fuel ? `<div class="muted">Beräknad bränsleåtgång: <b class="num">${st.fuel.toFixed(0)} l</b> (${b.fuel} l/h)</div>` : ""}
     ${wps.length >= 2 && !autoInfo ? `<button class="btn pri" id="rt-auto">Föreslå rutt längs farleder</button><div class="muted">Använder första och sista punkten som start och mål.</div>` : ""}
+    ${wps.length >= 2 ? `<div class="muted">Dra i en punkt för att flytta den. Tryck på linjen för att lägga till en punkt där, eller på en punkt för att ta bort den.</div>` : ""}
     ${wps.length < 2 ? `<div class="muted">Tryck ut start och mål, och låt appen föreslå vägen längs farlederna. Eller tryck ut hela rutten själv.</div>` : ""}
-    ${autoInfo ? `<div class="callout ${autoInfo.offNm > .3 ? "bad" : "ok"}">Ruttförslag längs farleder: <b>${autoInfo.onNm.toFixed(1)} nm i farled</b>${autoInfo.minDraft ? `, minsta farledsdjup ${autoInfo.minDraft.toFixed(1)} m` : ""}${autoInfo.unknownNm > .1 ? `, varav ${autoInfo.unknownNm.toFixed(1)} nm med okänt farledsdjup` : ""}.${autoInfo.offNm > .02 ? ` <b>${autoInfo.offNm.toFixed(2)} nm utanför farled</b> (orange)${autoInfo.unchecked ? ": appen hittade ingen väg i tillräckligt djupt vatten där, rita den själv" : autoInfo.shallow ? ": vägen dit passerar vatten som enligt sjökortet kan vara grundare än din båt behöver, kör försiktigt och kontrollera" : ": vägen går runt land och kända grund men stenar finns inte i datan, kontrollera mot sjökortet"}.` : ""}</div>` : ""}
+    ${autoInfo ? `<div class="callout ${autoInfo.offNm > .3 ? "bad" : "ok"}">${autoInfo.edited ? "Justerat ruttförslag. Kontrollera dina ändringar mot sjökortet. " : ""}Ruttförslag längs farleder: <b>${autoInfo.onNm.toFixed(1)} nm i farled</b>${autoInfo.minDraft ? `, minsta farledsdjup ${autoInfo.minDraft.toFixed(1)} m` : ""}${autoInfo.unknownNm > .1 ? `, varav ${autoInfo.unknownNm.toFixed(1)} nm med okänt farledsdjup` : ""}.${autoInfo.offNm > .02 ? ` <b>${autoInfo.offNm.toFixed(2)} nm utanför farled</b> (orange)${autoInfo.unchecked ? ": appen hittade ingen väg i tillräckligt djupt vatten där, rita den själv" : autoInfo.shallow ? ": vägen dit passerar vatten som enligt sjökortet kan vara grundare än din båt behöver, kör försiktigt och kontrollera" : ": vägen går runt land och kända grund men stenar finns inte i datan, kontrollera mot sjökortet"}.` : ""}</div>` : ""}
     ${shTxt}${dark}${routeWindNote()}
-    <div>${st.legs.map((l, i) => `<div class="leg"><span class="pill">${i + 1}→${i + 2}</span><span>${compass(l.brg)}</span><span class="num">${String(Math.round(l.brg)).padStart(3, "0")}°</span><span class="num">${l.d.toFixed(2)} nm</span></div>`).join("") || `<div class="muted">Tryck på en punkt för att ta bort den. Dra för att flytta.</div>`}</div>
+    <div>${st.legs.map((l, i) => `<div class="leg"><span class="pill">${i + 1}→${i + 2}</span><span>${compass(l.brg)}</span><span class="num">${String(Math.round(l.brg)).padStart(3, "0")}°</span><span class="num">${l.d.toFixed(2)} nm</span></div>`).join("") || `<div class="muted">Tryck på kartan för att lägga till punkter.</div>`}</div>
     ${wps.length > 1 ? `<div class="card"><h3>Ankomsttid</h3>
       <label class="f">Vill vara framme kl<input type="time" id="rt-arr" value="${S.arrTime || ""}"></label>
       <div id="rt-arrout" class="muted"></div>
@@ -817,31 +850,53 @@ function nearestFwList(G, p, ok, n) {
   }
   return list.map(x => x[1]);
 }
-/* bästa anslutning mellan en punkt och farledsnätet, via vatten som är djupt nog */
-async function connect(G, p, other, ok, need) {
-  let best = null;
-  for (const m of nearestFwList(G, p, ok, 6)) {
+/* kandidater för anslutning mellan en punkt och farledsnätet, via vatten som är djupt nog */
+async function connectCands(G, p, ok, need) {
+  const out = [];
+  for (const m of nearestFwList(G, p, ok, 7)) {
     const q = G.pt(m);
-    if (distNm(p, q) * NM < 25) return { node: m, pts: [p, q], ok: true, nm: 0, near: true };
+    if (distNm(p, q) * NM < 25) { out.push({ node: m, pts: [p, q], ok: true, nm: 0, cost: 0, near: true }); continue; }
     const w = await waterPath(p, q, need, [p]);
-    const cost = (w.ok ? w.nm : distNm(p, q) * 3 + 50) + distNm(q, other) * .5;
-    if (!best || cost < best.cost) best = { node: m, ...w, cost, nm: w.ok ? w.nm : distNm(p, q) };
+    const nm = w.ok ? w.nm : distNm(p, q);
+    out.push({ node: m, ...w, nm, cost: w.ok ? nm * (w.shallow ? 3 : 1.6) : nm * 3 + 5 });   // farled föredras framför okontrollerat vatten
   }
-  return best;
+  return out;
+}
+function fwSearchMulti(G, sources, ok, targets) {
+  const N = G.nodes.length, dist = new Float64Array(N).fill(Infinity), prev = new Int32Array(N).fill(-1), heap = [];
+  const push = it => { heap.push(it); let i = heap.length - 1; while (i) { const p = (i - 1) >> 1; if (heap[p][0] <= heap[i][0]) break; [heap[p], heap[i]] = [heap[i], heap[p]]; i = p; } };
+  const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === i) break; [heap[m], heap[i]] = [heap[i], heap[m]]; i = m; } } return top; };
+  for (const s of sources) if (s.cost < dist[s.node]) { dist[s.node] = s.cost; push([s.cost, s.node]); }
+  let left = new Set(targets);
+  while (heap.length && left.size) {
+    const [dd, u] = pop(); if (dd > dist[u]) continue; left.delete(u);
+    const A = G.adj[u];
+    for (let k = 0; k < A.length; k += 3) {
+      const v = A[k], d = A[k + 2]; if (!ok(d)) continue;
+      const nd = dd + A[k + 1] * (d === 0 ? 1.25 : 1);
+      if (nd < dist[v]) { dist[v] = nd; prev[v] = u; push([nd, v]); }
+    }
+  }
+  return { dist, prev };
 }
 async function computeAutoRoute(from, to) {
   let G; try { G = await loadFairways(); } catch (e) { return { err: "Farledsnätet kunde inte laddas. Försök igen om en stund." }; }
   const b = boat(), ok = d => d === 0 || d / 10 >= (+b.draft || 0), need = needDepth();
-  const cs = await connect(G, from, to, ok, need), ct = await connect(G, to, from, ok, need);
-  if (!cs || !ct) return { err: "Hittade ingen farled i närheten." };
-  const path = cs.node === ct.node ? [cs.node] : fwSearch(G, cs.node, ct.node, ok);
-  if (!path) return { err: `Ingen sammanhängande farled där djupet räcker för ${b.name} (${b.draft} m).` };
+  const S0 = await connectCands(G, from, ok, need), T0 = await connectCands(G, to, ok, need);
+  if (!S0.length || !T0.length) return { err: "Hittade ingen farled i närheten." };
+  // hela resan räknas: anslutning + farled + anslutning, så rutten inte går förbi målet och tillbaka
+  const { dist, prev } = fwSearchMulti(G, S0, ok, T0.map(t => t.node));
+  let best = null; for (const t of T0) { const c = dist[t.node] + t.cost; if (isFinite(c) && (!best || c < best.c)) best = { t, c }; }
+  if (!best) return { err: `Ingen sammanhängande farled där djupet räcker för ${b.name} (${b.draft} m).` };
+  const path = []; for (let u = best.t.node; u !== -1; u = prev[u]) path.push(u); path.reverse();
+  const cs = S0.find(s => s.node === path[0]), ct = best.t;
   const mid = simplify(path.map(G.pt), 12);
   const out = [ll(from)], off = [];
   if (!cs.near) for (const p of cs.pts.slice(1)) { out.push(ll(p)); off.push(true); }
   for (let i = cs.near ? 0 : 1; i < mid.length; i++) { out.push(mid[i]); off.push(false); }
   if (!ct.near) { for (const p of ct.pts.slice().reverse().slice(1)) { out.push(ll(p)); off.push(true); } }
   else out[out.length - 1] = ll(to);
+  if (cs.near && out.length > 2 && distNm(out[0], out[1]) * NM < 1) { out.splice(1, 1); off.splice(0, 1); }
   let onNm = 0, unknownNm = 0, minDraft = Infinity;
   for (let i = 1; i < path.length; i++) {
     const A = G.adj[path[i - 1]]; let d = 0; for (let k = 0; k < A.length; k += 3) if (A[k] === path[i]) { d = A[k + 2]; break; }
@@ -984,7 +1039,10 @@ function darkCheck(eta) {
   const ss = sunInfo.sunset.find(s => s.toDateString() === eta.toDateString());
   return ss && eta > ss ? `<div class="callout bad">Du är framme ${fmtDur((eta - ss) / 3600000)} efter solnedgången (${hm(ss)}).</div>` : "";
 }
-$("#b-route").onclick = () => planning ? closeSheet() : startPlanning();
+$("#b-route").onclick = () => {
+  if (planning) { stopPlanning(false); closeWpMenu(); if (sheetView === "route" || sheetView === "disclaimer") closeSheet(); }
+  else startPlanning();
+};
 
 /* ---------- weather ---------- */
 let wx = null, sunInfo = null, wxT = null, wxKey = "";
