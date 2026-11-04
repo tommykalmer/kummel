@@ -13,7 +13,8 @@ const KEY = "kummel.v1";
 const DEFAULT_STATE = {
   mode: "tur",
   view: { lat: 60.08, lng: 19.94, z: 11, bearing: 0 },
-  layers: { base: "chart", detail: true, seamarks: false, soundings: true },
+  layers: { base: "chart", detail: true, detailZoom: 13, seamarks: false, soundings: true, groups: {} },
+  theme: "day",
   fishDepth: [4, 12],
   boats: [{ id: "b1", name: "Min båt", type: "motor", length: 6.5, beam: 2.4, draft: 0.6, air: 2.0, speed: 20, fuel: 18, margin: 0.5, maxWind: 10 }],
   boatId: "b1",
@@ -106,6 +107,7 @@ function baseStyle() {
   };
 }
 
+KummelChart.setTheme(S.theme === "day" || !S.theme ? "day" : "dark");
 const map = new maplibregl.Map({
   container: "map", style: baseStyle(), center: [S.view.lng, S.view.lat], zoom: S.view.z, bearing: S.view.bearing || 0,
   maxZoom: 18.5, minZoom: 4, attributionControl: false, dragRotate: true, pitchWithRotate: false, touchPitch: false, hash: false
@@ -134,6 +136,9 @@ function addOverlays() {
 map.on("style.load", () => { // inte "load": den väntar på alla källor, och en nere OSM-källa får inte stoppa appen
   mapReady = true; addOverlays(); applyLayers(); drawPlaces(); refreshCatches(); updateFishZone(); updateCross();
   if (curTrack) setLive();
+  if (wps.length) drawWps();
+  if (mob) setData("mob", { type: "FeatureCollection", features: [{ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: lnglat(mob) } }] });
+  if (gps) setData("acc", circlePoly(gps, gps.acc || 1));
 });
 map.on("error", e => console.warn("Karta:", String(e && e.error && e.error.message || e)));
 /* finns sjökortsfilen? annars gatukarta för stunden (sparas inte som val) */
@@ -149,6 +154,7 @@ function circlePoly(c, m, n = 48) {
   return { type: "FeatureCollection", features: [{ type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [pts] } }] };
 }
 
+const dz = () => +S.layers.detailZoom || 13;
 function applyLayers() {
   if (!mapReady) return;
   const vis = (id, on) => map.getLayer(id) && map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
@@ -157,7 +163,9 @@ function applyLayers() {
   vis("sat", base === "sat");
   KummelChart.layerIds().forEach(id => vis(id, base === "chart" || (base === "sat" && KummelChart.isOverlay(id))));
   KummelChart.soundingIds().forEach(id => vis(id, (base === "chart" || (base === "sat" && id === "soundg-shallow")) && S.layers.soundings));
-  KummelChart.detailIds().forEach(id => vis(id, base === "chart" && S.layers.detail !== false));
+  KummelChart.detailIds().forEach(id => { vis(id, base === "chart" && S.layers.detail !== false); if (map.getLayer(id)) map.setLayerZoomRange(id, id === "detail-harbour" ? Math.max(14, dz()) : dz(), 24); });
+  const G = KummelChart.groups(), on = g => (S.layers.groups || {})[g] !== false;
+  Object.entries(G).forEach(([g, ids]) => { if (!on(g)) ids.forEach(id => vis(id, false)); });
   vis("seamarks", S.layers.seamarks);
 }
 
@@ -709,15 +717,22 @@ function openLayers() {
   const r = (k, v) => `<label class="row"><input type="radio" name="base" value="${k}" ${S.layers.base === k ? "checked" : ""}> ${v}</label>`;
   openSheet("Kartlager", `
     <div class="card"><h3>Karta</h3>${r("chart", "Sjökort")}${r("sat", "Flygfoto med farleder och sjömärken")}${r("osm", "Gatukarta")}</div>
-    <div class="card"><h3>Visa</h3>
+    <div class="card"><h3>Grynnor och stenar</h3>
+      <label class="row"><input type="checkbox" id="ly-det" ${S.layers.detail !== false ? "checked" : ""}> Visa detaljkortet när jag zoomar in</label>
+      <label class="f">Visa detaljkortet från<select id="ly-dz">${[[11, "Översikt (ca 2 nm över skärmen)"], [12, "Mellan (ca 1 nm)"], [13, "Nära (ca 0,5 nm), rekommenderas"], [14, "Mycket nära (ca 0,25 nm)"]].map(([z, t]) => `<option value="${z}" ${dz() === z ? "selected" : ""}>${t}</option>`).join("")}</select></label>
+      <div class="muted">Grynnor och stenar finns bara i Traficoms detaljkort. Längre ut blir det svårläst eftersom kortet förminskas.</div>
+    </div>
+    <div class="card"><h3>Visa på kartan</h3>
+      ${[["fairways", "Farleder, ledlinjer och farledsdjup"], ["marks", "Sjömärken och fyrar"], ["sectors", "Ljussektorer"], ["contours", "Djupkurvor"], ["limits", "Fartbegränsningar och förbudsområden"], ["land", "Ortnamn, vägar och hus"]].map(([g, t]) => `<label class="row"><input type="checkbox" data-grp="${g}" ${(S.layers.groups || {})[g] !== false ? "checked" : ""}> ${t}</label>`).join("")}
       <label class="row"><input type="checkbox" id="ly-snd" ${S.layers.soundings ? "checked" : ""}> Djupsiffror</label>
-      <label class="row"><input type="checkbox" id="ly-det" ${S.layers.detail !== false ? "checked" : ""}> Detaljkort med grynnor och stenar vid inzoomning</label>
       <label class="row"><input type="checkbox" id="ly-sea" ${S.layers.seamarks ? "checked" : ""}> OpenSeaMap sjömärken</label>
     </div>
     <div class="muted">På detaljkortet är vatten som är grundare än din båt behöver skuggat i rött.</div>
     <div class="disclaimer">Källa: Traficom (CC BY 4.0). Ej för navigering, uppfyller inte kraven för officiella sjökort. Använd alltid uppdaterade officiella sjökort.</div>`, "layers");
   $("#ly-snd").onchange = e => { S.layers.soundings = e.target.checked; save(); applyLayers(); };
   $("#ly-det").onchange = e => { S.layers.detail = e.target.checked; save(); applyLayers(); };
+  $("#ly-dz").onchange = e => { S.layers.detailZoom = +e.target.value; save(); applyLayers(); };
+  document.querySelectorAll("[data-grp]").forEach(x => x.onchange = () => { S.layers.groups = { ...(S.layers.groups || {}), [x.dataset.grp]: x.checked }; save(); applyLayers(); });
   $("#ly-sea").onchange = e => { S.layers.seamarks = e.target.checked; save(); applyLayers(); };
   document.querySelectorAll("input[name=base]").forEach(x => x.onchange = () => { S.layers.base = x.value; save(); applyLayers(); });
 }
@@ -805,10 +820,20 @@ function openAbout() {
 }
 
 /* ---------- night mode ---------- */
+const THEMES = { day: "Dagläge", dark: "Nattläge: mörk karta", red: "Nattläge: rött ljus" };
+function applyTheme(rebuild) {
+  const t = S.theme || "day";
+  if (t === "day") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = "dark";
+  document.body.classList.toggle("night", t === "red");
+  $("#b-night").setAttribute("aria-pressed", t !== "day");
+  document.querySelector('meta[name="theme-color"]').content = t === "day" ? "#0f2a3d" : "#05101a";
+  if (rebuild) { KummelChart.setTheme(t === "day" ? "day" : "dark"); map.setStyle(baseStyle(), { diff: false }); }
+}
 $("#b-night").onclick = () => {
-  const on = !document.body.classList.contains("night");
-  document.body.classList.toggle("night", on); $("#b-night").setAttribute("aria-pressed", on);
+  S.theme = { day: "dark", dark: "red", red: "day" }[S.theme || "day"]; save();
+  applyTheme(true); toast(THEMES[S.theme], 1500);
 };
+applyTheme(false);
 
 /* ---------- init ---------- */
 setMode(S.mode);
