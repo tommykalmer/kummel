@@ -3,7 +3,7 @@
 set -euo pipefail
 shopt -s nullglob
 python3 scripts/prepare_layers.py
-MARKS="aids lights daymarks faults signs pilot"   # ligger i data/marks.geojson
+MARKS="aids lights daymarks faults signs pilot navline leadline"   # ligger i data/marks.geojson
 files=(build/layers/*.geojsonl)
 if [ ${#files[@]} -eq 0 ]; then echo "Inga lager att bygga"; exit 1; fi
 args=()

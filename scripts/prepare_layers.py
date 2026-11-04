@@ -126,12 +126,13 @@ for name, feats in out.items():
     print(f"{name}: {len(feats)}")
 # sjömärken som en enda GeoJSON-fil: få objekt, och då gallras inga bort i någon zoomnivå
 mk = []
-for lay in ("aids", "lights", "daymarks", "faults", "signs", "pilot"):
+def rnd(c): return [round(c[0], 6), round(c[1], 6)] if isinstance(c[0], (int, float)) else [rnd(q) for q in c]
+for lay in ("aids", "lights", "daymarks", "faults", "signs", "pilot", "navline", "leadline"):
     for ft in out.get(lay, []):
         g = ft["geometry"]
         if g["type"] == "MultiPoint": g = {"type": "Point", "coordinates": g["coordinates"][0]}
-        if g["type"] != "Point": continue
-        g = {"type": "Point", "coordinates": [round(g["coordinates"][0], 6), round(g["coordinates"][1], 6)]}
+        if g["type"] not in ("Point", "LineString", "MultiLineString"): continue
+        g = {"type": g["type"], "coordinates": rnd(g["coordinates"])}
         mk.append({"type": "Feature", "geometry": g, "properties": {"L": lay, **ft["properties"]}})
 with open("data/marks.geojson", "w") as fh:
     json.dump({"type": "FeatureCollection", "features": mk}, fh, ensure_ascii=False, separators=(",", ":"))
