@@ -1,0 +1,52 @@
+name: Sjökortsdata
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * 1"   # måndagar 03:17 UTC
+  push:
+    branches: [main]
+    paths:
+      - "scripts/fetch_chart.py"
+      - "scripts/build_tiles.sh"
+      - ".github/workflows/chart.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: chart-data
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installera tippecanoe
+        run: |
+          sudo apt-get update -qq
+          if ! sudo apt-get install -y -qq tippecanoe; then
+            git clone --depth 1 https://github.com/felt/tippecanoe.git /tmp/tippecanoe
+            make -C /tmp/tippecanoe -j"$(nproc)" && sudo make -C /tmp/tippecanoe install
+          fi
+          tippecanoe --version
+
+      - name: Hämta Traficoms data
+        run: python3 scripts/fetch_chart.py
+
+      - name: Bygg vektortiles
+        run: bash scripts/build_tiles.sh
+
+      - name: Spara i repot
+        if: always()
+        run: |
+          git config user.name "kummel-bot"
+          git config user.email "kummel-bot@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then echo "Inga ändringar"; exit 0; fi
+          git commit -m "Uppdatera sjökortsdata ($(date -u +%Y-%m-%d))"
+          git pull --rebase origin main
+          git push origin HEAD:main
