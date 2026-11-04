@@ -76,6 +76,11 @@ const KummelChart = (() => {
       { id: "depcnt-safety", type: "line", source: CH, "source-layer": "depcnt", filter: ["==", ["get", "v"], sc], paint: { "line-color": C.safety, "line-width": ["interpolate", ["linear"], ["zoom"], 9, 1, 14, 2.2] } },
       { id: "depcnt-lbl", type: "symbol", source: CH, "source-layer": "depcnt", minzoom: 12, layout: { "symbol-placement": "line", "symbol-spacing": 320, "text-field": ["to-string", ["get", "v"]], "text-font": FONT_I, "text-size": 10, "text-keep-upright": true }, paint: { "text-color": C.contour, "text-halo-color": C.halo, "text-halo-width": 1.5 } },
 
+      /* stenar och grund (Maanmittauslaitos terrängdatabas) */
+      { id: "rock-area", type: "fill", source: "rocks", "source-layer": "rocks", minzoom: 12, filter: ["all", ["in", ["get", "k"], ["literal", [4, 5]]], ["==", ["geometry-type"], "Polygon"]], paint: { "fill-color": C.unsafe, "fill-opacity": .55 } },
+      { id: "rock-area-line", type: "line", source: "rocks", "source-layer": "rocks", minzoom: 12, filter: ["all", ["in", ["get", "k"], ["literal", [4, 5]]], ["==", ["geometry-type"], "Polygon"]], paint: { "line-color": C.nav, "line-width": .8, "line-dasharray": [1, 2] } },
+      { id: "rocks", type: "symbol", source: "rocks", "source-layer": "rocks", minzoom: 11.5, filter: ["in", ["get", "k"], ["literal", [1, 2, 3]]], layout: { "icon-image": ["match", ["get", "k"], 1, "rock-under", 2, "rock-awash", "rock-dry"], "icon-size": ["interpolate", ["linear"], ["zoom"], 11.5, .5, 14, .8, 17, 1.1], "icon-allow-overlap": true, "icon-ignore-placement": true } },
+
       /* land (kustlinje från OSM-vattnet), kustkonstruktioner */
       { id: "ofm-coast", type: "line", source: OFM, "source-layer": "water", minzoom: 9, paint: { "line-color": C.landLine, "line-width": ["interpolate", ["linear"], ["zoom"], 9, .3, 15, 1] } },
       { id: "ofm-road", type: "line", source: OFM, "source-layer": "transportation", minzoom: 11, filter: ["in", ["get", "class"], ["literal", ["motorway", "trunk", "primary", "secondary", "tertiary", "minor"]]], paint: { "line-color": C.road, "line-width": ["interpolate", ["linear"], ["zoom"], 11, .4, 16, 2] } },
@@ -110,7 +115,6 @@ const KummelChart = (() => {
       { id: "ofm-water-name", type: "symbol", source: OFM, "source-layer": "water_name", minzoom: 9, layout: { "text-field": ["coalesce", ["get", "name:sv"], ["get", "name"]], "text-font": FONT_I, "text-size": 11 }, paint: { "text-color": C.waterName, "text-halo-color": C.halo, "text-halo-width": 1.5 } },
 
       /* sjömärken */
-      { id: "daymarks", type: "symbol", source: MK, filter: ["==", ["get", "L"], "daymarks"], minzoom: 12, layout: { "icon-image": "daymark", "icon-size": .9, "icon-allow-overlap": false } },
       { id: "lights", type: "symbol", source: MK, minzoom: 9, filter: ["==", ["get", "L"], "lights"], layout: { "icon-image": "light", "icon-anchor": "bottom-left", "icon-offset": [-3, 3], "icon-allow-overlap": true, "text-field": ["step", ["zoom"], "", 13, ["coalesce", ["get", "chr"], ""]], "text-font": FONT, "text-size": 10, "text-anchor": "top-left", "text-offset": [.8, .4], "text-optional": true }, paint: { "text-color": C.magenta, "text-halo-color": C.halo, "text-halo-width": 1.5 } },
       { id: "aids", type: "symbol", source: MK, minzoom: 8, filter: ["==", ["get", "L"], "aids"], layout: {
           "icon-image": ["match", ["to-number", ["get", "nav"], 99], 1, "aid-port", 2, "aid-stbd", 3, "aid-n", 4, "aid-s", 5, "aid-w", 6, "aid-e", 7, "aid-iso", 8, "aid-safe", 9, "aid-spec", ["case", ["==", ["get", "lit"], 1], "aid-lit", "aid-other"]],
@@ -136,7 +140,8 @@ const KummelChart = (() => {
 
   const GROUPS = {
     fairways: ["navline-case", "navline", "navline-lbl", "leadline", "fwyarea", "fwyname"],
-    marks: ["aids", "lights", "daymarks", "signs", "pilot", "faults"],
+    marks: ["aids", "lights", "signs", "pilot", "faults"],
+    rocks: ["rock-area", "rock-area-line", "rocks"],
     sectors: ["sectors", "seclegs"],
     soundings: ["soundg", "soundg-shallow"],
     contours: ["depcnt", "depcnt-safety", "depcnt-lbl"],
@@ -144,7 +149,7 @@ const KummelChart = (() => {
     land: ["ofm-place", "ofm-water-name", "ofm-road", "ofm-building"]
   };
   const ALL = layers({ need: 1 }).map(l => l.id).filter(id => !DETAIL_IDS.includes(id) && id !== "depare-sat");
-  const OVERLAY = ["depcnt", "depcnt-safety", "depcnt-lbl", "soundg", "navline-case", "navline", "navline-lbl", "leadline", "fwyname", "sectors", "seclegs", "lights", "aids", "faults", "speed", "speed-lbl", "restrict", "tss-line", "pilot", "signs", "soundg-shallow", "fishband", "fishband-line"];
+  const OVERLAY = ["rocks", "rock-area-line", "depcnt", "depcnt-safety", "depcnt-lbl", "soundg", "navline-case", "navline", "navline-lbl", "leadline", "fwyname", "sectors", "seclegs", "lights", "aids", "faults", "speed", "speed-lbl", "restrict", "tss-line", "pilot", "signs", "soundg-shallow", "fishband", "fishband-line"];
 
   function setNeed(map, need) {
     if (map.getLayer("depare")) map.setPaintProperty("depare", "fill-color", depthFill(need));
@@ -187,6 +192,9 @@ const KummelChart = (() => {
     "aid-spec": () => canvas(24, 32, g => pole(g, [C.yellow], (g, cx) => { g.strokeStyle = C.yellow; g.lineWidth = 2.5; g.beginPath(); g.moveTo(cx - 4, 2); g.lineTo(cx + 4, 10); g.moveTo(cx + 4, 2); g.lineTo(cx - 4, 10); g.stroke(); })),
     "aid-lit": () => canvas(24, 32, g => { g.fillStyle = C.ink; g.beginPath(); g.arc(12, 27, 3.2, 0, 7); g.fill(); g.fillStyle = C.magenta; g.beginPath(); g.moveTo(12, 25); g.quadraticCurveTo(22, 12, 16, 5); g.quadraticCurveTo(9, 14, 12, 25); g.fill(); }),
     "aid-other": () => canvas(24, 32, g => { g.fillStyle = C.ink; g.fillRect(10.5, 14, 3, 15); g.beginPath(); g.arc(12, 29, 2.5, 0, 7); g.fill(); }),
+    "rock-under": () => canvas(16, 16, g => { g.strokeStyle = C.ink; g.lineWidth = 1.8; g.beginPath(); g.moveTo(8, 2); g.lineTo(8, 14); g.moveTo(2, 8); g.lineTo(14, 8); g.stroke(); }),
+    "rock-awash": () => canvas(16, 16, g => { g.strokeStyle = C.ink; g.lineWidth = 1.6; g.beginPath(); g.moveTo(8, 1.5); g.lineTo(8, 14.5); g.moveTo(1.5, 8); g.lineTo(14.5, 8); g.stroke(); g.fillStyle = C.ink; [[4, 4], [12, 4], [4, 12], [12, 12]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 1.3, 0, 7); g.fill(); }); }),
+    "rock-dry": () => canvas(16, 16, g => { g.fillStyle = C.land; g.strokeStyle = C.ink; g.lineWidth = 1.4; g.beginPath(); g.arc(8, 8, 4.2, 0, 7); g.fill(); g.stroke(); }),
     "light": () => canvas(22, 22, g => { g.fillStyle = C.magenta; g.globalAlpha = .9; g.beginPath(); g.moveTo(3, 19); g.quadraticCurveTo(18, 12, 19, 2); g.quadraticCurveTo(8, 6, 3, 19); g.fill(); }),
     "daymark": () => canvas(16, 16, g => { g.fillStyle = C.ink; g.beginPath(); g.moveTo(8, 2); g.lineTo(14, 14); g.lineTo(2, 14); g.closePath(); g.fill(); }),
     "sign": () => canvas(18, 18, g => { g.fillStyle = C.paper; g.strokeStyle = C.red; g.lineWidth = 2.2; g.beginPath(); g.arc(9, 9, 7, 0, 7); g.fill(); g.stroke(); }),

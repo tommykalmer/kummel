@@ -93,7 +93,7 @@ function mmlSources() {
   if (!mmlKey()) return {};
   return {
     "mml-orto": { type: "raster", tiles: [MML("ortokuva", "jpg")], tileSize: 256, maxzoom: 16, bounds: [19, 59.3, 32, 70.2], attribution: "Flygbild © Maanmittauslaitos" },
-    "mml-prop": { type: "raster", tiles: [MML("kiinteistojaotus", "png")], tileSize: 256, minzoom: 12, maxzoom: 16, bounds: [19, 59.3, 32, 70.2], attribution: "Fastighetsgränser © Maanmittauslaitos" }
+    "mml-prop": { type: "raster", tiles: [MML("kiinteistojaotus", "png")], tileSize: 256, minzoom: 15, maxzoom: 16, bounds: [19, 59.3, 32, 70.2], attribution: "Fastighetsgränser © Maanmittauslaitos" }
   };
 }
 function baseStyle() {
@@ -108,6 +108,7 @@ function baseStyle() {
       seamarks: { type: "raster", tiles: ["https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"], tileSize: 256, maxzoom: 18, attribution: "© OpenSeaMap" },
       ofm: { type: "vector", url: "https://tiles.openfreemap.org/planet", attribution: "OpenFreeMap © OpenStreetMap" },
       marks: { type: "geojson", data: "data/marks.geojson" },
+      rocks: { type: "vector", url: "pmtiles://" + new URL("data/rocks-aland.pmtiles", location.href).href, attribution: "Stenar: Maanmittauslaitos" },
       chart: { type: "vector", url: CHART_URL, attribution: "Källa: Traficom (CC BY 4.0). Ej för navigering." }
     },
     layers: [
@@ -116,7 +117,7 @@ function baseStyle() {
       { id: "sat", type: "raster", source: "sat", layout: { visibility: "none" } },
       ...(mmlKey() ? [{ id: "mml-orto", type: "raster", source: "mml-orto", layout: { visibility: "none" } }] : []),
       ...KummelChart.layers({ need: needDepth(), fish: null, soundings: S.layers.soundings }),
-      ...(mmlKey() ? [{ id: "mml-prop", type: "raster", source: "mml-prop", minzoom: 14.5, layout: { visibility: "none" }, paint: { "raster-opacity": .9 } }] : []),
+      ...(mmlKey() ? [{ id: "mml-prop", type: "raster", source: "mml-prop", minzoom: 15, layout: { visibility: "none" }, paint: { "raster-opacity": .9 } }] : []),
       { id: "seamarks", type: "raster", source: "seamarks", layout: { visibility: "none" } }
     ]
   };
@@ -831,10 +832,11 @@ async function waterPath(a, b, need, free) {
   const k = Math.cos(rad((a.lat + b.lat) / 2)) * 111320, Wm = (bb[2] - bb[0]) * k, Hm = (bb[3] - bb[1]) * 111320;
   const cell = Math.max(12, Math.hypot(Wm, Hm) / 170), nx = Math.ceil(Wm / cell), ny = Math.ceil(Hm / cell);
   const at = (i, j) => ({ lng: bb[0] + (i + .5) * cell / k, lat: bb[1] + (j + .5) * cell / 111320 });
-  const ok = new Uint8Array(nx * ny); for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) ok[j * nx + i] = cls(at(i, j));
+  const ok = depthGrid([bb[0], bb[1], bb[0] + nx * cell / k, bb[1] + ny * cell / 111320], nx, ny, need);
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) if (isFree(at(i, j))) ok[j * nx + i] = 1;
   const idx = p => [Math.min(nx - 1, Math.max(0, Math.floor((p.lng - bb[0]) * k / cell))), Math.min(ny - 1, Math.max(0, Math.floor((p.lat - bb[1]) * 111320 / cell)))];
   const [si, sj] = idx(a), [ti, tj] = idx(b), S0 = sj * nx + si, T0 = tj * nx + ti; ok[S0] = ok[T0] = 1;
-  const g = new Float32Array(nx * ny).fill(Infinity), prev = new Int32Array(nx * ny).fill(-1), open = [[0, S0]]; g[S0] = 0;
+  const g = new Float64Array(nx * ny).fill(Infinity), prev = new Int32Array(nx * ny).fill(-1), open = [[0, S0]]; g[S0] = 0;
   const push = it => { open.push(it); let i = open.length - 1; while (i) { const p = (i - 1) >> 1; if (open[p][0] <= open[i][0]) break; [open[p], open[i]] = [open[i], open[p]]; i = p; } };
   const pop = () => { const top = open[0], last = open.pop(); if (open.length) { open[0] = last; let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < open.length && open[l][0] < open[m][0]) m = l; if (r < open.length && open[r][0] < open[m][0]) m = r; if (m === i) break; [open[m], open[i]] = [open[i], open[m]]; i = m; } } return top; };
   const closed = new Uint8Array(nx * ny);
@@ -857,6 +859,89 @@ async function waterPath(a, b, need, free) {
   for (let i = 0; i < raw.length - 1;) { let j = raw.length - 1; while (j > i + 1 && !los(raw[i], raw[j])) j--; out.push(raw[j]); i = j; }
   let nm = 0; for (let i = 1; i < out.length; i++) nm += distNm(out[i - 1], out[i]);
   return { pts: out, ok: true, nm, shallow };
+}
+/* avståndsfält i vatten från en punkt: kortaste väg från varje rutnätscell till punkten */
+/* djupområden ritade på ett rutnät (snabbt: canvas) -> 1 djupt nog, 2 grunt, 0 land/okänt */
+function depthGrid(bb, nx, ny, need) {
+  const cv = document.createElement("canvas"); cv.width = nx; cv.height = ny;
+  const g = cv.getContext("2d", { willReadFrequently: true }); g.imageSmoothingEnabled = false;
+  const X = lng => (lng - bb[0]) / (bb[2] - bb[0]) * nx, Y = lat => (bb[3] - lat) / (bb[3] - bb[1]) * ny;
+  const [x0, y1] = tileOf({ lat: bb[1], lng: bb[0] }, DZ), [x1, y0] = tileOf({ lat: bb[3], lng: bb[2] }, DZ);
+  for (const pass of [0, 1]) for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) {
+    const t = depData.get(x + "/" + y); if (!t) continue;
+    for (const P of t.polys) {
+      if (P.bb[2] < bb[0] || P.bb[0] > bb[2] || P.bb[3] < bb[1] || P.bb[1] > bb[3]) continue;
+      const deep = P.d1 >= need; if ((pass === 0) !== deep) continue;   // grunt ritas sist och vinner
+      g.fillStyle = deep ? "rgb(255,0,0)" : "rgb(128,0,0)";
+      g.beginPath();
+      for (const r of P.rings) { r.forEach(([lng, lat], i) => i ? g.lineTo(X(lng), Y(lat)) : g.moveTo(X(lng), Y(lat))); g.closePath(); }
+      g.fill("evenodd");
+    }
+  }
+  const px = g.getImageData(0, 0, nx, ny).data, out = new Uint8Array(nx * ny);
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const r = px[((ny - 1 - j) * nx + i) * 4]; out[j * nx + i] = r > 200 ? 1 : r > 60 ? 2 : 0; }
+  return out;   // rad j = 0 är södra kanten
+}
+async function waterField(target, radiusM, need) {
+  const dLat = radiusM / 111320, dLng = radiusM / (111320 * Math.cos(rad(target.lat)));
+  const bb = [target.lng - dLng, target.lat - dLat, target.lng + dLng, target.lat + dLat];
+  if (!(await loadDepth(bb))) return null;
+  const k = Math.cos(rad(target.lat)) * 111320, cell = Math.max(15, radiusM / 90);
+  const nx = Math.ceil((bb[2] - bb[0]) * k / cell), ny = Math.ceil((bb[3] - bb[1]) * 111320 / cell);
+  const at = (i, j) => ({ lng: bb[0] + (i + .5) * cell / k, lat: bb[1] + (j + .5) * cell / 111320 });
+  const idx = p => { const i = Math.floor((p.lng - bb[0]) * k / cell), j = Math.floor((p.lat - bb[1]) * 111320 / cell); return i < 0 || j < 0 || i >= nx || j >= ny ? -1 : j * nx + i; };
+  const bbg = [bb[0], bb[1], bb[0] + nx * cell / k, bb[1] + ny * cell / 111320];
+  const cls = depthGrid(bbg, nx, ny, need);
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) if (distNm(at(i, j), target) * NM < 90) cls[j * nx + i] = 1;
+  const T = idx(target); if (T < 0) return null; cls[T] = 1;
+  const dist = new Float64Array(nx * ny).fill(Infinity), prev = new Int32Array(nx * ny).fill(-1), heap = [[0, T]]; dist[T] = 0;
+  const push = it => { heap.push(it); let i = heap.length - 1; while (i) { const p = (i - 1) >> 1; if (heap[p][0] <= heap[i][0]) break; [heap[p], heap[i]] = [heap[i], heap[p]]; i = p; } };
+  const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === i) break; [heap[m], heap[i]] = [heap[i], heap[m]]; i = m; } } return top; };
+  while (heap.length) {
+    const [d0, c] = pop(); if (d0 > dist[c]) continue;
+    const ci = c % nx, cj = (c / nx) | 0;
+    for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+      if (!di && !dj) continue; const i2 = ci + di, j2 = cj + dj; if (i2 < 0 || j2 < 0 || i2 >= nx || j2 >= ny) continue;
+      const n = j2 * nx + i2; if (!cls[n]) continue; if (di && dj && (!cls[cj * nx + i2] || !cls[j2 * nx + ci])) continue;
+      const nd = d0 + cell * (di && dj ? 1.414 : 1) * (cls[n] === 2 ? 8 : 1);
+      if (nd < dist[n]) { dist[n] = nd; prev[n] = c; push([nd, n]); }
+    }
+  }
+  const lerp = (p, q, t) => ({ lat: p.lat + (q.lat - p.lat) * t, lng: p.lng + (q.lng - p.lng) * t });
+  const free = p => { const c = idx(p); return c >= 0 && cls[c] === 1; };
+  const los = (p, q) => { const n = Math.max(2, Math.ceil(distNm(p, q) * NM / 10)); for (let i = 1; i < n; i++) if (!free(lerp(p, q, i / n))) return false; return true; };
+  return {
+    cost: p => { const c = idx(p); return c < 0 ? Infinity : dist[c]; },
+    path: p => {   // från p till målet, förenklad med fri sikt
+      let c = idx(p); if (c < 0 || !isFinite(dist[c])) return null;
+      const raw = [p]; let shallow = false, guard = 0; while (c !== -1 && c !== T && guard++ < nx * ny) { c = prev[c]; if (c >= 0) { raw.push(at(c % nx, (c / nx) | 0)); if (cls[c] === 2) shallow = true; } }
+      raw.push(target);
+      const out = [raw[0]]; for (let i = 0; i < raw.length - 1;) { let j = raw.length - 1; while (j > i + 1 && !los(raw[i], raw[j])) j--; out.push(raw[j]); i = j; }
+      let nm = 0; for (let i = 1; i < out.length; i++) nm += distNm(out[i - 1], out[i]);
+      return { pts: out, nm, shallow };
+    }
+  };
+}
+/* bästa avfart: punkten längs farleden som ger kortast total väg (farled + vatten) till målet */
+async function bestExit(line, target, need, fromEnd) {
+  const Lm = Math.min(5000, Math.max(1200, distNm(target, fromEnd ? line[line.length - 1] : line[0]) * NM * 3));
+  const F = await waterField(target, Lm, need); if (!F) return null;
+  const P = fromEnd ? line : line.slice().reverse();
+  const cum = [0]; for (let i = 1; i < P.length; i++) cum.push(cum[i - 1] + distNm(P[i - 1], P[i]) * NM);
+  let best = null;
+  for (let i = 0; i < P.length - 1; i++) {
+    const segM = cum[i + 1] - cum[i], n = Math.max(1, Math.ceil(segM / 40));
+    for (let s = 0; s <= n; s++) {
+      const t = s / n, q = { lat: P[i].lat + (P[i + 1].lat - P[i].lat) * t, lng: P[i].lng + (P[i + 1].lng - P[i].lng) * t };
+      const w = F.cost(q); if (!isFinite(w)) continue;
+      const total = cum[i] + segM * t + w * 1.25;
+      if (!best || total < best.total) best = { total, i, q };
+    }
+  }
+  if (!best) return null;
+  const wp = F.path(best.q); if (!wp) return null;
+  const kept = [...P.slice(0, best.i + 1), best.q];
+  return { line: fromEnd ? kept : kept.reverse(), water: fromEnd ? wp.pts : wp.pts.slice().reverse(), nm: wp.nm, shallow: wp.shallow };
 }
 function nearestFwList(G, p, ok, n) {
   const list = [];
@@ -908,20 +993,12 @@ async function computeAutoRoute(from, to) {
   const path = []; for (let u = best.t.node; u !== -1; u = prev[u]) path.push(u); path.reverse();
   let cs = S0.find(s => s.node === path[0]), ct = best.t;
   let mid = simplify(path.map(G.pt), 12);
-  // kapa farleden där den passerar närmast start och mål, så rutten inte går till nästa farledspunkt och tillbaka
-  const proj = (p, a, b) => {
-    const k = Math.cos(rad(p.lat)) * 111320, ax = (a.lng - p.lng) * k, ay = (a.lat - p.lat) * 111320, bx = (b.lng - p.lng) * k, by = (b.lat - p.lat) * 111320;
-    const dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy, u = L ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / L)) : 0;
-    return { q: { lat: a.lat + (b.lat - a.lat) * u, lng: a.lng + (b.lng - a.lng) * u }, d: Math.hypot(ax + u * dx, ay + u * dy) };
-  };
-  if (!cs.near && mid.length > 1) {
-    let bp = null; for (let i = 0; i < Math.min(mid.length - 1, 40); i++) { const r = proj(from, mid[i], mid[i + 1]); if (!bp || r.d < bp.d) bp = { ...r, i }; }
-    if (bp && bp.d < cs.nm * NM * .95) { const w = await waterPath(from, bp.q, need, [from]); if (w.ok && w.nm < cs.nm) { mid = [bp.q, ...mid.slice(bp.i + 1)]; cs = { ...cs, ...w, near: false }; } }
-  }
-  if (!ct.near && mid.length > 1) {
-    let bp = null; for (let i = Math.max(0, mid.length - 41); i < mid.length - 1; i++) { const r = proj(to, mid[i], mid[i + 1]); if (!bp || r.d < bp.d) bp = { ...r, i }; }
-    if (bp && bp.d < ct.nm * NM * .95) { const w = await waterPath(to, bp.q, need, [to]); if (w.ok && w.nm < ct.nm) { mid = [...mid.slice(0, bp.i + 1), bp.q]; ct = { ...ct, ...w, near: false }; } }
-  }
+  // välj var rutten lämnar farleden: punkten som ger kortast total väg i vatten som är djupt nog
+  let exitS = null, exitT = null;
+  if (mid.length > 1 && !ct.near) exitT = await bestExit(mid, to, need, true);
+  if (exitT) { mid = exitT.line; ct = { ...ct, pts: exitT.water.slice().reverse(), nm: exitT.nm, ok: true, shallow: exitT.shallow }; }
+  if (mid.length > 1 && !cs.near) exitS = await bestExit(mid, from, need, false);
+  if (exitS) { mid = exitS.line; cs = { ...cs, pts: exitS.water, nm: exitS.nm, ok: true, shallow: exitS.shallow }; }
   const out = [ll(from)], off = [];
   if (!cs.near) for (const p of cs.pts.slice(1)) { out.push(ll(p)); off.push(true); }
   for (let i = cs.near ? 0 : 1; i < mid.length; i++) { out.push(mid[i]); off.push(false); }
@@ -1442,7 +1519,7 @@ function openLayers() {
       <div class="muted">Grynnor och stenar finns bara i Traficoms detaljkort. Längre ut blir det svårläst eftersom kortet förminskas.</div>
     </div>
     <div class="card"><h3>Visa på kartan</h3>
-      ${[["fairways", "Farleder, ledlinjer och farledsdjup"], ["marks", "Sjömärken och fyrar"], ["sectors", "Ljussektorer"], ["contours", "Djupkurvor"], ["limits", "Fartbegränsningar och förbudsområden"], ["land", "Ortnamn, vägar och hus"]].map(([g, t]) => `<label class="row"><input type="checkbox" data-grp="${g}" ${(S.layers.groups || {})[g] !== false ? "checked" : ""}> ${t}</label>`).join("")}
+      ${[["fairways", "Farleder, ledlinjer och farledsdjup"], ["marks", "Sjömärken och fyrar"], ["rocks", "Stenar och grund"], ["sectors", "Ljussektorer"], ["contours", "Djupkurvor"], ["limits", "Fartbegränsningar och förbudsområden"], ["land", "Ortnamn, vägar och hus"]].map(([g, t]) => `<label class="row"><input type="checkbox" data-grp="${g}" ${(S.layers.groups || {})[g] !== false ? "checked" : ""}> ${t}</label>`).join("")}
       <label class="row"><input type="checkbox" id="ly-snd" ${S.layers.soundings ? "checked" : ""}> Djupsiffror</label>
       <label class="row"><input type="checkbox" id="ly-ais" ${S.layers.ais ? "checked" : ""}> AIS-fartyg i realtid</label>
       <label class="row"><input type="checkbox" id="ly-sea" ${S.layers.seamarks ? "checked" : ""}> OpenSeaMap sjömärken</label>
@@ -1452,7 +1529,7 @@ function openLayers() {
   $("#ly-snd").onchange = e => { S.layers.soundings = e.target.checked; save(); applyLayers(); };
   $("#ly-ais").onchange = e => setAis(e.target.checked);
   $("#ly-det").onchange = e => { S.layers.detail = e.target.checked; save(); applyLayers(); };
-  $("#ly-prop").onchange = e => { S.layers.props = e.target.checked; save(); applyLayers(); if (e.target.checked && map.getZoom() < 14.5) toast("Fastighetsgränser visas när du zoomar in närmare", 2200); };
+  $("#ly-prop").onchange = e => { S.layers.props = e.target.checked; save(); applyLayers(); if (e.target.checked && map.getZoom() < 15) toast("Fastighetsgränser visas när du zoomar in närmare", 2200); };
   $("#ly-mml-save").onclick = () => {
     S.mmlKey = $("#ly-mml").value.trim(); save();
     map.setStyle(baseStyle(), { diff: false });

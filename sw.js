@@ -1,5 +1,5 @@
 /* Kummel service worker – app shell offline + cache of chart tiles you have viewed */
-const SHELL = "kummel-shell-v18";
+const SHELL = "kummel-shell-v20";
 const TILES = "kummel-tiles-v1";
 const MAX_TILES = 6000;
 const SHELL_FILES = ["./", "./index.html", "./app.js", "./chartstyle.js", "./config.js", "./data/marks.geojson", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png",
@@ -48,7 +48,12 @@ self.addEventListener("fetch", e => {
       .catch(() => caches.match(e.request)));
     return;
   }
-  // app shell: stale-while-revalidate
+  // app shell: nätet först (nya versioner direkt), cache om man är offline
+  if (url.origin === self.location.origin && /\.(html|js|geojson)$|\/$/.test(url.pathname)) {
+    e.respondWith(fetch(e.request).then(res => { if (res.ok) { const cl = res.clone(); caches.open(SHELL).then(c => c.put(e.request, cl)); } return res; }).catch(() => caches.match(e.request, { ignoreSearch: true })));
+    return;
+  }
+  // övrigt: stale-while-revalidate
   e.respondWith(caches.match(e.request).then(hit => {
     const net = fetch(e.request).then(res => { if (res.ok) { const cl = res.clone(); caches.open(SHELL).then(c => c.put(e.request, cl)); } return res; }).catch(() => hit);
     return hit || net;
