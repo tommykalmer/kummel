@@ -107,6 +107,7 @@ function baseStyle() {
       ...KummelChart.rasterSources(),
       seamarks: { type: "raster", tiles: ["https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"], tileSize: 256, maxzoom: 18, attribution: "© OpenSeaMap" },
       ofm: { type: "vector", url: "https://tiles.openfreemap.org/planet", attribution: "OpenFreeMap © OpenStreetMap" },
+      marks: { type: "geojson", data: "data/marks.geojson" },
       chart: { type: "vector", url: CHART_URL, attribution: "Källa: Traficom (CC BY 4.0). Ej för navigering." }
     },
     layers: [
@@ -115,7 +116,7 @@ function baseStyle() {
       { id: "sat", type: "raster", source: "sat", layout: { visibility: "none" } },
       ...(mmlKey() ? [{ id: "mml-orto", type: "raster", source: "mml-orto", layout: { visibility: "none" } }] : []),
       ...KummelChart.layers({ need: needDepth(), fish: null, soundings: S.layers.soundings }),
-      ...(mmlKey() ? [{ id: "mml-prop", type: "raster", source: "mml-prop", minzoom: 12, layout: { visibility: "none" }, paint: { "raster-opacity": .9 } }] : []),
+      ...(mmlKey() ? [{ id: "mml-prop", type: "raster", source: "mml-prop", minzoom: 14.5, layout: { visibility: "none" }, paint: { "raster-opacity": .9 } }] : []),
       { id: "seamarks", type: "raster", source: "seamarks", layout: { visibility: "none" } }
     ]
   };
@@ -206,6 +207,7 @@ function applyLayers() {
   vis("sat", base === "sat" && !mmlKey());
   vis("mml-orto", base === "sat" && !!mmlKey());
   vis("mml-prop", !!S.layers.props);
+  vis("depare-sat", base === "sat");
   KummelChart.layerIds().forEach(id => vis(id, base === "chart" || (base === "sat" && KummelChart.isOverlay(id))));
   KummelChart.soundingIds().forEach(id => vis(id, (base === "chart" || (base === "sat" && id === "soundg-shallow")) && S.layers.soundings));
   $("#b-detail").setAttribute("aria-pressed", !!S.layers.detail);
@@ -904,8 +906,22 @@ async function computeAutoRoute(from, to) {
   let best = null; for (const t of T0) { const c = dist[t.node] + t.cost; if (isFinite(c) && (!best || c < best.c)) best = { t, c }; }
   if (!best) return { err: `Ingen sammanhängande farled där djupet räcker för ${b.name} (${b.draft} m).` };
   const path = []; for (let u = best.t.node; u !== -1; u = prev[u]) path.push(u); path.reverse();
-  const cs = S0.find(s => s.node === path[0]), ct = best.t;
-  const mid = simplify(path.map(G.pt), 12);
+  let cs = S0.find(s => s.node === path[0]), ct = best.t;
+  let mid = simplify(path.map(G.pt), 12);
+  // kapa farleden där den passerar närmast start och mål, så rutten inte går till nästa farledspunkt och tillbaka
+  const proj = (p, a, b) => {
+    const k = Math.cos(rad(p.lat)) * 111320, ax = (a.lng - p.lng) * k, ay = (a.lat - p.lat) * 111320, bx = (b.lng - p.lng) * k, by = (b.lat - p.lat) * 111320;
+    const dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy, u = L ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / L)) : 0;
+    return { q: { lat: a.lat + (b.lat - a.lat) * u, lng: a.lng + (b.lng - a.lng) * u }, d: Math.hypot(ax + u * dx, ay + u * dy) };
+  };
+  if (!cs.near && mid.length > 1) {
+    let bp = null; for (let i = 0; i < Math.min(mid.length - 1, 40); i++) { const r = proj(from, mid[i], mid[i + 1]); if (!bp || r.d < bp.d) bp = { ...r, i }; }
+    if (bp && bp.d < cs.nm * NM * .95) { const w = await waterPath(from, bp.q, need, [from]); if (w.ok && w.nm < cs.nm) { mid = [bp.q, ...mid.slice(bp.i + 1)]; cs = { ...cs, ...w, near: false }; } }
+  }
+  if (!ct.near && mid.length > 1) {
+    let bp = null; for (let i = Math.max(0, mid.length - 41); i < mid.length - 1; i++) { const r = proj(to, mid[i], mid[i + 1]); if (!bp || r.d < bp.d) bp = { ...r, i }; }
+    if (bp && bp.d < ct.nm * NM * .95) { const w = await waterPath(to, bp.q, need, [to]); if (w.ok && w.nm < ct.nm) { mid = [...mid.slice(0, bp.i + 1), bp.q]; ct = { ...ct, ...w, near: false }; } }
+  }
   const out = [ll(from)], off = [];
   if (!cs.near) for (const p of cs.pts.slice(1)) { out.push(ll(p)); off.push(true); }
   for (let i = cs.near ? 0 : 1; i < mid.length; i++) { out.push(mid[i]); off.push(false); }
@@ -915,8 +931,9 @@ async function computeAutoRoute(from, to) {
   let onNm = 0, unknownNm = 0, minDraft = Infinity;
   for (let i = 1; i < path.length; i++) {
     const A = G.adj[path[i - 1]]; let d = 0; for (let k = 0; k < A.length; k += 3) if (A[k] === path[i]) { d = A[k + 2]; break; }
-    const w = distNm(G.pt(path[i - 1]), G.pt(path[i])); onNm += w; if (d === 0) unknownNm += w; else minDraft = Math.min(minDraft, d / 10);
+    const w = distNm(G.pt(path[i - 1]), G.pt(path[i])); if (d === 0) unknownNm += w; else minDraft = Math.min(minDraft, d / 10);
   }
+  for (let i = 1; i < mid.length; i++) onNm += distNm(mid[i - 1], mid[i]);
   const offNm = (cs.near ? 0 : cs.nm) + (ct.near ? 0 : ct.nm);
   return { pts: out, off: off.slice(0, out.length - 1), info: { onNm, offNm, unknownNm, minDraft: isFinite(minDraft) ? minDraft : null, unchecked: (!cs.near && !cs.ok) || (!ct.near && !ct.ok), shallow: !!(cs.shallow || ct.shallow) } };
 }
@@ -1435,7 +1452,7 @@ function openLayers() {
   $("#ly-snd").onchange = e => { S.layers.soundings = e.target.checked; save(); applyLayers(); };
   $("#ly-ais").onchange = e => setAis(e.target.checked);
   $("#ly-det").onchange = e => { S.layers.detail = e.target.checked; save(); applyLayers(); };
-  $("#ly-prop").onchange = e => { S.layers.props = e.target.checked; save(); applyLayers(); if (e.target.checked && map.getZoom() < 12) toast("Fastighetsgränser visas när du zoomar in närmare", 2200); };
+  $("#ly-prop").onchange = e => { S.layers.props = e.target.checked; save(); applyLayers(); if (e.target.checked && map.getZoom() < 14.5) toast("Fastighetsgränser visas när du zoomar in närmare", 2200); };
   $("#ly-mml-save").onclick = () => {
     S.mmlKey = $("#ly-mml").value.trim(); save();
     map.setStyle(baseStyle(), { diff: false });

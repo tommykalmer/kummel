@@ -42,7 +42,7 @@ const KummelChart = (() => {
     ["<", d1, 10], C.d6,
     C.d10];
 
-  const OFM = "ofm", CH = "chart", DETAIL_Z = 13;
+  const OFM = "ofm", CH = "chart", MK = "marks", DETAIL_Z = 13;
   const rasterPaint = () => themeName === "dark"
     ? { "raster-fade-duration": 250, "raster-brightness-min": .82, "raster-brightness-max": .04, "raster-hue-rotate": 180, "raster-saturation": .1 }
     : { "raster-fade-duration": 250 };
@@ -64,13 +64,15 @@ const KummelChart = (() => {
 
       /* djupområden */
       { id: "depare", type: "fill", source: CH, "source-layer": "depare", paint: { "fill-color": depthFill(need), "fill-antialias": false } },
+      /* på flygfotot: djupet som genomskinlig färg, så att grunt syns direkt */
+      { id: "depare-sat", type: "fill", source: CH, "source-layer": "depare", layout: { visibility: "none" }, paint: { "fill-color": ["case", ["<", d1, need], "#7fd0ff", ["<", d1, 6], "#b9e4ff", "rgba(0,0,0,0)"], "fill-opacity": ["case", ["<", d1, need], .45, .22] } },
       { id: "unsurv", type: "fill", source: CH, "source-layer": "unsurv", paint: { "fill-color": C.unsurv, "fill-opacity": .25 } },
       { id: "dredged", type: "fill", source: CH, "source-layer": "dredged", paint: { "fill-color": C.dredged, "fill-outline-color": C.secLeg } },
 
       /* djupkurvor */
       { id: "depcnt", type: "line", source: CH, "source-layer": "depcnt", paint: { "line-color": C.contour, "line-width": ["interpolate", ["linear"], ["zoom"], 9, .4, 14, .9] } },
       { id: "depcnt-safety", type: "line", source: CH, "source-layer": "depcnt", filter: ["==", ["get", "v"], sc], paint: { "line-color": C.safety, "line-width": ["interpolate", ["linear"], ["zoom"], 9, 1, 14, 2.2] } },
-      { id: "depcnt-lbl", type: "symbol", source: CH, "source-layer": "depcnt", minzoom: 13, layout: { "symbol-placement": "line", "symbol-spacing": 320, "text-field": ["to-string", ["get", "v"]], "text-font": FONT_I, "text-size": 10, "text-keep-upright": true }, paint: { "text-color": C.contour, "text-halo-color": C.halo, "text-halo-width": 1.5 } },
+      { id: "depcnt-lbl", type: "symbol", source: CH, "source-layer": "depcnt", minzoom: 12, layout: { "symbol-placement": "line", "symbol-spacing": 320, "text-field": ["to-string", ["get", "v"]], "text-font": FONT_I, "text-size": 10, "text-keep-upright": true }, paint: { "text-color": C.contour, "text-halo-color": C.halo, "text-halo-width": 1.5 } },
 
       /* land (kustlinje från OSM-vattnet), kustkonstruktioner */
       { id: "ofm-coast", type: "line", source: OFM, "source-layer": "water", minzoom: 9, paint: { "line-color": C.landLine, "line-width": ["interpolate", ["linear"], ["zoom"], 9, .3, 15, 1] } },
@@ -105,17 +107,17 @@ const KummelChart = (() => {
       { id: "ofm-water-name", type: "symbol", source: OFM, "source-layer": "water_name", minzoom: 9, layout: { "text-field": ["coalesce", ["get", "name:sv"], ["get", "name"]], "text-font": FONT_I, "text-size": 11 }, paint: { "text-color": C.waterName, "text-halo-color": C.halo, "text-halo-width": 1.5 } },
 
       /* sjömärken */
-      { id: "daymarks", type: "symbol", source: CH, "source-layer": "daymarks", minzoom: 12, layout: { "icon-image": "daymark", "icon-size": .9, "icon-allow-overlap": false } },
-      { id: "lights", type: "symbol", source: CH, "source-layer": "lights", layout: { "icon-image": "light", "icon-anchor": "bottom-left", "icon-offset": [-3, 3], "icon-allow-overlap": true, "text-field": ["step", ["zoom"], "", 13, ["coalesce", ["get", "chr"], ""]], "text-font": FONT, "text-size": 10, "text-anchor": "top-left", "text-offset": [.8, .4], "text-optional": true }, paint: { "text-color": C.magenta, "text-halo-color": C.halo, "text-halo-width": 1.5 } },
-      { id: "aids", type: "symbol", source: CH, "source-layer": "aids", layout: {
+      { id: "daymarks", type: "symbol", source: MK, filter: ["==", ["get", "L"], "daymarks"], minzoom: 12, layout: { "icon-image": "daymark", "icon-size": .9, "icon-allow-overlap": false } },
+      { id: "lights", type: "symbol", source: MK, minzoom: 9, filter: ["==", ["get", "L"], "lights"], layout: { "icon-image": "light", "icon-anchor": "bottom-left", "icon-offset": [-3, 3], "icon-allow-overlap": true, "text-field": ["step", ["zoom"], "", 13, ["coalesce", ["get", "chr"], ""]], "text-font": FONT, "text-size": 10, "text-anchor": "top-left", "text-offset": [.8, .4], "text-optional": true }, paint: { "text-color": C.magenta, "text-halo-color": C.halo, "text-halo-width": 1.5 } },
+      { id: "aids", type: "symbol", source: MK, minzoom: 8, filter: ["==", ["get", "L"], "aids"], layout: {
           "icon-image": ["match", ["to-number", ["get", "nav"], 99], 1, "aid-port", 2, "aid-stbd", 3, "aid-n", 4, "aid-s", 5, "aid-w", 6, "aid-e", 7, "aid-iso", 8, "aid-safe", 9, "aid-spec", ["case", ["==", ["get", "lit"], 1], "aid-lit", "aid-other"]],
           "icon-size": ["interpolate", ["linear"], ["zoom"], 10, .55, 14, .9, 17, 1.1],
           "icon-anchor": "bottom", "icon-allow-overlap": true, "icon-ignore-placement": true,
           "text-field": ["step", ["zoom"], "", 14, ["coalesce", ["get", "name"], ""]], "text-font": FONT, "text-size": 10, "text-anchor": "top", "text-offset": [0, .3], "text-optional": true
         }, paint: { "text-color": C.nav, "text-halo-color": C.halo, "text-halo-width": 1.5, "icon-opacity": ["case", ["==", ["get", "st"], 2], .45, 1] } },
-      { id: "pilot", type: "symbol", source: CH, "source-layer": "pilot", layout: { "text-field": "Lots", "text-font": FONT_B, "text-size": 11 }, paint: { "text-color": C.magenta, "text-halo-color": C.halo, "text-halo-width": 2 } },
-      { id: "signs", type: "symbol", source: CH, "source-layer": "signs", layout: { "icon-image": "sign", "icon-size": .8, "text-field": ["case", ["has", "val"], ["to-string", ["get", "val"]], ""], "text-font": FONT_B, "text-size": 9 }, paint: { "text-color": C.red } },
-      { id: "faults", type: "symbol", source: CH, "source-layer": "faults", layout: { "icon-image": "fault", "icon-allow-overlap": true, "text-field": "Fel på sjömärke", "text-font": FONT_B, "text-size": 10, "text-anchor": "top", "text-offset": [0, 1.2], "text-optional": true }, paint: { "text-color": C.red, "text-halo-color": C.halo, "text-halo-width": 2 } },
+      { id: "pilot", type: "symbol", source: MK, filter: ["==", ["get", "L"], "pilot"], layout: { "text-field": "Lots", "text-font": FONT_B, "text-size": 11 }, paint: { "text-color": C.magenta, "text-halo-color": C.halo, "text-halo-width": 2 } },
+      { id: "signs", type: "symbol", source: MK, filter: ["==", ["get", "L"], "signs"], layout: { "icon-image": "sign", "icon-size": .8, "text-field": ["case", ["has", "val"], ["to-string", ["get", "val"]], ""], "text-font": FONT_B, "text-size": 9 }, paint: { "text-color": C.red } },
+      { id: "faults", type: "symbol", source: MK, filter: ["==", ["get", "L"], "faults"], layout: { "icon-image": "fault", "icon-allow-overlap": true, "text-field": "Fel på sjömärke", "text-font": FONT_B, "text-size": 10, "text-anchor": "top", "text-offset": [0, 1.2], "text-optional": true }, paint: { "text-color": C.red, "text-halo-color": C.halo, "text-halo-width": 2 } },
 
       /* detaljkort från Traficom (inskannade sjökort med grynnor och stenar) när man zoomar in.
          Ligger över vektorkortet; där bladen saknas syns vektorkortet igenom. */
@@ -138,8 +140,8 @@ const KummelChart = (() => {
     limits: ["speed", "speed-lbl", "restrict", "tss-fill", "tss-line"],
     land: ["ofm-place", "ofm-water-name", "ofm-road", "ofm-building"]
   };
-  const ALL = layers({ need: 1 }).map(l => l.id).filter(id => !DETAIL_IDS.includes(id));
-  const OVERLAY = ["depcnt", "depcnt-safety", "navline", "navline-lbl", "leadline", "fwyname", "sectors", "seclegs", "lights", "aids", "faults", "speed", "speed-lbl", "restrict", "tss-line", "pilot", "signs", "soundg-shallow", "fishband", "fishband-line"];
+  const ALL = layers({ need: 1 }).map(l => l.id).filter(id => !DETAIL_IDS.includes(id) && id !== "depare-sat");
+  const OVERLAY = ["depcnt", "depcnt-safety", "depcnt-lbl", "soundg", "navline", "navline-lbl", "leadline", "fwyname", "sectors", "seclegs", "lights", "aids", "faults", "speed", "speed-lbl", "restrict", "tss-line", "pilot", "signs", "soundg-shallow", "fishband", "fishband-line"];
 
   function setNeed(map, need) {
     if (map.getLayer("depare")) map.setPaintProperty("depare", "fill-color", depthFill(need));
