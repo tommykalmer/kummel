@@ -54,10 +54,10 @@ for f in read("turvalaitteet_uusi"):
         "st": p.get("toimintatilakoodi"),
         "no": p.get("turvalaitenumero"),
         "top": 1 if p.get("huippumerkki") == "K" else 0,
-    }, 10)
+    }, 8)
 for f in read("loistot_uusi"):
     p = f["properties"]
-    emit("lights", f["geometry"], {"chr": first(p.get("viralvalotunnuse"), p.get("virallvalotunnus")), "h": num(p.get("korkeusvedesta")), "kind": p.get("valoominaisuussv"), "no": p.get("turvalaitenumero")}, 11)
+    emit("lights", f["geometry"], {"chr": first(p.get("viralvalotunnuse"), p.get("virallvalotunnus")), "h": num(p.get("korkeusvedesta")), "kind": p.get("valoominaisuussv"), "no": p.get("turvalaitenumero")}, 9)
 for f in read("paivatunnukset_uusi"):
     p = f["properties"]
     emit("daymarks", f["geometry"], {"col": p.get("paivamerkkivarisv"), "shape": p.get("paivamerkkimuotosv"), "kum": p.get("paivamerkkikummelitunnus")}, 12)
