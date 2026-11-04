@@ -1,29 +1,226 @@
-# Diagnostik Wed Nov  4 11:19:19 UTC 2026
-## AIS locations (radius)
-    HTTP/2 200 
-    content-type: application/json;charset=UTF-8
-    access-control-expose-headers: DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Content-Range,Range,Digitraffic-User
-    access-control-allow-origin: *
-    access-control-allow-methods: GET, POST, OPTIONS
-    access-control-allow-headers: DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Content-Range,Range,Digitraffic-User
-    typ: dict keys: ['type', 'dataUpdatedTime', 'features']
-    antal: 23
-    exempel: {"mmsi": 230940100, "type": "Feature", "geometry": {"type": "Point", "coordinates": [20.274317, 60.207407]}, "properties": {"mmsi": 230940100, "sog": 3.8, "cog": 309.1, "navStat": 3, "rot": 0, "posAcc": true, "raim": false, "heading": 127, "timestamp": 12, "timestampExternal": 1793791153193}}
-    exempel: {"mmsi": 230155020, "type": "Feature", "geometry": {"type": "Point", "coordinates": [20.267258, 60.067207]}, "properties": {"mmsi": 230155020, "sog": 0.1, "cog": 23.9, "navStat": 5, "rot": 0, "posAcc": true, "raim": false, "heading": 294, "timestamp": 28, "timestampExternal": 1793791108523}}
-## AIS vessels (metadata)
-    HTTP/2 200 
-    content-type: application/json;charset=UTF-8
-    access-control-expose-headers: DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Content-Range,Range,Digitraffic-User
-    access-control-allow-origin: *
-    access-control-allow-methods: GET, POST, OPTIONS
-    access-control-allow-headers: DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Content-Range,Range,Digitraffic-User
-    storlek: 198982 typ: list antal: 611
-    exempel: {"callSign": "OH6222", "destination": "VALKO", "draught": 42, "eta": 664768, "imo": 6524682, "mmsi": 230091450, "name": "KALKKE", "posType": 1, "referencePointA": 5, "referencePointB": 25, "referencePointC": 4, "referencePointD": 4, "shipType": 52, "timestamp": 1793790262114}
-    exempel: {"callSign": "OJQI", "destination": "FITOR", "draught": 36, "eta": 521152, "imo": 8521464, "mmsi": 230644000, "name": "LEONARDO", "posType": 1, "referencePointA": 6, "referencePointB": 23, "referencePointC": 6, "referencePointD": 3, "shipType": 52, "timestamp": 1793790267154}
-## Preflight med Digitraffic-User
-    HTTP/2 204 
-    access-control-max-age: 86400
-    access-control-allow-origin: *
-    access-control-allow-methods: GET, POST, OPTIONS
-    access-control-allow-headers: DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Content-Range,Range,Digitraffic-User
-    access-control-expose-headers: DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Content-Range,Range,Digitraffic-User
+# Diagnostik Wed Nov  4 12:10:54 UTC 2026
+## Oskari GetHierarchicalMapLayerGroups&lang=fi
+  storlek 60013 namn: 217
+  - Aerodrome Node
+  - Ahti_Limit_L
+  - Air Route Link
+  - Air Space Area
+  - Aluejaot
+  - Aluemeren raja
+  - Aluemeri
+  - Aluemeri (alue)
+  - Aluemeri (viiva)
+  - Berths_L
+  - CTR
+  - CTR_ALUE
+  - DW-reitti
+  - Dam_A
+  - Dam_L
+  - DeepWaterRoutePart_A
+  - Default
+  - Default Line1
+  - Default Point
+  - Default Polygon
+  - DepthArea_A
+  - DepthContour_L
+  - Designated Point
+  - DredgedArea_A
+  - ENC Approach
+  - ENC Berthing
+  - ENC Coastal
+  - ENC Coverage Layer
+  - ENC General
+  - ENC Harbour
+  - ENC Layer
+  - ExclusiveEconomicZone_A
+  - ExclusiveEconomicZone_L
+  - Full
+  - Full - Transparent Land
+  - Gate_L
+  - Generic1
+  - Highlight
+  - Instrument Approach Procedure
+  - Kaikki kartat
+  - Kaksisuuntaisen reitin osa
+  - Karttakeskus, L4356
+  - Kohtaamis- ja ohittamiskieltoalueet
+  - Kuntarajat
+  - Label
+  - Laiturit (viiva)
+  - Lentoliikenne
+  - Liikennejakovyöhyke (alue)
+  - Liikennejakovyöhyke (viiva)
+  - Luotsinkohtauspaikka
+  - MML Taustakarttasarja
+  - Maanmittauslaitos
+  - Matkustaja-alusten D-alueet
+  - Merikarttasarjat
+  - Merirajat
+  - Merituulivoima-alueet
+  - Merivaroitukset
+  - Merivaroitukset (alue)
+  - Merivaroitukset (piste)
+  - Merivaroitukset (viiva)
+  - Mittaamaton alue
+  - N2000-alueet
+  - Navaid
+  - PilotBoardingPlace_P
+  - Pontoon_A
+  - Pontoon_L
+  - Ponttoni (alue)
+  - Ponttoni (viiva)
+  - PrecautionaryArea_A
+  - Procedure Link
+  - Radioilmoittautumislinja
+  - Radioilmoittautumispiste
+  - Rannikkokartat
+  - Rantarakenne
+  - Rantarakenteet
+  - Rantarakenteet (piste)
+  - Rantarakenteet (viiva)
+  - Rdocal_L
+  - Rdocal_P
+  - Reittijakojärjestelmä
+  - Reittijakojärjestelmän liikennekaistan osa
+  - Reittijakojärjestelmän reunaviiva
+  - Runway Area
+  - Runway Centerline Point
+  - Ruoppausalue
+  - Satamakartat
+  - ShorelineConstruction_L
+  - ShorelineConstruction_P
+  - Single Color
+  - Sisäisten aluevesien ulkoraja
+  - Sisävesikartat
+  - Sounding_P
+  - Standard
+  - Standard - Transparent Land
+  - Standard Instrument Arrival
+  - Standard Instrument Departure
+  - StraightTerritorialSeaBaseline_L
+  - Sulku tai pato
+  - Sulkuportti
+  - Sulut ja kanavat (alue)
+  - Sulut ja kanavat (viiva)
+  - Suomalaiset merikartat, tuotejako
+  - Surface Composition
+  - Syvyysalue
+  - Syvyysalueet
+  - Syvyyskayra tyyli
+  - Syvyyskäyrät
+  - Syvyyspiste label
+  - Syvyyspiste_point
+  - Syvyyspisteet
+  - Syvyystiedot
+  - TN_AERODROMENODE
+  - TN_AIRROUTELINK
+  - TN_AIRSPACEAREA
+  - TN_DESIGNATEDPOINT
+  - TN_INSTRUMENTAPPROACHPROCEDURE
+  - TN_NAVAID
+  - TN_PROCEDURELINK
+  - TN_RUNWAYAREA
+  - TN_RUNWAYCENTERLINEPOINT
+  - TN_STANDARDINSTRUMENTARRIVAL
+  - TN_STANDARDINSTRUMENTDEPARTURE
+  - TN_SURFACECOMPOSITION
+  - Talousvyohyke_a
+  - Talousvyöhyke
+  - Talousvyöhykkeen merituulivoima-alueet
+  - Talousvyöhykkeen raja
+  - Taustakartat (ei ladattavissa)
+  - TerritorialSeaArea_A
+  - TerritorialSeaArea_L
+  - Tieliikenne
+  - TrafficSeparationLine_L
+  - TrafficSeparationSchemeBoundary_L
+  - TrafficSeparationSchemeLanePart_A
+  - TrafficSeparationZone_A
+  - Traficom
+  - Traficom:Merikarttasarjat public
+  - Traficom:Rannikkokartat public
+  - Traficom:Satamakartat
+  - Traficom:Veneilykartat public
+  - Traficom:Yleiskartat 250k public
+  - Tutkimusluvat
+  - TwoWayRoutePart_A
+  - UnsurveyedArea_A
+  - Utm100
+  - Utm200
+  - Utm50
+  - VTS AREA
+  - VTS-alueet
+  - VTSArea_A
+  - VTS_AREA_A
+  - Valtakunnan_raja_a
+  - Valtioiden välinen raja
+  - Varoalue
+  - Veneilykartat
+  - Vesiliikenne
+  - Voimassa olevat hyödyntämisluvat
+  - Voimassa olevat hyödyntämisluvat 
+  - Voimassa olevat tutkimusluvat
+  - Yleiskartat
+  - Yleiskartat 250k
+  - aluemeri_raja_a
+  - aluemeri_raja_v
+  - cells
+  - coverage
+  - d_alueet
+  - default
+  - default line style
+  - generic
+  - highlight
+  - kohtaamis_ja_ohittamiskieltoalueet
+  - kuntarajat
+  - label
+  - line
+  - navigational_warnings_a
+  - navigational_warnings_l
+  - navigational_warnings_p
+  - point
+  - polygon
+  - polygon_raja
+  - rantarakenteet
+  - reittijakojarjestelma_a
+  - singlecolor
+  - sisavesi_raja_v
+  - sisavesien_vertaustasot
+  - style-id-200
+  - style-id-201
+  - style-id-202
+  - style-id-203
+  - sulut_a
+  - sulut_v
+  - syvyysalue_a
+  - syvyyskayra
+  - talousvyohyke_a
+  - talousvyohyke_v
+  - talousvyohykkeen_merituulivoima_alueet
+  - taustakartta
+  - tuotejako_enc_approach
+  - tuotejako_enc_berthing
+  - tuotejako_enc_coastal
+  - tuotejako_enc_general
+  - tuotejako_enc_harbour
+  - tuotejako_kaikki
+  - tuotejako_merikarttasarjat
+  - tuotejako_rannikkokartat
+  - tuotejako_satamakartat
+  - tuotejako_sisavesikartat 
+  - tuotejako_veneilykartat
+  - tuotejako_yleiskartat
+  - tutkimusluvat
+  - utm100
+  - utm200
+  - utm50
+  - valtakunnan_raja_a
+  - valtakunnan_raja_v
+  - voimassa_olevat_hyodyntamisluvat
+  - voimassa_olevat_tutkimusluvat
+## Oskari GetMapLayers&lang=fi&epsg=EPSG:3067
+  storlek 51 namn: 0
+## Åland karttjänster
+- https://kartor.regeringen.ax/geoserver/ows?service=WMS&request=GetCapabilities → 404 
+- https://geodata.regeringen.ax/geoserver/ows?service=WMS&request=GetCapabilities → 000 
+- https://karta.ax/geoserver/ows?service=WMS&request=GetCapabilities → 403 
