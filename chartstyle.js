@@ -32,7 +32,16 @@ const KummelChart = (() => {
     ["<", d1, 10], C.d6,
     C.d10];
 
-  const OFM = "ofm", CH = "chart";
+  const OFM = "ofm", CH = "chart", DETAIL_Z = 13;
+  const dangerFilter = need => ["<", ["coalesce", ["get", "d1"], 0], need];
+  const WMTS = layer => `https://julkinen.traficom.fi/rasteripalvelu/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${encodeURIComponent(layer)}&STYLE=&FORMAT=image%2Fpng&TILEMATRIXSET=WGS84_Pseudo-Mercator&TILEMATRIX=WGS84_Pseudo-Mercator%3A{z}&TILEROW={y}&TILECOL={x}`;
+  const FI = [19, 59.3, 32, 70.2];
+  const rasterSources = () => ({
+    "tr-coast": { type: "raster", tiles: [WMTS("Traficom:Rannikkokartat public")], tileSize: 256, minzoom: 12, maxzoom: 15, bounds: FI, attribution: "Sjökort: Traficom" },
+    "tr-sea": { type: "raster", tiles: [WMTS("Traficom:Merikarttasarjat public")], tileSize: 256, minzoom: 12, maxzoom: 15, bounds: FI },
+    "tr-harbour": { type: "raster", tiles: [WMTS("Traficom:Satamakartat")], tileSize: 256, minzoom: 14, maxzoom: 16, bounds: FI }
+  });
+  const DETAIL_IDS = ["detail-coast", "detail-sea", "detail-harbour", "danger-ovl"];
   function layers(o) {
     const need = o.need, sc = safetyContour(need);
     return [
@@ -42,8 +51,6 @@ const KummelChart = (() => {
 
       /* djupområden */
       { id: "depare", type: "fill", source: CH, "source-layer": "depare", paint: { "fill-color": depthFill(need), "fill-antialias": false } },
-      { id: "fishband", type: "fill", source: CH, "source-layer": "depare", filter: ["==", ["get", "d1"], -9999], paint: { "fill-color": C.fish, "fill-opacity": .45 } },
-      { id: "fishband-line", type: "line", source: CH, "source-layer": "depare", filter: ["==", ["get", "d1"], -9999], paint: { "line-color": "#0b6e44", "line-width": 1 } },
       { id: "unsurv", type: "fill", source: CH, "source-layer": "unsurv", paint: { "fill-color": "#9aa6ad", "fill-opacity": .25 } },
       { id: "dredged", type: "fill", source: CH, "source-layer": "dredged", paint: { "fill-color": "#dfe6ea", "fill-outline-color": "#7f8c93" } },
 
@@ -95,11 +102,21 @@ const KummelChart = (() => {
         }, paint: { "text-color": C.nav, "text-halo-color": "#fff", "text-halo-width": 1.5, "icon-opacity": ["case", ["==", ["get", "st"], 2], .45, 1] } },
       { id: "pilot", type: "symbol", source: CH, "source-layer": "pilot", layout: { "text-field": "Lots", "text-font": FONT_B, "text-size": 11 }, paint: { "text-color": C.magenta, "text-halo-color": "#fff", "text-halo-width": 2 } },
       { id: "signs", type: "symbol", source: CH, "source-layer": "signs", layout: { "icon-image": "sign", "icon-size": .8, "text-field": ["case", ["has", "val"], ["to-string", ["get", "val"]], ""], "text-font": FONT_B, "text-size": 9 }, paint: { "text-color": C.red } },
-      { id: "faults", type: "symbol", source: CH, "source-layer": "faults", layout: { "icon-image": "fault", "icon-allow-overlap": true, "text-field": "Fel på sjömärke", "text-font": FONT_B, "text-size": 10, "text-anchor": "top", "text-offset": [0, 1.2], "text-optional": true }, paint: { "text-color": C.red, "text-halo-color": "#fff", "text-halo-width": 2 } }
+      { id: "faults", type: "symbol", source: CH, "source-layer": "faults", layout: { "icon-image": "fault", "icon-allow-overlap": true, "text-field": "Fel på sjömärke", "text-font": FONT_B, "text-size": 10, "text-anchor": "top", "text-offset": [0, 1.2], "text-optional": true }, paint: { "text-color": C.red, "text-halo-color": "#fff", "text-halo-width": 2 } },
+
+      /* detaljkort från Traficom (inskannade sjökort med grynnor och stenar) när man zoomar in.
+         Ligger över vektorkortet; där bladen saknas syns vektorkortet igenom. */
+      { id: "detail-coast", type: "raster", source: "tr-coast", minzoom: DETAIL_Z, paint: { "raster-fade-duration": 250 } },
+      { id: "detail-sea", type: "raster", source: "tr-sea", minzoom: DETAIL_Z, paint: { "raster-fade-duration": 250 } },
+      { id: "detail-harbour", type: "raster", source: "tr-harbour", minzoom: 14, paint: { "raster-fade-duration": 250 } },
+      /* ovanpå detaljkortet: farozon för den aktiva båten och djupintervall för fiske */
+      { id: "danger-ovl", type: "fill", source: CH, "source-layer": "depare", minzoom: DETAIL_Z, filter: dangerFilter(need), paint: { "fill-color": C.red, "fill-opacity": .16 } },
+      { id: "fishband", type: "fill", source: CH, "source-layer": "depare", filter: ["==", ["get", "d1"], -9999], paint: { "fill-color": C.fish, "fill-opacity": .45 } },
+      { id: "fishband-line", type: "line", source: CH, "source-layer": "depare", filter: ["==", ["get", "d1"], -9999], paint: { "line-color": "#0b6e44", "line-width": 1 } }
     ];
   }
 
-  const ALL = layers({ need: 1 }).map(l => l.id);
+  const ALL = layers({ need: 1 }).map(l => l.id).filter(id => !DETAIL_IDS.includes(id));
   const OVERLAY = ["depcnt", "depcnt-safety", "navline", "navline-lbl", "leadline", "fwyname", "sectors", "seclegs", "lights", "aids", "faults", "speed", "speed-lbl", "restrict", "tss-line", "pilot", "signs", "soundg-shallow", "fishband", "fishband-line"];
 
   function setNeed(map, need) {
@@ -107,6 +124,7 @@ const KummelChart = (() => {
     if (map.getLayer("depcnt-safety")) map.setFilter("depcnt-safety", ["==", ["get", "v"], safetyContour(need)]);
     if (map.getLayer("soundg")) map.setFilter("soundg", [">=", ["get", "d"], need]);
     if (map.getLayer("soundg-shallow")) map.setFilter("soundg-shallow", ["<", ["get", "d"], need]);
+    if (map.getLayer("danger-ovl")) map.setFilter("danger-ovl", dangerFilter(need));
   }
   function setFishBand(map, band) {
     const f = band ? ["all", ["<", ["coalesce", ["get", "d1"], 0], band[1]], [">", ["coalesce", ["get", "d2"], 999], band[0]], [">=", ["coalesce", ["get", "d1"], 0], band[0] - 5]] : ["==", ["get", "d1"], -9999];
@@ -151,11 +169,11 @@ const KummelChart = (() => {
     map.addImage(id, ICONS[id](), { pixelRatio: R });
   }
 
-  const rasterUrl = "https://julkinen.traficom.fi/rasteripalvelu/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=Traficom%3AMerikarttasarjat%20public&STYLE=&FORMAT=image%2Fpng&TILEMATRIXSET=WGS84_Pseudo-Mercator&TILEMATRIX=WGS84_Pseudo-Mercator%3A{z}&TILEROW={y}&TILECOL={x}";
 
   return {
     colors: () => ({ water: C.d10, land: C.land }),
-    layers, setNeed, setFishBand, image, rasterUrl,
+    layers, setNeed, setFishBand, image, rasterSources,
+    detailIds: () => DETAIL_IDS,
     layerIds: () => ALL,
     isOverlay: id => OVERLAY.includes(id),
     soundingIds: () => ["soundg", "soundg-shallow"],

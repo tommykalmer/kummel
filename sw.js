@@ -1,5 +1,5 @@
 /* Kummel service worker – app shell offline + cache of chart tiles you have viewed */
-const SHELL = "kummel-shell-v4";
+const SHELL = "kummel-shell-v5";
 const TILES = "kummel-tiles-v1";
 const MAX_TILES = 6000;
 const SHELL_FILES = ["./", "./index.html", "./app.js", "./chartstyle.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png",
@@ -29,7 +29,7 @@ self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
   // sjökortsfilen läses med range-anrop; webbläsarens egen cache hanterar den
   if (url.pathname.endsWith(".pmtiles") || e.request.headers.has("range")) return;
-  if (TILE_HOSTS.some(h => url.hostname.endsWith(h)) && (/\/\d+\/\d+\/\d+/.test(url.pathname) || url.pathname.includes("/fonts/"))) {
+  if (TILE_HOSTS.some(h => url.hostname.endsWith(h)) && (/\/\d+\/\d+\/\d+/.test(url.pathname) || url.pathname.includes("/fonts/") || url.search.includes("GetTile"))) {
     // cache-first for map tiles (opaque responses are fine for <img>)
     e.respondWith(caches.open(TILES).then(async c => {
       const hit = await c.match(e.request);

@@ -13,7 +13,7 @@ const KEY = "kummel.v1";
 const DEFAULT_STATE = {
   mode: "tur",
   view: { lat: 60.08, lng: 19.94, z: 11, bearing: 0 },
-  layers: { base: "chart", raster: false, seamarks: false, soundings: true },
+  layers: { base: "chart", detail: true, seamarks: false, soundings: true },
   fishDepth: [4, 12],
   boats: [{ id: "b1", name: "Min båt", type: "motor", length: 6.5, beam: 2.4, draft: 0.6, air: 2.0, speed: 20, fuel: 18, margin: 0.5, maxWind: 10 }],
   boatId: "b1",
@@ -91,7 +91,7 @@ function baseStyle() {
     sources: {
       osm: { type: "raster", tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], tileSize: 256, maxzoom: 19, attribution: "© OpenStreetMap" },
       sat: { type: "raster", tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"], tileSize: 256, maxzoom: 18, attribution: "Bild © Esri" },
-      traficom: { type: "raster", tiles: [KummelChart.rasterUrl], tileSize: 256, minzoom: 8, maxzoom: 15, attribution: "Traficom" },
+      ...KummelChart.rasterSources(),
       seamarks: { type: "raster", tiles: ["https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"], tileSize: 256, maxzoom: 18, attribution: "© OpenSeaMap" },
       ofm: { type: "vector", url: "https://tiles.openfreemap.org/planet", attribution: "OpenFreeMap © OpenStreetMap" },
       chart: { type: "vector", url: CHART_URL, attribution: "Källa: Traficom (CC BY 4.0). Ej för navigering." }
@@ -101,7 +101,6 @@ function baseStyle() {
       { id: "osm", type: "raster", source: "osm", paint: { "raster-opacity": 1 }, layout: { visibility: "none" } },
       { id: "sat", type: "raster", source: "sat", layout: { visibility: "none" } },
       ...KummelChart.layers({ need: needDepth(), fish: null, soundings: S.layers.soundings }),
-      { id: "traficom", type: "raster", source: "traficom", layout: { visibility: "none" } },
       { id: "seamarks", type: "raster", source: "seamarks", layout: { visibility: "none" } }
     ]
   };
@@ -158,7 +157,7 @@ function applyLayers() {
   vis("sat", base === "sat");
   KummelChart.layerIds().forEach(id => vis(id, base === "chart" || (base === "sat" && KummelChart.isOverlay(id))));
   KummelChart.soundingIds().forEach(id => vis(id, (base === "chart" || (base === "sat" && id === "soundg-shallow")) && S.layers.soundings));
-  vis("traficom", S.layers.raster);
+  KummelChart.detailIds().forEach(id => vis(id, base === "chart" && S.layers.detail !== false));
   vis("seamarks", S.layers.seamarks);
 }
 
@@ -712,12 +711,13 @@ function openLayers() {
     <div class="card"><h3>Karta</h3>${r("chart", "Sjökort")}${r("sat", "Flygfoto med farleder och sjömärken")}${r("osm", "Gatukarta")}</div>
     <div class="card"><h3>Visa</h3>
       <label class="row"><input type="checkbox" id="ly-snd" ${S.layers.soundings ? "checked" : ""}> Djupsiffror</label>
-      <label class="row"><input type="checkbox" id="ly-ras" ${S.layers.raster ? "checked" : ""}> Traficoms kartbild (inskannade sjökort)</label>
+      <label class="row"><input type="checkbox" id="ly-det" ${S.layers.detail !== false ? "checked" : ""}> Detaljkort med grynnor och stenar vid inzoomning</label>
       <label class="row"><input type="checkbox" id="ly-sea" ${S.layers.seamarks ? "checked" : ""}> OpenSeaMap sjömärken</label>
     </div>
+    <div class="muted">På detaljkortet är vatten som är grundare än din båt behöver skuggat i rött.</div>
     <div class="disclaimer">Källa: Traficom (CC BY 4.0). Ej för navigering, uppfyller inte kraven för officiella sjökort. Använd alltid uppdaterade officiella sjökort.</div>`, "layers");
   $("#ly-snd").onchange = e => { S.layers.soundings = e.target.checked; save(); applyLayers(); };
-  $("#ly-ras").onchange = e => { S.layers.raster = e.target.checked; save(); applyLayers(); };
+  $("#ly-det").onchange = e => { S.layers.detail = e.target.checked; save(); applyLayers(); };
   $("#ly-sea").onchange = e => { S.layers.seamarks = e.target.checked; save(); applyLayers(); };
   document.querySelectorAll("input[name=base]").forEach(x => x.onchange = () => { S.layers.base = x.value; save(); applyLayers(); });
 }
