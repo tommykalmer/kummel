@@ -1,0 +1,18 @@
+name: Diagnostik
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["scripts/diag.sh"]
+permissions:
+  contents: write
+jobs:
+  diag:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/diag.sh
+      - run: |
+          git config user.name "kummel-bot"; git config user.email "kummel-bot@users.noreply.github.com"
+          git add data/diag.md; git commit -m "Diagnostik" || exit 0
+          git pull --rebase origin main; git push origin HEAD:main
