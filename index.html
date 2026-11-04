@@ -1,0 +1,943 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<title>Kummel</title>
+<meta name="description" content="Sjökort, väder och båtliv i skärgården – i webbläsaren, på mobil, iPad och dator.">
+<meta name="theme-color" content="#0f2a3d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f2a3d'/%3E%3Cpath d='M32 10 46 50H18Z' fill='%23f2c14e'/%3E%3Cpath d='M22 40h20' stroke='%230f2a3d' stroke-width='4'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;500;600&display=swap">
+<style>
+/* Layout: full-bleed chart; floating top bar + tool rail; bottom sheet on phone, left side panel on desktop */
+:root{
+  --ink:#0f2a3d;        /* chart navy */
+  --paper:#f7f5ee;      /* chart paper */
+  --panel:rgba(250,249,244,.94);
+  --line:#d8d4c6;
+  --fg:#14232e;
+  --muted:#5d6b73;
+  --signal:#f2c14e;     /* buoy yellow */
+  --port:#d64545;       /* red / warning */
+  --stbd:#2f8f5b;       /* green / ok */
+  --water:#cfe4ee;
+  --accent:#1d6fa3;
+  --shadow:0 6px 24px rgba(15,42,61,.18);
+  --f-ui:"Source Sans 3","Segoe UI",system-ui,-apple-system,sans-serif;
+  --f-num:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  --r:14px;
+  --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);
+  --sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0d1a23;--panel:rgba(16,32,44,.94);--line:#2a4252;--fg:#e6edf0;--muted:#93a5ae;
+  --water:#183244;--accent:#5fb0e0;--ink:#081620;--shadow:0 6px 24px rgba(0,0,0,.45);color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0d1a23;--panel:rgba(16,32,44,.94);--line:#2a4252;--fg:#e6edf0;--muted:#93a5ae;
+  --water:#183244;--accent:#5fb0e0;--ink:#081620;--shadow:0 6px 24px rgba(0,0,0,.45);color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--paper);color:var(--fg);font:15px/1.4 var(--f-ui);overflow:hidden;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit;color:inherit}
+#map{position:fixed;inset:0;background:var(--water)}
+.leaflet-container{background:var(--water);font-family:var(--f-ui)}
+.leaflet-control-attribution{font-size:10px;background:var(--panel)!important;color:var(--muted)}
+.leaflet-control-attribution a{color:var(--accent)}
+.leaflet-control-scale{margin-bottom:calc(8px + var(--sab))!important}
+.leaflet-control-scale-line{background:var(--panel);border-color:var(--fg);color:var(--fg)}
+
+/* top bar */
+#top{position:fixed;z-index:500;top:calc(10px + var(--sat));left:calc(10px + var(--sal));right:calc(10px + var(--sar));
+  display:flex;gap:8px;align-items:center;pointer-events:none}
+#top > *{pointer-events:auto}
+.brand{display:flex;align-items:center;gap:8px;background:var(--ink);color:#fff;border-radius:var(--r);padding:8px 12px;box-shadow:var(--shadow);
+  font:700 18px/1 var(--f-num);letter-spacing:.06em;text-transform:uppercase}
+.brand svg{width:20px;height:20px}
+.modes{display:flex;gap:4px;background:var(--panel);border-radius:var(--r);padding:4px;box-shadow:var(--shadow);overflow-x:auto;scrollbar-width:none;min-width:0}
+.modes::-webkit-scrollbar{display:none}
+.modes button{border:0;background:transparent;border-radius:10px;padding:6px 10px;font-weight:600;color:var(--muted);white-space:nowrap;cursor:pointer}
+.modes button[aria-pressed="true"]{background:var(--ink);color:#fff}
+:root[data-theme="dark"] .modes button[aria-pressed="true"]{background:var(--accent);color:#081620}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .modes button[aria-pressed="true"]{background:var(--accent);color:#081620}}
+.spacer{flex:1}
+
+/* weather chip */
+#wxchip{display:flex;align-items:center;gap:8px;background:var(--panel);border:0;border-radius:var(--r);padding:6px 12px;box-shadow:var(--shadow);cursor:pointer;
+  font:600 16px/1 var(--f-num);font-variant-numeric:tabular-nums}
+#wxchip .arrow{width:22px;height:22px;transition:transform .4s}
+#wxchip small{font:500 12px var(--f-ui);color:var(--muted)}
+
+/* rail */
+#rail{position:fixed;z-index:500;right:calc(10px + var(--sar));top:calc(70px + var(--sat));display:flex;flex-direction:column;gap:8px}
+.rb{width:48px;height:48px;border-radius:50%;border:0;background:var(--panel);box-shadow:var(--shadow);display:grid;place-items:center;cursor:pointer;color:var(--fg)}
+.rb svg{width:22px;height:22px}
+.rb[aria-pressed="true"]{background:var(--accent);color:#fff}
+.rb:focus-visible,.modes button:focus-visible,.btn:focus-visible{outline:3px solid var(--signal);outline-offset:2px}
+
+/* crosshair */
+#cross{position:fixed;z-index:400;left:50%;top:50%;width:28px;height:28px;margin:-14px 0 0 -14px;pointer-events:none;opacity:.7}
+body.plan #cross{opacity:1}
+
+/* instruments */
+#inst{position:fixed;z-index:500;left:calc(10px + var(--sal));bottom:calc(36px + var(--sab));display:flex;gap:6px;flex-wrap:wrap;max-width:calc(100% - 90px)}
+.gauge{background:var(--panel);border-radius:12px;padding:6px 10px;box-shadow:var(--shadow);min-width:72px}
+.gauge b{display:block;font:700 24px/1 var(--f-num);font-variant-numeric:tabular-nums}
+.gauge span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.gauge.pos b{font-size:15px;font-weight:600;line-height:1.15}
+
+/* big action buttons */
+#fab{position:fixed;z-index:500;right:calc(10px + var(--sar));bottom:calc(36px + var(--sab));display:flex;flex-direction:column;gap:10px;align-items:flex-end}
+.fab{border:0;border-radius:28px;min-height:56px;padding:0 20px;font:700 18px var(--f-num);letter-spacing:.04em;text-transform:uppercase;box-shadow:var(--shadow);cursor:pointer;display:flex;align-items:center;gap:8px}
+.fab.fish{background:var(--signal);color:#1b1500}
+.fab.rec{background:var(--panel);color:var(--fg)}
+.fab.rec.on{background:var(--port);color:#fff}
+.fab.mob{background:var(--port);color:#fff;min-height:44px;font-size:15px;padding:0 14px}
+.fab svg{width:22px;height:22px}
+
+/* sheet / panel */
+#sheet{position:fixed;z-index:600;left:0;right:0;bottom:0;max-height:72%;background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-radius:18px 18px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.2);transform:translateY(105%);transition:transform .28s ease;display:flex;flex-direction:column;
+  padding-bottom:var(--sab)}
+#sheet.open{transform:none}
+@media (min-width:900px){
+  #sheet{left:calc(10px + var(--sal));right:auto;top:calc(70px + var(--sat));bottom:calc(10px + var(--sab));width:390px;max-height:none;border-radius:18px;transform:translateX(-110%)}
+  #sheet.open{transform:none}
+  body.sheet-open #inst{left:420px}
+}
+.sh-head{display:flex;align-items:center;gap:8px;padding:12px max(16px,var(--sal)) 8px;border-bottom:1px solid var(--line)}
+.sh-head h2{margin:0;font:700 20px var(--f-num);letter-spacing:.03em;text-transform:uppercase;flex:1;text-wrap:balance}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:8px auto 0}
+@media (min-width:900px){.grab{display:none}}
+.sh-body{overflow:auto;padding:12px max(16px,var(--sal)) 16px max(16px,var(--sar));display:flex;flex-direction:column;gap:12px}
+.x{border:0;background:transparent;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:22px;color:var(--muted)}
+.btn{border:1px solid var(--line);background:transparent;border-radius:10px;padding:8px 12px;font-weight:600;cursor:pointer}
+.btn.pri{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn.warn{color:var(--port);border-color:var(--port)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.muted{color:var(--muted);font-size:13px}
+.card{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.card.sel{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.card h3{margin:0;font:600 17px var(--f-num);letter-spacing:.02em}
+.list{display:flex;flex-direction:column;gap:8px}
+label.f{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted);min-width:0}
+label.f input,label.f select,label.f textarea{border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:var(--paper);color:var(--fg);font-size:16px;width:100%}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.big{font:700 34px/1 var(--f-num);font-variant-numeric:tabular-nums}
+.pill{display:inline-block;padding:2px 8px;border-radius:99px;font-size:12px;font-weight:600;background:var(--line)}
+.pill.ok{background:var(--stbd);color:#fff}.pill.bad{background:var(--port);color:#fff}.pill.mid{background:var(--signal);color:#1b1500}
+.wx-now{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;align-items:center}
+.wx-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.wx-stats div{background:var(--paper);border-radius:10px;padding:6px 8px}
+.wx-stats b{display:block;font:700 19px var(--f-num);font-variant-numeric:tabular-nums}
+.wx-stats span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.chart{width:100%;overflow-x:auto}
+.callout{border-radius:12px;padding:10px 12px;background:var(--paper);border-left:4px solid var(--accent)}
+.callout.ok{border-color:var(--stbd)}.callout.bad{border-color:var(--port)}
+.leg{display:grid;grid-template-columns:28px 1fr auto auto;gap:6px;font-variant-numeric:tabular-nums;font-size:14px;align-items:center;padding:4px 0;border-bottom:1px dashed var(--line)}
+.toast{position:fixed;z-index:900;left:50%;top:calc(70px + var(--sat));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;box-shadow:var(--shadow);font-weight:600;max-width:90vw}
+#night{position:fixed;inset:0;z-index:2000;pointer-events:none;background:#b00000;mix-blend-mode:multiply;display:none}
+body.night #night{display:block}
+body.night{filter:brightness(.65)}
+.wp-icon{width:22px;height:22px;border-radius:50%;background:var(--signal);color:#1b1500;border:2px solid var(--ink);display:grid;place-items:center;font:700 12px var(--f-num)}
+.pl-icon{width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:grid;place-items:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.pl-icon span{transform:rotate(45deg);font-size:15px;line-height:1}
+.boat-icon{transition:transform .5s}
+.disclaimer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+.hidden{display:none!important}
+@media (max-width:520px){.brand .bt{display:none}#wxchip small{display:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="map" aria-label="Sjökort"></div>
+
+<svg id="cross" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="5" fill="none" stroke="#0f2a3d" stroke-width="2"/><path d="M14 0v8M14 20v8M0 14h8M20 14h8" stroke="#0f2a3d" stroke-width="2"/></svg>
+
+<div id="top">
+  <div class="brand"><svg viewBox="0 0 24 24"><path d="M12 2 20 21H4Z" fill="#f2c14e"/><path d="M7.5 16h9" stroke="#0f2a3d" stroke-width="2"/></svg><span class="bt">Kummel</span></div>
+  <div class="modes" role="group" aria-label="Läge">
+    <button data-mode="tur" aria-pressed="true">Utflykt</button>
+    <button data-mode="fiske" aria-pressed="false">Fiske</button>
+    <button data-mode="segling" aria-pressed="false">Segling</button>
+    <button data-mode="paddling" aria-pressed="false">Paddling</button>
+  </div>
+  <div class="spacer"></div>
+  <button id="wxchip" aria-label="Väder"><svg class="arrow" viewBox="0 0 24 24"><path d="M12 3 18 20 12 16 6 20Z" fill="currentColor"/></svg><span id="wxtxt">–</span><small id="wxsub">väder</small></button>
+</div>
+
+<div id="rail">
+  <button class="rb" id="b-locate" title="Min position" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>
+  <button class="rb" id="b-route" title="Planera rutt" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><path d="M7 18c6-1 2-9 10-11"/></svg></button>
+  <button class="rb" id="b-place" title="Ny plats vid korset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s7-7 7-12a7 7 0 0 0-14 0c0 5 7 12 7 12z"/><path d="M12 7v6M9 10h6"/></svg></button>
+  <button class="rb" id="b-layers" title="Kartlager"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg></button>
+  <button class="rb" id="b-menu" title="Meny"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <button class="rb" id="b-night" title="Nattläge" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg></button>
+</div>
+
+<div id="inst">
+  <div class="gauge"><b id="g-sog">–</b><span>Fart kn</span></div>
+  <div class="gauge"><b id="g-cog">–</b><span>Kurs °</span></div>
+  <div class="gauge pos"><b id="g-pos">–</b><span id="g-poslbl">Kors</span></div>
+</div>
+
+<div id="fab">
+  <button class="fab mob hidden" id="b-mob" title="Man överbord">MOB</button>
+  <button class="fab fish hidden" id="b-fish"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 12c3-4 7-6 11-6 4 0 7 3 8 6-1 3-4 6-8 6-4 0-8-2-11-6zm15-1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM2 12 0 8v8z"/></svg>Fisk!</button>
+  <button class="fab rec" id="b-rec"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="currentColor"/></svg><span>Spela in</span></button>
+</div>
+
+<section id="sheet" aria-live="polite">
+  <div class="grab"></div>
+  <div class="sh-head"><h2 id="sh-title">–</h2><button class="x" id="sh-close" aria-label="Stäng">×</button></div>
+  <div class="sh-body" id="sh-body"></div>
+</section>
+<div id="night"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+"use strict";
+/* =========================================================
+   Kummel v0.1 – sjökort för webben
+   Data: Traficom (CC BY 4.0, ej för navigering), OpenSeaMap,
+   OpenStreetMap, Open-Meteo.
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const NM = 1852, KN = 1.943844;
+const R_NM = 3440.065;
+
+/* ---------- storage ---------- */
+const KEY = "kummel.v1";
+const DEFAULT_STATE = {
+  mode: "tur",
+  view: { lat: 60.08, lng: 19.94, z: 10 },
+  layers: { base: "osm", chart: true, seamarks: true },
+  boats: [{ id: "b1", name: "Min båt", type: "motor", length: 6.5, beam: 2.4, draft: 0.6, air: 2.0, speed: 20, fuel: 18, margin: 0.5, maxWind: 10 }],
+  boatId: "b1",
+  places: [],
+  routes: [],
+  tracks: [],
+  catches: [],
+  wmts: null
+};
+let S = load();
+function load() {
+  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) return Object.assign(structuredClone(DEFAULT_STATE), s); } catch (e) {}
+  return structuredClone(DEFAULT_STATE);
+}
+let saveT;
+function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }, 200); }
+const uid = () => Math.random().toString(36).slice(2, 9);
+const boat = () => S.boats.find(b => b.id === S.boatId) || S.boats[0];
+
+/* ---------- geo helpers ---------- */
+const rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;
+function distNm(a, b) {
+  const dLat = rad(b.lat - a.lat), dLng = rad(b.lng - a.lng);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R_NM * Math.asin(Math.sqrt(h));
+}
+function bearing(a, b) {
+  const y = Math.sin(rad(b.lng - a.lng)) * Math.cos(rad(b.lat));
+  const x = Math.cos(rad(a.lat)) * Math.sin(rad(b.lat)) - Math.sin(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.cos(rad(b.lng - a.lng));
+  return (deg(Math.atan2(y, x)) + 360) % 360;
+}
+function ddm(v, pos, neg, padDeg) {
+  const h = v >= 0 ? pos : neg; v = Math.abs(v);
+  const d = Math.floor(v), m = (v - d) * 60;
+  return `${String(d).padStart(padDeg, "0")}°${m.toFixed(3).padStart(6, "0")}′${h}`;
+}
+const fmtPos = ll => `${ddm(ll.lat, "N", "S", 2)}<br>${ddm(ll.lng, "E", "W", 3)}`;
+const fmtPosTxt = ll => `${ddm(ll.lat, "N", "S", 2)} ${ddm(ll.lng, "E", "W", 3)}`;
+const fmtDur = h => { const m = Math.round(h * 60); return m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, "0")} min`; };
+const pad = n => String(n).padStart(2, "0");
+const DAYS = ["sön", "mån", "tis", "ons", "tor", "fre", "lör"];
+const hm = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const compass = d => ["N","NNO","NO","ONO","O","OSO","SO","SSO","S","SSV","SV","VSV","V","VNV","NV","NNV"][Math.round(d / 22.5) % 16];
+
+function toast(msg, ms = 2600) {
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), ms);
+}
+
+/* ---------- map ---------- */
+const map = L.map("map", { zoomControl: false, attributionControl: true, worldCopyJump: true, tap: true })
+  .setView([S.view.lat, S.view.lng], S.view.z);
+L.control.scale({ imperial: false, position: "bottomleft" }).addTo(map);
+map.attributionControl.setPrefix(false);
+
+const BASES = {
+  osm: L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }),
+  light: L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", { maxZoom: 19, attribution: "© OpenStreetMap © CARTO" }),
+  dark: L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom: 19, attribution: "© OpenStreetMap © CARTO" }),
+  sat: L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 18, attribution: "Bild © Esri" })
+};
+const seamarks = L.tileLayer("https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png", { maxZoom: 18, attribution: "© OpenSeaMap", zIndex: 30 });
+
+/* Traficom WMTS (KVP). The 3857 tile set name is probed at start-up. */
+const TRAFICOM = "https://julkinen.traficom.fi/rasteripalvelu/wmts";
+const CHART_LAYERS = ["Traficom:Yleiskartat 250k public", "Traficom:Yleiskartat 100k public", "Traficom:Rannikkokartat public", "Traficom:Merikarttasarjat public", "Traficom:Satamakartat"];
+const TMS_CANDIDATES = [
+  { set: "WGS84_Pseudo-Mercator", m: "WGS84_Pseudo-Mercator:{z}" },
+  { set: "EPSG:3857", m: "EPSG:3857:{z}" },
+  { set: "EPSG:900913", m: "EPSG:900913:{z}" },
+  { set: "GoogleMapsCompatible", m: "{z}" },
+  { set: "EPSG:3857", m: "{z}" }
+];
+const STYLE_CANDIDATES = ["", "default"];
+function wmtsUrl(layer, c, style) {
+  return `${TRAFICOM}?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${encodeURIComponent(layer)}` +
+    (style ? `&STYLE=${style}` : "") + `&FORMAT=image%2Fpng&TILEMATRIXSET=${encodeURIComponent(c.set)}&TILEMATRIX=${c.m.replace("{z}", "{z}")}&TILEROW={y}&TILECOL={x}`;
+}
+function tileXY(lat, lng, z) {
+  const n = 2 ** z;
+  return { x: Math.floor((lng + 180) / 360 * n), y: Math.floor((1 - Math.log(Math.tan(rad(lat)) + 1 / Math.cos(rad(lat))) / Math.PI) / 2 * n) };
+}
+function probeImg(url) {
+  return new Promise(res => {
+    const i = new Image(); const t = setTimeout(() => res(false), 8000);
+    i.onload = () => { clearTimeout(t); res(i.naturalWidth > 0); };
+    i.onerror = () => { clearTimeout(t); res(false); };
+    i.src = url;
+  });
+}
+async function findTileSet() {
+  if (S.wmts) return S.wmts;
+  const probes = [];
+  for (const c of TMS_CANDIDATES) for (const st of STYLE_CANDIDATES) for (const [layer, z] of [[CHART_LAYERS[0], 8], [CHART_LAYERS[3], 12]]) {
+    const { x, y } = tileXY(60.1, 19.95, z);
+    const url = wmtsUrl(layer, c, st).replace(/\{z\}/g, z).replace("{x}", x).replace("{y}", y);
+    probes.push(probeImg(url).then(ok => ok ? { set: c.set, m: c.m, style: st } : null));
+  }
+  const results = await Promise.all(probes);
+  const hit = results.find(Boolean);
+  if (hit) { S.wmts = hit; save(); }
+  return hit;
+}
+let chartGroup = L.layerGroup();
+async function buildChart() {
+  chartGroup.clearLayers();
+  const ts = await findTileSet();
+  if (!ts) { toast("Traficoms sjökort svarar inte just nu. OpenSeaMap visas i stället.", 4000); return false; }
+  CHART_LAYERS.forEach((layer, i) => {
+    chartGroup.addLayer(L.tileLayer(wmtsUrl(layer, ts, ts.style), {
+      maxZoom: 19, maxNativeZoom: 16, zIndex: 10 + i, errorTileUrl: "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==",
+      attribution: i === 0 ? "Källa: Traficom. Ej för navigering." : ""
+    }));
+  });
+  return true;
+}
+function applyLayers() {
+  Object.values(BASES).forEach(l => map.removeLayer(l));
+  (BASES[S.layers.base] || BASES.osm).addTo(map);
+  if (S.layers.chart) chartGroup.addTo(map); else map.removeLayer(chartGroup);
+  if (S.layers.seamarks) seamarks.addTo(map); else map.removeLayer(seamarks);
+}
+applyLayers();
+buildChart().then(applyLayers);
+
+/* ---------- overlays ---------- */
+const placeLayer = L.layerGroup().addTo(map);
+const catchLayer = L.layerGroup().addTo(map);
+const routeLayer = L.layerGroup().addTo(map);
+const trackLayer = L.layerGroup().addTo(map);
+
+const CATS = {
+  hamn: { e: "⚓", c: "#1d6fa3", n: "Hamn" },
+  ankring: { e: "⛵", c: "#0f2a3d", n: "Ankring / naturhamn" },
+  bad: { e: "🏊", c: "#2f8f5b", n: "Bad" },
+  fiske: { e: "🎣", c: "#c9921b", n: "Fiskeplats" },
+  service: { e: "⛽", c: "#7a4fb0", n: "Service" },
+  fara: { e: "⚠️", c: "#d64545", n: "Varning / grund" },
+  ovrigt: { e: "📍", c: "#5d6b73", n: "Övrigt" }
+};
+function pinIcon(cat) {
+  const c = CATS[cat] || CATS.ovrigt;
+  return L.divIcon({ className: "", html: `<div class="pl-icon" style="background:${c.c}"><span>${c.e}</span></div>`, iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -28] });
+}
+function drawPlaces() {
+  placeLayer.clearLayers();
+  S.places.forEach(p => {
+    L.marker([p.lat, p.lng], { icon: pinIcon(p.cat) }).addTo(placeLayer)
+      .on("click", () => openPlace(p.id));
+  });
+  catchLayer.clearLayers();
+  if (S.mode === "fiske") S.catches.forEach(c => {
+    L.circleMarker([c.lat, c.lng], { radius: 7, color: "#1b1500", weight: 2, fillColor: "#f2c14e", fillOpacity: 1 }).addTo(catchLayer)
+      .on("click", () => openCatch(c.id));
+  });
+}
+drawPlaces();
+
+/* ---------- modes ---------- */
+const MODES = { tur: "Utflykt", fiske: "Fiske", segling: "Segling", paddling: "Paddling" };
+function setMode(m) {
+  S.mode = m; save();
+  document.querySelectorAll(".modes button").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === m));
+  $("#b-fish").classList.toggle("hidden", m !== "fiske");
+  drawPlaces();
+  if (wx) renderChip();
+}
+document.querySelectorAll(".modes button").forEach(b => b.onclick = () => { setMode(b.dataset.mode); toast(`Läge: ${MODES[b.dataset.mode]}`, 1400); });
+
+/* ---------- sheet ---------- */
+let sheetView = null;
+function openSheet(title, html, view) {
+  $("#sh-title").textContent = title;
+  $("#sh-body").innerHTML = html;
+  $("#sheet").classList.add("open");
+  document.body.classList.add("sheet-open");
+  sheetView = view || title;
+}
+function closeSheet() {
+  $("#sheet").classList.remove("open"); document.body.classList.remove("sheet-open");
+  if (sheetView === "route") stopPlanning(false);
+  sheetView = null;
+}
+$("#sh-close").onclick = closeSheet;
+let dragY = null;
+$(".grab").addEventListener("touchstart", e => dragY = e.touches[0].clientY, { passive: true });
+$(".grab").addEventListener("touchend", e => { if (dragY !== null && e.changedTouches[0].clientY - dragY > 60) closeSheet(); dragY = null; });
+
+/* ---------- crosshair readout ---------- */
+function updateCross() {
+  if (gps && follow) return;
+  $("#g-pos").innerHTML = fmtPos(map.getCenter());
+  $("#g-poslbl").textContent = "Kors";
+}
+map.on("move", updateCross);
+map.on("moveend", () => { const c = map.getCenter(); S.view = { lat: c.lat, lng: c.lng, z: map.getZoom() }; save(); scheduleWx(); });
+map.on("dragstart", () => { if (follow) { follow = false; $("#b-locate").setAttribute("aria-pressed", "false"); } });
+updateCross();
+
+/* ---------- GPS ---------- */
+let gps = null, watchId = null, follow = false, lastFix = null, wakeLock = null;
+const boatSvg = `<svg width="34" height="34" viewBox="0 0 34 34"><path d="M17 3 25 29 17 24 9 29Z" fill="#d64545" stroke="#fff" stroke-width="2"/></svg>`;
+const boatMarker = L.marker([0, 0], { icon: L.divIcon({ className: "", html: `<div class="boat-icon" id="boaticon">${boatSvg}</div>`, iconSize: [34, 34], iconAnchor: [17, 17] }), interactive: false, zIndexOffset: 1000 });
+const accCircle = L.circle([0, 0], { radius: 1, color: "#1d6fa3", weight: 1, fillOpacity: .08, interactive: false });
+const headingLine = L.polyline([], { color: "#d64545", weight: 2, dashArray: "6 6", interactive: false });
+
+function startGps() {
+  if (!("geolocation" in navigator)) { toast("Den här enheten saknar platstjänster."); return; }
+  if (watchId !== null) return;
+  watchId = navigator.geolocation.watchPosition(onFix, err => {
+    toast(err.code === 1 ? "Platsåtkomst nekad. Tillåt plats i webbläsarens inställningar." : "Ingen GPS-position ännu.", 4000);
+  }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 });
+  keepAwake();
+}
+async function keepAwake() {
+  try { if ("wakeLock" in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release", () => wakeLock = null); } } catch (e) {}
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && watchId !== null) keepAwake(); });
+
+function onFix(p) {
+  const ll = { lat: p.coords.latitude, lng: p.coords.longitude };
+  const t = p.timestamp;
+  let sog = p.coords.speed != null ? p.coords.speed * KN : null;
+  let cog = p.coords.heading != null && !isNaN(p.coords.heading) ? p.coords.heading : null;
+  if (lastFix) {
+    const dt = (t - lastFix.t) / 3600000, d = distNm(lastFix, ll);
+    if (sog == null && dt > 0) sog = d / dt;
+    if (cog == null && d > 0.005) cog = bearing(lastFix, ll);
+  }
+  if (cog == null && gps) cog = gps.cog;
+  gps = { ...ll, sog: sog ?? 0, cog, acc: p.coords.accuracy, t };
+  lastFix = { ...ll, t };
+  if (!map.hasLayer(boatMarker)) { boatMarker.addTo(map); accCircle.addTo(map); headingLine.addTo(map); }
+  boatMarker.setLatLng(ll); accCircle.setLatLng(ll).setRadius(gps.acc || 1);
+  const ic = document.getElementById("boaticon"); if (ic && cog != null) ic.style.transform = `rotate(${cog}deg)`;
+  if (cog != null && gps.sog > 0.5) {
+    const lenNm = gps.sog * (10 / 60); // 10 min ahead
+    const lat2 = ll.lat + (lenNm / 60) * Math.cos(rad(cog));
+    const lng2 = ll.lng + (lenNm / 60) * Math.sin(rad(cog)) / Math.cos(rad(ll.lat));
+    headingLine.setLatLngs([ll, [lat2, lng2]]);
+  } else headingLine.setLatLngs([]);
+  $("#g-sog").textContent = gps.sog.toFixed(1);
+  $("#g-cog").textContent = cog != null ? String(Math.round(cog)).padStart(3, "0") : "–";
+  if (follow) { map.panTo(ll, { animate: true }); $("#g-pos").innerHTML = fmtPos(ll); $("#g-poslbl").textContent = "GPS"; }
+  if (recording) addTrackPoint(ll, t, gps.sog);
+  if (mob) updateMob();
+}
+$("#b-locate").onclick = () => {
+  startGps();
+  follow = !follow;
+  $("#b-locate").setAttribute("aria-pressed", follow);
+  if (follow && gps) { map.setView([gps.lat, gps.lng], Math.max(map.getZoom(), 13)); }
+  else if (follow) toast("Söker GPS-position …");
+  $("#b-mob").classList.toggle("hidden", false);
+};
+
+/* ---------- track recording ---------- */
+let recording = false, curTrack = null;
+const liveTrack = L.polyline([], { color: "#d64545", weight: 4, opacity: .85 }).addTo(trackLayer);
+function addTrackPoint(ll, t, sog) {
+  const pts = curTrack.pts, last = pts[pts.length - 1];
+  if (last && distNm({ lat: last[0], lng: last[1] }, ll) * NM < 8) return;
+  pts.push([+ll.lat.toFixed(6), +ll.lng.toFixed(6), t]);
+  curTrack.max = Math.max(curTrack.max, sog || 0);
+  liveTrack.addLatLng(ll);
+}
+$("#b-rec").onclick = () => {
+  if (!recording) {
+    startGps();
+    recording = true; curTrack = { id: uid(), start: Date.now(), pts: [], max: 0, mode: S.mode, boat: boat().name };
+    liveTrack.setLatLngs([]);
+    $("#b-rec").classList.add("on"); $("#b-rec span").textContent = "Stoppa";
+    $("#b-mob").classList.remove("hidden");
+    toast("Spårinspelning startad. Håll skärmen på.");
+  } else {
+    recording = false; $("#b-rec").classList.remove("on"); $("#b-rec span").textContent = "Spela in";
+    curTrack.end = Date.now();
+    curTrack.nm = trackNm(curTrack.pts);
+    if (curTrack.pts.length > 1) { S.tracks.unshift(curTrack); save(); toast(`Tur sparad: ${curTrack.nm.toFixed(1)} nm`); }
+    else toast("För kort tur för att sparas.");
+    curTrack = null;
+  }
+};
+const trackNm = pts => pts.reduce((s, p, i) => i ? s + distNm({ lat: pts[i - 1][0], lng: pts[i - 1][1] }, { lat: p[0], lng: p[1] }) : 0, 0);
+
+/* ---------- MOB ---------- */
+let mob = null, mobLayer = L.layerGroup().addTo(map);
+$("#b-mob").onclick = () => {
+  const ll = gps ? { lat: gps.lat, lng: gps.lng } : map.getCenter();
+  mob = { lat: ll.lat, lng: ll.lng, t: Date.now() };
+  mobLayer.clearLayers();
+  L.circleMarker([mob.lat, mob.lng], { radius: 12, color: "#fff", weight: 3, fillColor: "#d64545", fillOpacity: 1 }).addTo(mobLayer);
+  map.setView([mob.lat, mob.lng], Math.max(map.getZoom(), 15));
+  updateMob();
+};
+function updateMob() {
+  if (!mob) return;
+  const here = gps || map.getCenter();
+  const d = distNm(here, mob) * NM, b = bearing(here, mob);
+  const secs = Math.round((Date.now() - mob.t) / 1000);
+  openSheet("Man överbord", `
+    <div class="callout bad"><div class="big">${Math.round(d)} m</div><div>Styr <b class="num">${String(Math.round(b)).padStart(3, "0")}°</b> (${compass(b)}) · markerad för ${Math.floor(secs / 60)} min ${secs % 60} s sedan</div></div>
+    <div class="muted">${fmtPosTxt(mob)}</div>
+    <div class="muted">Larma 112 eller VHF kanal 16 vid nödläge.</div>
+    <button class="btn warn" id="mob-clear">Avsluta MOB</button>`, "mob");
+  $("#mob-clear").onclick = () => { mob = null; mobLayer.clearLayers(); closeSheet(); };
+}
+setInterval(() => { if (mob && sheetView === "mob") updateMob(); }, 5000);
+
+/* ---------- places ---------- */
+function placeForm(p) {
+  return `
+    <label class="f">Namn<input id="pf-name" value="${esc(p.name)}" placeholder="t.ex. Lugna viken"></label>
+    <label class="f">Typ<select id="pf-cat">${Object.entries(CATS).map(([k, c]) => `<option value="${k}" ${k === p.cat ? "selected" : ""}>${c.e} ${c.n}</option>`).join("")}</select></label>
+    <label class="f">Anteckning<textarea id="pf-note" rows="3" placeholder="t.ex. Bra skydd vid sydvästlig vind, 3 m djup vid berget">${esc(p.note)}</textarea></label>
+    <div class="muted">${fmtPosTxt(p)}</div>
+    <div class="row"><button class="btn pri" id="pf-save">Spara</button>${p.id ? `<button class="btn warn" id="pf-del">Ta bort</button><button class="btn" id="pf-nav">Rutt hit</button>` : ""}</div>`;
+}
+function newPlace(ll) {
+  const p = { lat: ll.lat, lng: ll.lng, name: "", cat: S.mode === "fiske" ? "fiske" : "ankring", note: "" };
+  openSheet("Ny plats", placeForm(p), "place");
+  bindPlaceForm(p);
+}
+function openPlace(id) {
+  const p = S.places.find(x => x.id === id); if (!p) return;
+  openSheet(p.name || CATS[p.cat].n, placeForm(p), "place"); bindPlaceForm(p);
+}
+function bindPlaceForm(p) {
+  $("#pf-save").onclick = () => {
+    p.name = $("#pf-name").value.trim() || CATS[$("#pf-cat").value].n; p.cat = $("#pf-cat").value; p.note = $("#pf-note").value.trim();
+    if (!p.id) { p.id = uid(); p.created = Date.now(); S.places.push(p); }
+    save(); drawPlaces(); closeSheet(); toast("Platsen sparad");
+  };
+  const del = $("#pf-del"); if (del) del.onclick = () => { S.places = S.places.filter(x => x.id !== p.id); save(); drawPlaces(); closeSheet(); };
+  const nav = $("#pf-nav"); if (nav) nav.onclick = () => {
+    const from = gps ? { lat: gps.lat, lng: gps.lng } : map.getCenter();
+    startPlanning([from, { lat: p.lat, lng: p.lng }]);
+  };
+}
+$("#b-place").onclick = () => newPlace(map.getCenter());
+map.on("contextmenu", e => { if (!planning) newPlace(e.latlng); });
+
+/* ---------- fishing ---------- */
+const SPECIES = ["Gädda", "Abborre", "Gös", "Havsöring", "Lax", "Sik", "Strömming", "Torsk", "Braxen", "Annan"];
+$("#b-fish").onclick = async () => {
+  const ll = gps ? { lat: gps.lat, lng: gps.lng } : map.getCenter();
+  const c = { id: uid(), t: Date.now(), lat: ll.lat, lng: ll.lng, species: "", kg: "", lure: "", note: "", wx: null };
+  S.catches.unshift(c); save(); drawPlaces();
+  toast("Fångst markerad! Fyll i detaljer när du har tid.");
+  openCatch(c.id);
+  try {
+    const w = await fetchWx(ll.lat, ll.lng);
+    const h = hourIndex(w);
+    c.wx = {
+      wind: w.current.wind_speed_10m, gust: w.current.wind_gusts_10m, dir: w.current.wind_direction_10m,
+      temp: w.current.temperature_2m, p: w.current.pressure_msl,
+      pTrend: h >= 3 ? +(w.hourly.pressure_msl[h] - w.hourly.pressure_msl[h - 3]).toFixed(1) : null,
+      sst: w.marine?.current?.sea_surface_temperature ?? null, moon: moonPhase(new Date())
+    };
+    save(); if (sheetView === "catch:" + c.id) openCatch(c.id);
+  } catch (e) {}
+};
+function openCatch(id) {
+  const c = S.catches.find(x => x.id === id); if (!c) return;
+  const d = new Date(c.t), w = c.wx;
+  openSheet("Fångst", `
+    <div class="muted">${DAYS[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1} kl ${hm(d)} · ${fmtPosTxt(c)}</div>
+    <div class="grid2">
+      <label class="f">Art<select id="cf-sp"><option value="">Välj</option>${SPECIES.map(s => `<option ${s === c.species ? "selected" : ""}>${s}</option>`).join("")}</select></label>
+      <label class="f">Vikt (kg)<input id="cf-kg" inputmode="decimal" value="${esc(c.kg)}"></label>
+    </div>
+    <label class="f">Bete / metod<input id="cf-lure" value="${esc(c.lure)}" placeholder="t.ex. jigg 10 cm, trolling 2,5 kn"></label>
+    <label class="f">Anteckning<textarea id="cf-note" rows="2">${esc(c.note)}</textarea></label>
+    <div class="card"><h3>Förhållanden vid fångsten</h3>
+      ${w ? `<div class="wx-stats">
+        <div><b>${w.wind.toFixed(0)}–${w.gust.toFixed(0)}</b><span>Vind m/s ${compass(w.dir)}</span></div>
+        <div><b>${Math.round(w.p)}</b><span>Tryck ${w.pTrend == null ? "" : w.pTrend > 0.5 ? "↑ stiger" : w.pTrend < -0.5 ? "↓ faller" : "→ stabilt"}</span></div>
+        <div><b>${w.sst != null ? w.sst.toFixed(1) + "°" : "–"}</b><span>Vatten</span></div>
+        <div><b>${w.temp.toFixed(0)}°</b><span>Luft</span></div>
+        <div><b>${w.moon.icon}</b><span>${w.moon.name}</span></div></div>` : `<div class="muted">Hämtar väder … (sparas automatiskt när nätet finns)</div>`}
+    </div>
+    <div class="row"><button class="btn pri" id="cf-save">Spara</button><button class="btn warn" id="cf-del">Ta bort</button></div>`, "catch:" + c.id);
+  $("#cf-save").onclick = () => {
+    c.species = $("#cf-sp").value; c.kg = $("#cf-kg").value; c.lure = $("#cf-lure").value; c.note = $("#cf-note").value;
+    save(); closeSheet(); toast("Fångsten sparad");
+  };
+  $("#cf-del").onclick = () => { S.catches = S.catches.filter(x => x.id !== c.id); save(); drawPlaces(); closeSheet(); };
+}
+function moonPhase(d) {
+  const syn = 29.530588853, ref = Date.UTC(2000, 0, 6, 18, 14);
+  const age = (((d - ref) / 86400000) % syn + syn) % syn, f = age / syn;
+  const names = [["🌑", "Nymåne"], ["🌒", "Tilltagande"], ["🌓", "Första kvarteret"], ["🌔", "Tilltagande"], ["🌕", "Fullmåne"], ["🌖", "Avtagande"], ["🌗", "Sista kvarteret"], ["🌘", "Avtagande"]];
+  const [icon, name] = names[Math.round(f * 8) % 8];
+  return { icon, name, age: +age.toFixed(1) };
+}
+
+/* ---------- route planning ---------- */
+let planning = false, wps = [];
+const routeLine = L.polyline([], { color: "#d64545", weight: 3, dashArray: "8 6" });
+const wpLayer = L.layerGroup();
+function startPlanning(initial) {
+  planning = true; wps = (initial || []).map(p => L.latLng(p.lat, p.lng));
+  document.body.classList.add("plan"); $("#b-route").setAttribute("aria-pressed", "true");
+  routeLine.addTo(routeLayer); wpLayer.addTo(routeLayer);
+  renderRoute();
+  if (!initial) toast("Tryck på kartan för att lägga till punkter", 2200);
+}
+function stopPlanning(keep) {
+  planning = false; document.body.classList.remove("plan"); $("#b-route").setAttribute("aria-pressed", "false");
+  if (!keep) { wps = []; routeLine.setLatLngs([]); wpLayer.clearLayers(); }
+}
+map.on("click", e => { if (planning) { wps.push(e.latlng); renderRoute(); } });
+function routeStats(points) {
+  const b = boat(); let nm = 0; const legs = [];
+  for (let i = 1; i < points.length; i++) {
+    const d = distNm(points[i - 1], points[i]); nm += d;
+    legs.push({ d, brg: bearing(points[i - 1], points[i]) });
+  }
+  const h = b.speed > 0 ? nm / b.speed : 0;
+  return { nm, legs, h, fuel: h * (b.fuel || 0) };
+}
+function renderRoute() {
+  routeLine.setLatLngs(wps); wpLayer.clearLayers();
+  wps.forEach((p, i) => {
+    L.marker(p, { draggable: true, icon: L.divIcon({ className: "", html: `<div class="wp-icon">${i + 1}</div>`, iconSize: [22, 22], iconAnchor: [11, 11] }) })
+      .addTo(wpLayer)
+      .on("drag", e => { wps[i] = e.target.getLatLng(); routeLine.setLatLngs(wps); })
+      .on("dragend", renderRoute)
+      .on("click", () => { if (planning) { wps.splice(i, 1); renderRoute(); } });
+  });
+  const st = routeStats(wps), b = boat();
+  const eta = new Date(Date.now() + st.h * 3600000);
+  const dark = sunInfo && st.h ? darkCheck(eta) : "";
+  openSheet("Planera rutt", `
+    <div class="row" style="justify-content:space-between">
+      <div><div class="big">${st.nm.toFixed(1)} <small style="font-size:16px">nm</small></div><div class="muted">${wps.length} punkter · ${esc(b.name)} i ${b.speed} kn</div></div>
+      <div style="text-align:right"><div class="big">${st.h ? fmtDur(st.h) : "–"}</div><div class="muted">${st.h ? "Framme ca " + hm(eta) : "Tryck på kartan"}</div></div>
+    </div>
+    ${st.fuel ? `<div class="muted">Beräknad bränsleåtgång: <b class="num">${st.fuel.toFixed(0)} l</b> (${b.fuel} l/h)</div>` : ""}
+    ${dark}
+    ${routeWindNote()}
+    <div>${st.legs.map((l, i) => `<div class="leg"><span class="pill">${i + 1}→${i + 2}</span><span>${compass(l.brg)}</span><span class="num">${String(Math.round(l.brg)).padStart(3, "0")}°</span><span class="num">${l.d.toFixed(2)} nm</span></div>`).join("") || `<div class="muted">Tryck på en punkt för att ta bort den. Dra för att flytta.</div>`}</div>
+    <div class="row"><button class="btn" id="rt-undo">Ångra</button><button class="btn" id="rt-rev">Vänd</button><button class="btn pri" id="rt-save">Spara rutt</button><button class="btn warn" id="rt-clear">Rensa</button></div>
+    <div class="muted">Kontrollera alltid djup och faror mot sjökortet längs hela rutten.</div>`, "route");
+  $("#rt-undo").onclick = () => { wps.pop(); renderRoute(); };
+  $("#rt-rev").onclick = () => { wps.reverse(); renderRoute(); };
+  $("#rt-clear").onclick = () => { wps = []; renderRoute(); };
+  $("#rt-save").onclick = () => {
+    if (wps.length < 2) { toast("Lägg till minst två punkter."); return; }
+    const name = `Rutt ${new Date().getDate()}.${new Date().getMonth() + 1} (${st.nm.toFixed(1)} nm)`;
+    S.routes.unshift({ id: uid(), name, pts: wps.map(p => [+p.lat.toFixed(6), +p.lng.toFixed(6)]), created: Date.now() });
+    save(); toast("Rutten sparad");
+  };
+}
+function routeWindNote() {
+  if (!wx || wps.length < 2) return "";
+  const st = routeStats(wps); if (!st.h) return "";
+  const i0 = hourIndex(wx), i1 = Math.min(wx.hourly.time.length - 1, i0 + Math.ceil(st.h));
+  let maxG = 0; for (let i = i0; i <= i1; i++) maxG = Math.max(maxG, wx.hourly.wind_gusts_10m[i]);
+  const lim = boat().maxWind || 10;
+  return maxG > lim
+    ? `<div class="callout bad">Byvind upp till <b>${maxG.toFixed(0)} m/s</b> under turen, över din gräns på ${lim} m/s.</div>`
+    : `<div class="callout ok">Byvind högst ${maxG.toFixed(0)} m/s under turen.</div>`;
+}
+function darkCheck(eta) {
+  const ss = sunInfo.sunset.find(s => s.toDateString() === eta.toDateString());
+  if (ss && eta > ss) return `<div class="callout bad">Du är framme ${fmtDur((eta - ss) / 3600000)} efter solnedgången (${hm(ss)}).</div>`;
+  return "";
+}
+$("#b-route").onclick = () => planning ? closeSheet() : startPlanning();
+
+/* ---------- weather ---------- */
+let wx = null, sunInfo = null, wxT = null, wxKey = "";
+async function fetchWx(lat, lng) {
+  const q = `latitude=${lat.toFixed(3)}&longitude=${lng.toFixed(3)}&timezone=auto&forecast_days=3`;
+  const [f, m] = await Promise.all([
+    fetch(`https://api.open-meteo.com/v1/forecast?${q}&wind_speed_unit=ms&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,precipitation,weather_code&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation,pressure_msl&daily=sunrise,sunset`).then(r => r.json()),
+    fetch(`https://marine-api.open-meteo.com/v1/marine?${q}&current=wave_height,sea_surface_temperature&hourly=wave_height`).then(r => r.ok ? r.json() : null).catch(() => null)
+  ]);
+  if (f.error) throw new Error(f.reason);
+  f.marine = m; f.at = Date.now(); f.lat = lat; f.lng = lng;
+  return f;
+}
+const hourIndex = w => { const now = Date.now(); let i = w.hourly.time.findIndex(t => new Date(t).getTime() > now); return Math.max(0, i - 1); };
+function scheduleWx() {
+  clearTimeout(wxT);
+  wxT = setTimeout(loadWx, 700);
+}
+async function loadWx(force) {
+  const c = gps && follow ? gps : map.getCenter();
+  const key = `${c.lat.toFixed(1)},${c.lng.toFixed(1)}`;
+  if (!force && key === wxKey && wx && Date.now() - wx.at < 15 * 60000) return;
+  try {
+    wx = await fetchWx(c.lat, c.lng); wxKey = key;
+    sunInfo = { sunrise: wx.daily.sunrise.map(s => new Date(s)), sunset: wx.daily.sunset.map(s => new Date(s)) };
+    renderChip();
+    if (sheetView === "wx") openWx();
+  } catch (e) { $("#wxtxt").textContent = "–"; $("#wxsub").textContent = "inget väder"; }
+}
+function renderChip() {
+  const c = wx.current;
+  $("#wxtxt").textContent = `${c.wind_speed_10m.toFixed(0)} (${c.wind_gusts_10m.toFixed(0)}) m/s`;
+  $("#wxsub").textContent = `${compass(c.wind_direction_10m)} · ${c.temperature_2m.toFixed(0)}°`;
+  $("#wxchip .arrow").style.transform = `rotate(${(c.wind_direction_10m + 180) % 360}deg)`;
+  const lim = boat().maxWind || 10;
+  $("#wxchip").style.color = c.wind_gusts_10m > lim ? "var(--port)" : "";
+}
+function weatherWindow() {
+  const lim = boat().maxWind || 10, h = wx.hourly, i0 = hourIndex(wx);
+  const ok = i => h.wind_gusts_10m[i] <= lim;
+  const end = Math.min(h.time.length, i0 + 48);
+  const fmt = i => { const d = new Date(h.time[i]); return (d.toDateString() === new Date().toDateString() ? "" : DAYS[d.getDay()] + " ") + pad(d.getHours()) + ":00"; };
+  if (ok(i0)) {
+    let j = i0; while (j < end && ok(j)) j++;
+    if (j >= end) return { cls: "ok", txt: `Byvinden håller sig under ${lim} m/s de närmaste två dygnen.` };
+    let mx = 0; for (let k = j; k < Math.min(end, j + 6); k++) mx = Math.max(mx, h.wind_gusts_10m[k]);
+    return { cls: "ok", txt: `Lugnt nu, till ca <b>${fmt(j)}</b>. Därefter byvind upp mot ${mx.toFixed(0)} m/s.` };
+  }
+  let j = i0; while (j < end && !ok(j)) j++;
+  if (j >= end) return { cls: "bad", txt: `Byvind över ${lim} m/s hela den kommande perioden. Inget bra väderfönster i sikte.` };
+  let k = j; while (k < end && ok(k)) k++;
+  return { cls: "bad", txt: `Blåsigt nu. Nästa lugna fönster: <b>${fmt(j)}–${k >= end ? "framåt" : fmt(k)}</b> (byar under ${lim} m/s).` };
+}
+function windChart() {
+  const h = wx.hourly, i0 = hourIndex(wx), n = 48, lim = boat().maxWind || 10;
+  const W = 720, H = 170, padL = 26, padB = 30, bw = (W - padL) / n;
+  let max = lim + 2; for (let i = i0; i < i0 + n && i < h.time.length; i++) max = Math.max(max, h.wind_gusts_10m[i]);
+  max = Math.ceil(max / 5) * 5;
+  const y = v => (H - padB) - (v / max) * (H - padB - 10);
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Vind kommande 48 timmar" style="font:11px var(--f-ui)">`;
+  for (let v = 0; v <= max; v += 5) s += `<line x1="${padL}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${padL - 4}" y="${y(v) + 4}" text-anchor="end" fill="var(--muted)">${v}</text>`;
+  s += `<line x1="${padL}" x2="${W}" y1="${y(lim)}" y2="${y(lim)}" stroke="var(--port)" stroke-dasharray="4 4"/>`;
+  for (let k = 0; k < n; k++) {
+    const i = i0 + k; if (i >= h.time.length) break;
+    const x = padL + k * bw, ws = h.wind_speed_10m[i], g = h.wind_gusts_10m[i], d = new Date(h.time[i]);
+    const col = g > lim ? "var(--port)" : g > lim * .75 ? "var(--signal)" : "var(--stbd)";
+    s += `<rect x="${x + 1}" y="${y(ws)}" width="${bw - 2}" height="${y(0) - y(ws)}" fill="${col}" opacity=".85" rx="2"/>`;
+    s += `<line x1="${x + 1}" x2="${x + bw - 1}" y1="${y(g)}" y2="${y(g)}" stroke="var(--fg)" stroke-width="2"/>`;
+    if (k % 3 === 0) s += `<g transform="translate(${x + bw / 2},${H - 22}) rotate(${(h.wind_direction_10m[i] + 180) % 360})"><path d="M0 -6 4 5 0 2 -4 5Z" fill="var(--muted)"/></g>`;
+    if (d.getHours() % 6 === 0) s += `<text x="${x}" y="${H - 4}" fill="var(--muted)">${d.getHours() === 0 ? DAYS[d.getDay()] : pad(d.getHours())}</text>`;
+  }
+  return s + `</svg>`;
+}
+function openWx() {
+  if (!wx) { openSheet("Väder", `<div class="muted">Hämtar väder …</div>`, "wx"); loadWx(true); return; }
+  const c = wx.current, m = wx.marine?.current, b = boat(), win = weatherWindow();
+  const today = new Date().toDateString();
+  const sr = sunInfo.sunrise.find(d => d.toDateString() === today), ss = sunInfo.sunset.find(d => d.toDateString() === today);
+  const i0 = hourIndex(wx);
+  const pTrend = i0 >= 3 ? wx.hourly.pressure_msl[i0] - wx.hourly.pressure_msl[i0 - 3] : 0;
+  const moon = moonPhase(new Date());
+  const age = Math.round((Date.now() - wx.at) / 60000);
+  openSheet("Väder", `
+    <div class="wx-now">
+      <svg viewBox="0 0 24 24" width="56" height="56" style="transform:rotate(${(c.wind_direction_10m + 180) % 360}deg)"><path d="M12 2 19 21 12 16.5 5 21Z" fill="var(--accent)"/></svg>
+      <div><div class="big">${c.wind_speed_10m.toFixed(1)} <small style="font-size:16px">m/s</small></div>
+      <div>Byar ${c.wind_gusts_10m.toFixed(1)} m/s från ${compass(c.wind_direction_10m)} (${Math.round(c.wind_direction_10m)}°)</div></div>
+    </div>
+    <div class="callout ${win.cls}">${win.txt}<div class="muted">Gräns för ${esc(b.name)}: byar ${b.maxWind || 10} m/s</div></div>
+    <div class="wx-stats">
+      <div><b>${c.temperature_2m.toFixed(0)}°</b><span>Luft</span></div>
+      <div><b>${m?.sea_surface_temperature != null ? m.sea_surface_temperature.toFixed(1) + "°" : "–"}</b><span>Vatten</span></div>
+      <div><b>${m?.wave_height != null ? m.wave_height.toFixed(1) + " m" : "–"}</b><span>Våghöjd</span></div>
+      <div><b>${Math.round(c.pressure_msl)}</b><span>hPa ${pTrend > .5 ? "↑" : pTrend < -.5 ? "↓" : "→"}</span></div>
+      <div><b>${sr ? hm(sr) : "–"}</b><span>Sol upp</span></div>
+      <div><b>${ss ? hm(ss) : "–"}</b><span>Sol ned</span></div>
+    </div>
+    <div><div class="muted" style="margin-bottom:4px">Vind kommande 48 h · stapel = medelvind, streck = byar, röd linje = din gräns</div><div class="chart">${windChart()}</div></div>
+    ${S.mode === "fiske" ? `<div class="card"><h3>Fiskeförhållanden</h3><div>${moon.icon} ${moon.name} · Tryck ${pTrend > .5 ? "stigande" : pTrend < -.5 ? "fallande" : "stabilt"} (${pTrend >= 0 ? "+" : ""}${pTrend.toFixed(1)} hPa/3 h)</div></div>` : ""}
+    <div class="muted">Prognos för ${fmtPosTxt({ lat: wx.lat, lng: wx.lng })} · uppdaterad för ${age} min sedan. Källa: Open-Meteo.</div>
+    <button class="btn" id="wx-ref">Uppdatera</button>`, "wx");
+  $("#wx-ref").onclick = () => loadWx(true);
+}
+$("#wxchip").onclick = () => sheetView === "wx" ? closeSheet() : openWx();
+scheduleWx();
+setInterval(() => loadWx(true), 15 * 60000);
+
+/* ---------- boats ---------- */
+const BTYPES = { motor: "Motorbåt", segel: "Segelbåt", rib: "RIB", kajak: "Kajak / kanot", ovrig: "Annan" };
+const BDEF = { motor: { speed: 20, fuel: 18, maxWind: 10 }, segel: { speed: 5.5, fuel: 1.5, maxWind: 13 }, rib: { speed: 28, fuel: 25, maxWind: 9 }, kajak: { speed: 3, fuel: 0, maxWind: 6 }, ovrig: { speed: 6, fuel: 3, maxWind: 8 } };
+function openBoats() {
+  openSheet("Båtar", `
+    <div class="list">${S.boats.map(b => `<div class="card ${b.id === S.boatId ? "sel" : ""}">
+      <h3>${esc(b.name)}</h3><div class="muted">${BTYPES[b.type]} · ${b.length} m · djupgående ${b.draft} m · höjd ${b.air} m · ${b.speed} kn</div>
+      <div class="row">${b.id === S.boatId ? `<span class="pill ok">Aktiv</span>` : `<button class="btn" data-use="${b.id}">Använd</button>`}<button class="btn" data-edit="${b.id}">Ändra</button></div></div>`).join("")}</div>
+    <button class="btn pri" id="bt-new">Lägg till båt</button>`, "boats");
+  document.querySelectorAll("[data-use]").forEach(x => x.onclick = () => { S.boatId = x.dataset.use; save(); openBoats(); if (wx) renderChip(); toast(`Aktiv båt: ${boat().name}`); });
+  document.querySelectorAll("[data-edit]").forEach(x => x.onclick = () => editBoat(x.dataset.edit));
+  $("#bt-new").onclick = () => editBoat(null);
+}
+function editBoat(id) {
+  const b = id ? S.boats.find(x => x.id === id) : { name: "", type: "motor", length: 6, beam: 2.3, draft: 0.6, air: 2, ...BDEF.motor, margin: 0.5 };
+  const n = (k, lbl, step = "0.1") => `<label class="f">${lbl}<input type="number" step="${step}" inputmode="decimal" id="bf-${k}" value="${b[k]}"></label>`;
+  openSheet(id ? "Ändra båt" : "Ny båt", `
+    <label class="f">Namn<input id="bf-name" value="${esc(b.name)}" placeholder="t.ex. Buster"></label>
+    <label class="f">Typ<select id="bf-type">${Object.entries(BTYPES).map(([k, v]) => `<option value="${k}" ${k === b.type ? "selected" : ""}>${v}</option>`).join("")}</select></label>
+    <div class="grid2">${n("length", "Längd (m)")}${n("beam", "Bredd (m)")}${n("draft", "Djupgående (m)")}${n("air", "Höjd över vattnet (m)")}${n("margin", "Säkerhetsmarginal under kölen (m)")}${n("speed", "Marschfart (kn)", "0.5")}${n("fuel", "Förbrukning (l/h)", "0.5")}${n("maxWind", "Min gräns för byvind (m/s)", "1")}</div>
+    <div class="muted">Fart och förbrukning används för ETA och bränsleberäkning. Vindgränsen styr väderfönster och varningar.</div>
+    <div class="row"><button class="btn pri" id="bf-save">Spara</button>${id && S.boats.length > 1 ? `<button class="btn warn" id="bf-del">Ta bort</button>` : ""}<button class="btn" id="bf-back">Tillbaka</button></div>`, "boatedit");
+  $("#bf-type").onchange = e => { const d = BDEF[e.target.value]; ["speed", "fuel", "maxWind"].forEach(k => $("#bf-" + k).value = d[k]); };
+  $("#bf-save").onclick = () => {
+    b.name = $("#bf-name").value.trim() || BTYPES[$("#bf-type").value]; b.type = $("#bf-type").value;
+    ["length", "beam", "draft", "air", "margin", "speed", "fuel", "maxWind"].forEach(k => b[k] = parseFloat(String($("#bf-" + k).value).replace(",", ".")) || 0);
+    if (!id) { b.id = uid(); S.boats.push(b); S.boatId = b.id; }
+    save(); openBoats(); if (wx) renderChip();
+  };
+  const del = $("#bf-del"); if (del) del.onclick = () => { S.boats = S.boats.filter(x => x.id !== id); if (S.boatId === id) S.boatId = S.boats[0].id; save(); openBoats(); };
+  $("#bf-back").onclick = openBoats;
+}
+
+/* ---------- layers ---------- */
+function openLayers() {
+  const r = (k, v) => `<label class="row"><input type="radio" name="base" value="${k}" ${S.layers.base === k ? "checked" : ""}> ${v}</label>`;
+  openSheet("Kartlager", `
+    <div class="card"><h3>Sjökort</h3>
+      <label class="row"><input type="checkbox" id="ly-chart" ${S.layers.chart ? "checked" : ""}> Traficoms sjökort (Finland och Åland)</label>
+      <label class="row"><input type="checkbox" id="ly-sea" ${S.layers.seamarks ? "checked" : ""}> OpenSeaMap sjömärken</label>
+      <button class="btn" id="ly-reprobe">Försök ansluta sjökort igen</button>
+    </div>
+    <div class="card"><h3>Bakgrund</h3>${r("osm", "OpenStreetMap")}${r("light", "Ljus")}${r("dark", "Mörk")}${r("sat", "Flygfoto")}</div>
+    <div class="disclaimer">Källa: Traficom (CC BY 4.0). Ej för navigering, uppfyller inte kraven för officiella sjökort. Använd alltid uppdaterade officiella sjökort.</div>`, "layers");
+  $("#ly-chart").onchange = e => { S.layers.chart = e.target.checked; save(); applyLayers(); };
+  $("#ly-sea").onchange = e => { S.layers.seamarks = e.target.checked; save(); applyLayers(); };
+  document.querySelectorAll("input[name=base]").forEach(x => x.onchange = () => { S.layers.base = x.value; save(); applyLayers(); });
+  $("#ly-reprobe").onclick = async () => { S.wmts = null; map.removeLayer(chartGroup); const ok = await buildChart(); applyLayers(); toast(ok ? "Sjökortet är anslutet" : "Kunde inte nå Traficom"); };
+}
+$("#b-layers").onclick = openLayers;
+
+/* ---------- menu: places, routes, log, catches ---------- */
+function openMenu() {
+  const b = boat();
+  openSheet("Meny", `
+    <div class="card sel"><h3>${esc(b.name)}</h3><div class="muted">${BTYPES[b.type]} · djupgående ${b.draft} m · ${b.speed} kn</div><div class="row"><button class="btn" id="m-boats">Båtar</button></div></div>
+    <div class="list">
+      <button class="btn" id="m-places">Mina platser (${S.places.length})</button>
+      <button class="btn" id="m-routes">Sparade rutter (${S.routes.length})</button>
+      <button class="btn" id="m-log">Loggbok (${S.tracks.length} turer)</button>
+      <button class="btn" id="m-catch">Fångstlogg (${S.catches.length})</button>
+      <button class="btn" id="m-data">Säkerhetskopia</button>
+      <button class="btn" id="m-about">Om Kummel</button>
+    </div>`, "menu");
+  $("#m-boats").onclick = openBoats; $("#m-places").onclick = openPlaces; $("#m-routes").onclick = openRoutes;
+  $("#m-log").onclick = openLog; $("#m-catch").onclick = openCatches; $("#m-data").onclick = openData; $("#m-about").onclick = openAbout;
+}
+$("#b-menu").onclick = openMenu;
+function openPlaces() {
+  openSheet("Mina platser", `<div class="list">${S.places.map(p => `<div class="card"><h3>${CATS[p.cat].e} ${esc(p.name)}</h3>${p.note ? `<div>${esc(p.note)}</div>` : ""}<div class="row"><button class="btn" data-go="${p.id}">Visa</button></div></div>`).join("") || `<div class="muted">Inga platser ännu. Tryck på nålknappen eller håll fingret på kartan för att spara en plats.</div>`}</div>`, "places");
+  document.querySelectorAll("[data-go]").forEach(x => x.onclick = () => { const p = S.places.find(q => q.id === x.dataset.go); map.setView([p.lat, p.lng], 14); openPlace(p.id); });
+}
+function openRoutes() {
+  openSheet("Sparade rutter", `<div class="list">${S.routes.map(r => `<div class="card"><h3>${esc(r.name)}</h3><div class="row"><button class="btn" data-open="${r.id}">Öppna</button><button class="btn warn" data-del="${r.id}">Ta bort</button></div></div>`).join("") || `<div class="muted">Inga sparade rutter.</div>`}</div>`, "routes");
+  document.querySelectorAll("[data-open]").forEach(x => x.onclick = () => {
+    const r = S.routes.find(q => q.id === x.dataset.open);
+    const pts = r.pts.map(p => ({ lat: p[0], lng: p[1] }));
+    map.fitBounds(L.latLngBounds(r.pts), { padding: [60, 60] }); startPlanning(pts);
+  });
+  document.querySelectorAll("[data-del]").forEach(x => x.onclick = () => { S.routes = S.routes.filter(q => q.id !== x.dataset.del); save(); openRoutes(); });
+}
+let shownTrack = null;
+function openLog() {
+  const tot = S.tracks.reduce((s, t) => s + (t.nm || 0), 0);
+  openSheet("Loggbok", `
+    <div class="row" style="gap:24px"><div><div class="big">${tot.toFixed(1)}</div><div class="muted">nm totalt</div></div><div><div class="big">${S.tracks.length}</div><div class="muted">turer</div></div></div>
+    <div class="list">${S.tracks.map(t => { const d = new Date(t.start), h = (t.end - t.start) / 3600000; return `<div class="card"><h3>${DAYS[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1} kl ${hm(d)}</h3>
+      <div class="muted num">${(t.nm || 0).toFixed(1)} nm · ${fmtDur(h)} · snitt ${h ? (t.nm / h).toFixed(1) : 0} kn · max ${t.max.toFixed(1)} kn · ${esc(t.boat || "")}</div>
+      <div class="row"><button class="btn" data-show="${t.id}">Visa</button><button class="btn" data-gpx="${t.id}">GPX</button><button class="btn warn" data-del="${t.id}">Ta bort</button></div></div>`; }).join("") || `<div class="muted">Inga turer ännu. Tryck på Spela in när du lämnar bryggan.</div>`}</div>`, "log");
+  document.querySelectorAll("[data-show]").forEach(x => x.onclick = () => {
+    const t = S.tracks.find(q => q.id === x.dataset.show);
+    if (shownTrack) trackLayer.removeLayer(shownTrack);
+    shownTrack = L.polyline(t.pts.map(p => [p[0], p[1]]), { color: "#1d6fa3", weight: 4 }).addTo(trackLayer);
+    map.fitBounds(shownTrack.getBounds(), { padding: [60, 60] });
+  });
+  document.querySelectorAll("[data-gpx]").forEach(x => x.onclick = () => downloadGpx(S.tracks.find(q => q.id === x.dataset.gpx)));
+  document.querySelectorAll("[data-del]").forEach(x => x.onclick = () => { S.tracks = S.tracks.filter(q => q.id !== x.dataset.del); save(); openLog(); });
+}
+function downloadBlob(name, text, type) {
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+function downloadGpx(t) {
+  const pts = t.pts.map(p => `<trkpt lat="${p[0]}" lon="${p[1]}"><time>${new Date(p[2]).toISOString()}</time></trkpt>`).join("");
+  downloadBlob(`kummel-${new Date(t.start).toISOString().slice(0, 10)}.gpx`, `<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="Kummel" xmlns="http://www.topografix.com/GPX/1/1"><trk><name>Tur ${new Date(t.start).toLocaleString("sv")}</name><trkseg>${pts}</trkseg></trk></gpx>`, "application/gpx+xml");
+}
+function openCatches() {
+  const by = {}; S.catches.forEach(c => { const k = c.species || "Okänd art"; by[k] = (by[k] || 0) + 1; });
+  openSheet("Fångstlogg", `
+    <div class="row">${Object.entries(by).map(([k, v]) => `<span class="pill">${esc(k)} ${v}</span>`).join("")}</div>
+    <div class="list">${S.catches.map(c => { const d = new Date(c.t); return `<div class="card"><h3>${esc(c.species || "Fångst")} ${c.kg ? `· ${esc(c.kg)} kg` : ""}</h3>
+      <div class="muted">${DAYS[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1} kl ${hm(d)}${c.wx ? ` · ${c.wx.wind.toFixed(0)} m/s ${compass(c.wx.dir)} · ${Math.round(c.wx.p)} hPa · ${c.wx.moon.icon}` : ""}${c.lure ? " · " + esc(c.lure) : ""}</div>
+      <div class="row"><button class="btn" data-c="${c.id}">Visa</button></div></div>`; }).join("") || `<div class="muted">Inga fångster ännu. Välj läget Fiske och tryck på Fisk! när det nappar.</div>`}</div>
+    <div class="muted">Dina fiskeplatser sparas bara på den här enheten och delas aldrig.</div>`, "catches");
+  document.querySelectorAll("[data-c]").forEach(x => x.onclick = () => { const c = S.catches.find(q => q.id === x.dataset.c); if (S.mode !== "fiske") setMode("fiske"); map.setView([c.lat, c.lng], 14); openCatch(c.id); });
+}
+function openData() {
+  openSheet("Säkerhetskopia", `
+    <div class="muted">All data sparas lokalt i webbläsaren på den här enheten. Spara en kopia för att flytta den till en annan enhet.</div>
+    <div class="row"><button class="btn pri" id="d-exp">Spara kopia</button><label class="btn">Läs in kopia<input type="file" id="d-imp" accept=".json,application/json" hidden></label></div>`, "data");
+  $("#d-exp").onclick = () => { const o = { ...S }; delete o.wmts; downloadBlob(`kummel-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(o), "application/json"); };
+  $("#d-imp").onchange = async e => {
+    try { const o = JSON.parse(await e.target.files[0].text()); S = Object.assign(structuredClone(DEFAULT_STATE), o, { wmts: S.wmts }); save(); drawPlaces(); toast("Kopian är inläst"); closeSheet(); }
+    catch (err) { toast("Filen kunde inte läsas. Välj en säkerhetskopia från Kummel."); }
+  };
+}
+function openAbout() {
+  openSheet("Om Kummel", `
+    <div><b>Kummel v0.1</b>: sjökort, väder och båtliv i webbläsaren. Fungerar på mobil, iPad och dator. Lägg till på hemskärmen för att använda som app.</div>
+    <div class="card"><h3>Tips</h3><div class="muted">Håll fingret på kartan (eller högerklicka) för att spara en plats. Välj läge överst för fiske, segling eller paddling. Ställ in din båt under Meny → Båtar.</div></div>
+    <div class="disclaimer">Kummel är inte ett certifierat navigationshjälpmedel. Sjökortsdata: Traficom, CC BY 4.0, ej för navigering. Sjömärken: OpenSeaMap. Bakgrund: OpenStreetMap. Väder: Open-Meteo.</div>`, "about");
+}
+
+/* ---------- night mode ---------- */
+$("#b-night").onclick = () => {
+  const on = !document.body.classList.contains("night");
+  document.body.classList.toggle("night", on); $("#b-night").setAttribute("aria-pressed", on);
+};
+
+/* ---------- init ---------- */
+setMode(S.mode);
+if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+window.addEventListener("beforeunload", e => { if (recording) { e.preventDefault(); e.returnValue = ""; } });
+</script>
+</body>
+</html>
