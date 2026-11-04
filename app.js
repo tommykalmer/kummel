@@ -113,6 +113,14 @@ const map = new maplibregl.Map({
   maxZoom: 18.5, minZoom: 4, attributionControl: false, dragRotate: true, pitchWithRotate: false, touchPitch: false, hash: false
 });
 map.on("styleimagemissing", e => {
+  if (e.id === "ship" || e.id === "ship-still") { // fartyg: spetsig skrovform i fart, romb när det ligger still (SDF)
+    const c = document.createElement("canvas"); c.width = 32; c.height = 48; const g = c.getContext("2d"); g.fillStyle = "#fff"; g.beginPath();
+    if (e.id === "ship") { g.moveTo(16, 2); g.lineTo(27, 18); g.lineTo(25, 45); g.lineTo(7, 45); g.lineTo(5, 18); }
+    else { g.moveTo(16, 12); g.lineTo(26, 24); g.lineTo(16, 36); g.lineTo(6, 24); }
+    g.closePath(); g.fill();
+    if (!map.hasImage(e.id)) map.addImage(e.id, g.getImageData(0, 0, 32, 48), { sdf: true, pixelRatio: 2 });
+    return;
+  }
   if (e.id === "wind") { // vindpil som pekar dit vinden blåser, färgas i lagret (SDF)
     const c = document.createElement("canvas"); c.width = c.height = 48; const g = c.getContext("2d");
     g.fillStyle = "#fff"; g.beginPath(); g.moveTo(24, 3); g.lineTo(38, 30); g.lineTo(28, 25); g.lineTo(28, 45); g.lineTo(20, 45); g.lineTo(20, 25); g.lineTo(10, 30); g.closePath(); g.fill();
@@ -127,7 +135,7 @@ map.touchZoomRotate.enableRotation();
 let mapReady = false;
 
 /* overlay sources (route, track, boat …) */
-const SRC = ["route", "track", "live", "shown", "heading", "acc", "catches", "fishzone", "mob", "wxgrid", "wxobs", "wxsst", "navto"];
+const SRC = ["route", "track", "live", "shown", "heading", "acc", "catches", "fishzone", "mob", "wxgrid", "wxobs", "wxsst", "navto", "ais", "aisvec"];
 function addOverlays() {
   SRC.forEach(id => { if (!map.getSource(id)) map.addSource(id, { type: "geojson", data: EMPTY }); });
   const add = l => { if (!map.getLayer(l.id)) map.addLayer(l); };
@@ -143,6 +151,9 @@ function addOverlays() {
   add({ id: "track", type: "line", source: "live", paint: { "line-color": "#d64545", "line-width": 4, "line-opacity": .85 } });
   add({ id: "route", type: "line", source: "route", paint: { "line-color": ["case", ["==", ["get", "off"], 1], "#e07b00", "#d64545"], "line-width": ["case", ["==", ["get", "off"], 1], 3, 3.5], "line-dasharray": [2, 1.5] } });
   add({ id: "route-lbl", type: "symbol", source: "route", layout: { "symbol-placement": "line-center", "text-field": ["get", "label"], "text-font": ["Noto Sans Medium"], "text-size": 12, "text-allow-overlap": false }, paint: { "text-color": "#d64545", "text-halo-color": "#fff", "text-halo-width": 2 } });
+  const aisColor = ["match", ["get", "cat"], "pass", "#2b6cd6", "cargo", "#2f8f5b", "tank", "#c0392b", "fish", "#e07b00", "sail", "#7a4fb0", "leis", "#c2185b", "serv", "#0097a7", "#6b7780"];
+  add({ id: "ais-vec", type: "line", source: "aisvec", paint: { "line-color": "#14232e", "line-width": 1.4, "line-dasharray": [2, 1.5], "line-opacity": .7 } });
+  add({ id: "ais", type: "symbol", source: "ais", layout: { "icon-image": ["case", ["==", ["get", "moving"], 1], "ship", "ship-still"], "icon-size": ["interpolate", ["linear"], ["zoom"], 7, .55, 12, .9, 16, 1.2], "icon-rotate": ["get", "rot"], "icon-rotation-alignment": "map", "icon-allow-overlap": true, "text-field": ["step", ["zoom"], "", 11.5, ["get", "name"]], "text-font": ["Noto Sans Regular"], "text-size": 10.5, "text-offset": [0, 1.4], "text-anchor": "top", "text-optional": true }, paint: { "icon-color": aisColor, "icon-halo-color": "#ffffff", "icon-halo-width": 1.2, "text-color": "#14232e", "text-halo-color": "#ffffff", "text-halo-width": 1.5 } });
   add({ id: "navto", type: "line", source: "navto", paint: { "line-color": "#2f8f5b", "line-width": 3, "line-dasharray": [1, 1.2] } });
   add({ id: "heading", type: "line", source: "heading", paint: { "line-color": "#d64545", "line-width": 2, "line-dasharray": [3, 3] } });
   add({ id: "catches", type: "circle", source: "catches", paint: { "circle-radius": 7, "circle-color": "#f2c14e", "circle-stroke-color": "#1b1500", "circle-stroke-width": 2 } });
@@ -155,6 +166,7 @@ map.on("style.load", () => { // inte "load": den väntar på alla källor, och e
   if (mob) setData("mob", { type: "FeatureCollection", features: [{ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: lnglat(mob) } }] });
   if (gps) setData("acc", circlePoly(gps, gps.acc || 1));
   if (wxOn) renderWxLayer();
+  renderAis();
   if (nav) { setData("route", { type: "FeatureCollection", features: nav.pts.slice(1).map((p, k) => ({ type: "Feature", properties: { label: "" }, geometry: { type: "LineString", coordinates: [lnglat(nav.pts[k]), lnglat(p)] } })) }); updateNav(gps || ll(map.getCenter())); }
 });
 map.on("error", e => console.warn("Karta:", String(e && e.error && e.error.message || e)));
@@ -1067,6 +1079,87 @@ $("#wxb-range").oninput = e => { wxStep = +e.target.value; renderWxLayer(); };
 map.on("moveend", () => { if (!wxOn) return; clearTimeout(wxGridT); wxGridT = setTimeout(() => { loadWxGrid(); if (wxStep === 0) loadWxObs(); }, 600); });
 setInterval(() => { if (wxOn) { wxGrid = null; loadWxGrid(); loadWxObs(); } }, 10 * 60000);
 
+/* ---------- AIS (Digitraffic, öppen data) ---------- */
+const DT = { headers: { "Digitraffic-User": "Kummel/sjokort" } };
+let aisT = null, aisMeta = {}, aisMetaAt = 0, aisShips = [];
+const SHIPCAT = t => t >= 60 && t < 70 ? "pass" : t >= 70 && t < 80 ? "cargo" : t >= 80 && t < 90 ? "tank" : t === 30 ? "fish" : t === 36 ? "sail" : t === 37 ? "leis" : (t >= 50 && t < 60) || t === 31 || t === 32 || t === 33 ? "serv" : "other";
+const CATNAME = { pass: "Passagerarfartyg", cargo: "Lastfartyg", tank: "Tankfartyg", fish: "Fiskebåt", sail: "Segelbåt", leis: "Fritidsbåt", serv: "Lots, bogserare, räddning", other: "Övrigt" };
+const NAVSTAT = ["Under gång med motor", "För ankar", "Ej manöverduglig", "Begränsad manöverförmåga", "Begränsad av djupgående", "Förtöjd", "På grund", "Fiskar", "Under segel"];
+async function loadAisMeta() {
+  if (Date.now() - aisMetaAt < 30 * 60000) return;
+  aisMetaAt = Date.now();
+  try {
+    const list = await (await fetch(`https://meri.digitraffic.fi/api/ais/v1/vessels?from=${Date.now() - 6 * 3600000}`, DT)).json();
+    (Array.isArray(list) ? list : []).forEach(v => { aisMeta[v.mmsi] = v; });
+    renderAis();
+  } catch (e) { aisMetaAt = 0; }
+}
+async function loadAis() {
+  if (!S.layers.ais) return;
+  const c = map.getCenter(), b = map.getBounds();
+  const r = Math.min(200, Math.max(5, distNm(ll(c), { lat: b.getNorth(), lng: b.getEast() }) * 1.852 * 1.15));
+  try {
+    const j = await (await fetch(`https://meri.digitraffic.fi/api/ais/v1/locations?latitude=${c.lat.toFixed(3)}&longitude=${c.lng.toFixed(3)}&radius=${Math.round(r)}&from=${Date.now() - 20 * 60000}`, DT)).json();
+    aisShips = (j.features || []).map(f => {
+      const p = f.properties || {}, [lng, lat] = f.geometry?.coordinates || [];
+      return lat == null ? null : { mmsi: p.mmsi ?? f.mmsi, lat, lng, sog: p.sog ?? 0, cog: p.cog ?? 0, hdg: p.heading, nav: p.navStat, t: p.timestampExternal || Date.now() };
+    }).filter(Boolean);
+    renderAis(); loadAisMeta();
+  } catch (e) { if (!aisShips.length) toast("AIS-data kunde inte hämtas just nu."); }
+}
+function renderAis() {
+  if (!S.layers.ais) { setData("ais", EMPTY); setData("aisvec", EMPTY); return; }
+  const feats = [], vecs = [];
+  for (const s of aisShips) {
+    const m = aisMeta[s.mmsi] || {}, moving = s.sog >= .7 ? 1 : 0;
+    const rot = s.hdg != null && s.hdg < 360 ? s.hdg : s.cog || 0;
+    feats.push({ type: "Feature", properties: { mmsi: s.mmsi, moving, rot, cat: SHIPCAT(m.shipType), name: (m.name || "").trim() }, geometry: { type: "Point", coordinates: [s.lng, s.lat] } });
+    if (moving && s.sog > 2) vecs.push({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [[s.lng, s.lat], lnglat(dest(s, s.cog, s.sog * 6 / 60))] } });
+  }
+  setData("ais", { type: "FeatureCollection", features: feats });
+  setData("aisvec", { type: "FeatureCollection", features: vecs });
+  if (sheetView && sheetView.startsWith("ais:")) openShip(+sheetView.slice(4), true);
+}
+/* närmaste passage (CPA) mellan egen båt och fartyget, båda på rak kurs */
+function cpa(a, b) {
+  const k = Math.cos(rad(a.lat)) * 60, v = (sog, cog) => [sog * Math.sin(rad(cog)), sog * Math.cos(rad(cog))];
+  const [ax, ay] = [0, 0], [bx, by] = [(b.lng - a.lng) * k, (b.lat - a.lat) * 60];
+  const [avx, avy] = v(a.sog || 0, a.cog || 0), [bvx, bvy] = v(b.sog || 0, b.cog || 0);
+  const dvx = bvx - avx, dvy = bvy - avy, dv2 = dvx * dvx + dvy * dvy;
+  const t = dv2 < 1e-6 ? 0 : Math.max(0, -((bx - ax) * dvx + (by - ay) * dvy) / dv2);
+  return { nm: Math.hypot(bx + dvx * t, by + dvy * t), min: t * 60 };
+}
+function openShip(mmsi, refresh) {
+  const s = aisShips.find(x => x.mmsi === mmsi); if (!s) return;
+  const m = aisMeta[mmsi] || {}, age = Math.round((Date.now() - s.t) / 60000);
+  let near = "";
+  if (gps) {
+    const d = distNm(gps, s), c = cpa(gps, s);
+    near = `<div class="callout ${c.nm < .3 && c.min < 20 ? "bad" : "ok"}">Avstånd ${d.toFixed(2)} nm, bäring ${String(Math.round(bearing(gps, s))).padStart(3, "0")}°.${s.sog > .5 || gps.sog > .5 ? (c.min < 1 ? " Avståndet ökar." : ` Närmaste passage <b>${c.nm.toFixed(2)} nm</b> om ${Math.round(c.min)} min.`) : ""}</div>`;
+  }
+  const html = `
+    <div class="muted">${CATNAME[SHIPCAT(m.shipType)]}${m.callSign ? " · " + esc(m.callSign) : ""} · MMSI ${mmsi}</div>
+    <div class="wx-stats">
+      <div><b>${s.sog.toFixed(1)}</b><span>Fart kn</span></div>
+      <div><b>${String(Math.round(s.cog)).padStart(3, "0")}°</b><span>Kurs</span></div>
+      <div><b>${m.draught ? (m.draught / 10).toFixed(1) + " m" : "–"}</b><span>Djupgående</span></div>
+    </div>
+    ${near}
+    ${s.nav != null && NAVSTAT[s.nav] ? `<div>${NAVSTAT[s.nav]}</div>` : ""}
+    ${m.destination ? `<div>Destination: <b>${esc(m.destination)}</b></div>` : ""}
+    <div class="muted">Position för ${age < 1 ? "mindre än en minut" : age + " min"} sedan. Källa: Digitraffic (Fintraffic).</div>`;
+  if (refresh && sheetView === "ais:" + mmsi) { $("#sh-body").innerHTML = html; return; }
+  openSheet((m.name || "Fartyg").trim(), html, "ais:" + mmsi);
+}
+map.on("click", "ais", e => { e.preventDefault(); openShip(+e.features[0].properties.mmsi); });
+map.on("mouseenter", "ais", () => map.getCanvas().style.cursor = "pointer");
+map.on("mouseleave", "ais", () => map.getCanvas().style.cursor = "");
+function setAis(on) {
+  S.layers.ais = on; save(); clearInterval(aisT);
+  if (on) { loadAis(); aisT = setInterval(loadAis, 20000); } else renderAis();
+}
+map.on("moveend", () => { if (S.layers.ais) { clearTimeout(loadAis.t); loadAis.t = setTimeout(loadAis, 800); } });
+
 /* ---------- boats ---------- */
 const BTYPES = { motor: "Motorbåt", segel: "Segelbåt", rib: "RIB", kajak: "Kajak / kanot", ovrig: "Annan" };
 const BDEF = { motor: { speed: 20, fuel: 18, maxWind: 10, draft: .6 }, segel: { speed: 5.5, fuel: 1.5, maxWind: 13, draft: 1.6 }, rib: { speed: 28, fuel: 25, maxWind: 9, draft: .5 }, kajak: { speed: 3, fuel: 0, maxWind: 6, draft: .2 }, ovrig: { speed: 6, fuel: 3, maxWind: 8, draft: .8 } };
@@ -1115,11 +1208,13 @@ function openLayers() {
     <div class="card"><h3>Visa på kartan</h3>
       ${[["fairways", "Farleder, ledlinjer och farledsdjup"], ["marks", "Sjömärken och fyrar"], ["sectors", "Ljussektorer"], ["contours", "Djupkurvor"], ["limits", "Fartbegränsningar och förbudsområden"], ["land", "Ortnamn, vägar och hus"]].map(([g, t]) => `<label class="row"><input type="checkbox" data-grp="${g}" ${(S.layers.groups || {})[g] !== false ? "checked" : ""}> ${t}</label>`).join("")}
       <label class="row"><input type="checkbox" id="ly-snd" ${S.layers.soundings ? "checked" : ""}> Djupsiffror</label>
+      <label class="row"><input type="checkbox" id="ly-ais" ${S.layers.ais ? "checked" : ""}> AIS-fartyg i realtid</label>
       <label class="row"><input type="checkbox" id="ly-sea" ${S.layers.seamarks ? "checked" : ""}> OpenSeaMap sjömärken</label>
     </div>
     <div class="muted">På detaljkortet är vatten som är grundare än din båt behöver skuggat i rött.</div>
     <div class="disclaimer">Källa: Traficom (CC BY 4.0). Ej för navigering, uppfyller inte kraven för officiella sjökort. Använd alltid uppdaterade officiella sjökort.</div>`, "layers");
   $("#ly-snd").onchange = e => { S.layers.soundings = e.target.checked; save(); applyLayers(); };
+  $("#ly-ais").onchange = e => setAis(e.target.checked);
   $("#ly-det").onchange = e => { S.layers.detail = e.target.checked; save(); applyLayers(); };
   $("#ly-dz").onchange = e => { S.layers.detailZoom = +e.target.value; save(); applyLayers(); };
   document.querySelectorAll("[data-grp]").forEach(x => x.onchange = () => { S.layers.groups = { ...(S.layers.groups || {}), [x.dataset.grp]: x.checked }; save(); applyLayers(); });
@@ -1228,5 +1323,6 @@ applyTheme(false);
 
 /* ---------- init ---------- */
 setMode(S.mode);
+if (S.layers.ais) setAis(true);
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
 window.addEventListener("beforeunload", e => { if (recording) { e.preventDefault(); e.returnValue = ""; } });
