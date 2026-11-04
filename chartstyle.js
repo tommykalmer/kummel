@@ -145,6 +145,7 @@ const KummelChart = (() => {
     sectors: ["sectors", "seclegs"],
     soundings: ["soundg", "soundg-shallow"],
     contours: ["depcnt", "depcnt-safety", "depcnt-lbl"],
+    satdepth: ["depare-sat"],
     limits: ["speed", "speed-lbl", "restrict", "tss-fill", "tss-line"],
     land: ["ofm-place", "ofm-water-name", "ofm-road", "ofm-building"]
   };
