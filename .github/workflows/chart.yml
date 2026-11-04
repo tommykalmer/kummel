@@ -9,6 +9,7 @@ on:
     paths:
       - "scripts/fetch_chart.py"
       - "scripts/build_tiles.sh"
+      - "scripts/prepare_layers.py"
       - ".github/workflows/chart.yml"
 
 permissions:
