@@ -1,16 +1,26 @@
 #!/usr/bin/env bash
-# Diagnostik: hämta flygbildsrutor där användaren såg rosa fläckar
+# Diagnostik: Maanmittauslaitos terrängdatabas (OGC API Features), samlingar för stenar och grund
 key=$(grep -o 'mmlKey: "[^"]*"' config.js | cut -d'"' -f2)
-mkdir -p data/diag
-python3 - > /tmp/tiles <<'PY'
-import math
-for lat,lon in [(60.025,19.895),(60.018,19.88)]:
-  for z in (11,12):
-    n=2**z; x=int((lon+180)/360*n); y=int((1-math.log(math.tan(math.radians(lat))+1/math.cos(math.radians(lat)))/math.pi)/2*n)
-    print(z,x,y)
+out=data/diag.md
+echo "# Diagnostik $(date -u)" > $out
+base="https://avoin-paikkatieto.maanmittauslaitos.fi/maastotiedot/features/v1"
+curl -s -m 60 "$base/collections?api-key=$key&f=json" -o /tmp/c.json
+python3 - >> $out <<'PY'
+import json
+d=json.load(open('/tmp/c.json'))
+cs=d.get('collections',[])
+print("antal samlingar:",len(cs))
+for c in cs:
+  t=(c.get('id','')+' '+c.get('title','')).lower()
+  if any(k in t for k in ('kivi','kari','luoto','sten','rock','vesi','syvyys','matal')):
+    print("-",c.get('id'),"|",c.get('title'))
+open('/tmp/ids','w').write("\n".join(c['id'] for c in cs if any(k in (c.get('id','')+c.get('title','')).lower() for k in ('kivi','kari'))))
 PY
-while read z x y; do
-  curl -s -m 30 -o "data/diag/orto_${z}_${x}_${y}.jpg" "https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts/1.0.0/ortokuva/default/WGS84_Pseudo-Mercator/$z/$y/$x.jpg?api-key=$key"
-  curl -s -m 30 -o "data/diag/esri_${z}_${x}_${y}.jpg" "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/$z/$y/$x"
-done < /tmp/tiles
-ls -la data/diag > data/diag.md
+for id in $(cat /tmp/ids); do
+  echo "## $id" >> $out
+  curl -s -m 60 "$base/collections/$id/items?api-key=$key&f=json&bbox=19.85,60.0,20.05,60.12&limit=5" -o /tmp/i.json
+  python3 -c "
+import json; d=json.load(open('/tmp/i.json')); f=d.get('features',[]); print('  träffar:',d.get('numberMatched'),'returnerade',len(f))
+for x in f[:3]: print('  ',json.dumps(x)[:400])" >> $out
+done
+cat $out
