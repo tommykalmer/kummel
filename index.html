@@ -133,6 +133,8 @@ body:has(#satlegend:not([hidden])) #b-follow{bottom:calc(112px + var(--legend-h,
 #sheet.open{transform:none}
 #sheet.compact{max-height:34%}
 #sheet.full{max-height:calc(100% - 64px - var(--sat))}
+#sheet.peek{max-height:none;height:auto}#sheet.peek .sh-body{display:none}#sheet.peek .sh-head{border-bottom:0;cursor:pointer}
+#sheet.peek .sh-head h2::after{content:" · dra upp";font:500 13px var(--f-ui);letter-spacing:0;text-transform:none;color:var(--muted)}
 .sh-head{touch-action:none;cursor:grab}
 .wp-menu{display:flex;align-items:center;gap:6px;font:600 14px var(--f-ui);color:#14232e}
 .wp-pop .maplibregl-popup-content{border-radius:12px;padding:8px 10px}
@@ -260,8 +262,8 @@ body.night{filter:brightness(.65)}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script src="config.js?v=202611042306"></script>
-<script src="chartstyle.js?v=202611042306"></script>
-<script src="app.js?v=202611042306"></script>
+<script src="config.js?v=202611042325"></script>
+<script src="chartstyle.js?v=202611042325"></script>
+<script src="app.js?v=202611042325"></script>
 </body>
 </html>

@@ -269,13 +269,13 @@ function openSheet(title, html, view) {
   $("#sh-title").textContent = title;
   $("#sh-body").innerHTML = html;
   $("#sheet").classList.add("open");
-  if (sheetView !== (view || title)) $("#sheet").classList.remove("full");
+  if (sheetView !== (view || title)) $("#sheet").classList.remove("full", "peek");
   if (!$("#sheet").classList.contains("full")) $("#sheet").classList.toggle("compact", view === "route" || view === "depth");
   document.body.classList.add("sheet-open");
   sheetView = view || title;
 }
 function closeSheet() {
-  $("#sheet").classList.remove("open", "full"); document.body.classList.remove("sheet-open");
+  $("#sheet").classList.remove("open", "full", "peek"); document.body.classList.remove("sheet-open");
   if (sheetView === "route") stopPlanning(false);
   sheetView = null;
 }
@@ -289,9 +289,19 @@ let dragY = null;
   el.addEventListener("touchend", e => {
     if (dragY === null) return; const dy = e.changedTouches[0].clientY - dragY; dragY = null;
     const sh = $("#sheet"); sh.style.transition = ""; sh.style.transform = "";
-    if (dy < -40) { sh.classList.add("full"); sh.classList.remove("compact"); }
-    else if (dy > 60) { if (sh.classList.contains("full")) sh.classList.remove("full"); else closeSheet(); }
+    /* lägen: helskärm -> mellan -> liten (bara rubriken). Ruttplaneringen stängs aldrig med svep, bara med krysset */
+    const keep = sheetView === "route" || sheetView === "pastcatch" || sheetView === "depth";
+    if (dy < -40) {
+      if (sh.classList.contains("peek")) { sh.classList.remove("peek"); if (keep) sh.classList.add("compact"); }
+      else { sh.classList.add("full"); sh.classList.remove("compact"); }
+    } else if (dy > 60) {
+      if (sh.classList.contains("full")) { sh.classList.remove("full"); if (keep) sh.classList.add("compact"); }
+      else if (keep && !sh.classList.contains("peek")) { sh.classList.add("peek"); sh.classList.remove("compact"); }
+      else if (!keep) closeSheet();
+    }
   });
+  /* tryck på rubriken i det lilla läget fäller upp panelen igen */
+  el.addEventListener("click", e => { const sh = $("#sheet"); if (sh.classList.contains("peek") && !e.target.closest(".x")) { sh.classList.remove("peek"); sh.classList.add("compact"); } });
 });
 
 /* ---------- crosshair readout, north arrow ---------- */
@@ -722,7 +732,7 @@ function renderRoute() {
   const shTxt = !sh ? "" : sh.depth < needDepth()
     ? `<div class="callout bad">Rutten passerar <b>${sh.depth} m</b> djup. ${esc(b.name)} behöver ${needDepth().toFixed(1)} m. <button class="btn" id="rt-show">Visa</button></div>`
     : `<div class="callout ok">Minsta djup längs synlig del av rutten: ${sh.depth} m.</div>`;
-  openSheet("Planera rutt", `
+  openSheet(wps.length > 1 ? `Rutt ${st.nm.toFixed(1)} nm · ${fmtDur(st.h)}` : "Planera rutt", `
     <div class="row" style="justify-content:space-between">
       <div><div class="big">${st.nm.toFixed(1)} <small style="font-size:16px">nm</small></div><div class="muted">${wps.length} punkter · ${esc(b.name)} i ${b.speed} kn</div></div>
       <div style="text-align:right"><div class="big">${st.h ? fmtDur(st.h) : "–"}</div><div class="muted">${st.h ? "Framme ca " + hm(eta) : "Tryck på kartan"}</div></div>

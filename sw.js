@@ -1,5 +1,5 @@
 /* Kummel service worker – app shell offline + cache of chart tiles you have viewed */
-const SHELL = "kummel-shell-v27";
+const SHELL = "kummel-shell-v28";
 const TILES = "kummel-tiles-v1";
 const MAX_TILES = 6000;
 const SHELL_FILES = ["./", "./index.html", "./app.js", "./chartstyle.js", "./config.js", "./data/marks.geojson", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png",
