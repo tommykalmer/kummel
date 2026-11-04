@@ -159,7 +159,9 @@ body.night{filter:brightness(.65)}
 .boat-icon{transition:transform .5s}
 .disclaimer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
 .hidden{display:none!important}
-@media (max-width:520px){.brand .bt{display:none}#wxchip small{display:none}}
+@media (max-width:520px){.brand .bt{display:none}#wxchip small{display:none}
+  .fab.rec{width:56px;padding:0;justify-content:center}.fab.rec span{display:none}
+  #inst{max-width:calc(100% - 86px)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -294,8 +296,12 @@ const seamarks = L.tileLayer("https://tiles.openseamap.org/seamark/{z}/{x}/{y}.p
 /* Traficom WMTS (KVP). The 3857 tile set name is probed at start-up. */
 const TRAFICOM = "https://julkinen.traficom.fi/rasteripalvelu/wmts";
 const CHART_LAYERS = ["Traficom:Yleiskartat 250k public", "Traficom:Yleiskartat 100k public", "Traficom:Rannikkokartat public", "Traficom:Merikarttasarjat public", "Traficom:Satamakartat"];
-/* [minZoom, maxZoom, maxNativeZoom] per series */
-const CHART_ZOOMS = [[0, 11, 11], [10, 13, 13], [13, 19, 16], [13, 19, 16], [15, 19, 17]];
+/* [minZoom, maxZoom, maxNativeZoom] per series.
+   A series is never shown below its own scale (the server then thins it into speckle),
+   but stays visible at every closer zoom, enlarged, underneath the more detailed series.
+   So a gap in a detailed sheet shows the coarser chart instead of an empty base map.
+   The server has no tiles beyond z15 for the 1:50 000 series, hence maxNativeZoom 15. */
+const CHART_ZOOMS = [[8, 19, 11], [11, 19, 12], [12, 19, 15], [12, 19, 15], [14, 19, 16]];
 const TMS_CANDIDATES = [
   { set: "WGS84_Pseudo-Mercator", m: "WGS84_Pseudo-Mercator:{z}" },
   { set: "EPSG:3857", m: "EPSG:3857:{z}" },
