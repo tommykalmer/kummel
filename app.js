@@ -158,7 +158,7 @@ map.touchZoomRotate.enableRotation();
 let mapReady = false;
 
 /* overlay sources (route, track, boat …) */
-const SRC = ["route", "track", "live", "shown", "heading", "acc", "catches", "fishzone", "mob", "wxgrid", "wxobs", "wxsst", "navto", "ais", "aisvec"];
+const SRC = ["route", "track", "live", "shown", "heading", "acc", "catches", "fishzone", "mob", "wxgrid", "wxobs", "wxsst", "navto", "ais", "aisvec", "anchor"];
 function addOverlays() {
   SRC.forEach(id => { if (!map.getSource(id)) map.addSource(id, { type: "geojson", data: EMPTY }); });
   const add = l => { if (!map.getLayer(l.id)) map.addLayer(l); };
@@ -180,6 +180,9 @@ function addOverlays() {
   add({ id: "navto", type: "line", source: "navto", paint: { "line-color": "#2f8f5b", "line-width": 3, "line-dasharray": [1, 1.2] } });
   add({ id: "heading", type: "line", source: "heading", paint: { "line-color": "#d64545", "line-width": 2, "line-dasharray": [3, 3] } });
   add({ id: "catches", type: "circle", source: "catches", paint: { "circle-radius": 7, "circle-color": "#f2c14e", "circle-stroke-color": "#1b1500", "circle-stroke-width": 2 } });
+  add({ id: "anchor-fill", type: "fill", source: "anchor", filter: ["==", ["geometry-type"], "Polygon"], paint: { "fill-color": ["case", ["==", ["get", "out"], 1], "#d64545", "#2f8f5b"], "fill-opacity": .12 } });
+  add({ id: "anchor-line", type: "line", source: "anchor", filter: ["==", ["geometry-type"], "Polygon"], paint: { "line-color": ["case", ["==", ["get", "out"], 1], "#d64545", "#2f8f5b"], "line-width": 2.5, "line-dasharray": [2, 1.5] } });
+  add({ id: "anchor-pt", type: "circle", source: "anchor", filter: ["==", ["geometry-type"], "Point"], paint: { "circle-radius": 7, "circle-color": "#ffffff", "circle-stroke-color": "#0f2a3d", "circle-stroke-width": 3 } });
   add({ id: "mob", type: "circle", source: "mob", paint: { "circle-radius": 12, "circle-color": "#d64545", "circle-stroke-color": "#fff", "circle-stroke-width": 3 } });
 }
 map.on("style.load", () => { // inte "load": den väntar på alla källor, och en nere OSM-källa får inte stoppa appen
@@ -188,6 +191,7 @@ map.on("style.load", () => { // inte "load": den väntar på alla källor, och e
   if (wps.length) drawWps();
   if (mob) setData("mob", { type: "FeatureCollection", features: [{ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: lnglat(mob) } }] });
   if (gps) setData("acc", circlePoly(gps, gps.acc || 1));
+  anchorDraw();
   if (wxOn) renderWxLayer();
   renderAis();
   if (nav) { setData("route", { type: "FeatureCollection", features: nav.pts.slice(1).map((p, k) => ({ type: "Feature", properties: { label: "" }, geometry: { type: "LineString", coordinates: [lnglat(nav.pts[k]), lnglat(p)] } })) }); updateNav(gps || ll(map.getCenter())); }
@@ -410,6 +414,7 @@ function onFix(p) {
   if (nav) updateNav(pos);
   if (mob && sheetView === "mob") updateMob();
   if (gps.sog > 0.5) depthAlarm(pos);
+  anchorCheck(pos);
 }
 $("#b-locate").onclick = () => {
   startGps();
@@ -1681,11 +1686,13 @@ function openMenu() {
       <button class="btn" id="m-log">Loggbok (${S.tracks.length} turer)</button>
       <button class="btn" id="m-catch">Fångstlogg (${S.catches.length})</button>
       <button class="btn" id="m-data">Säkerhetskopia</button>
+      <button class="btn" id="m-anchor">Ankarlarm${S.anchor ? " (på)" : ""}</button>
+      <button class="btn" id="m-offline">Offlinekarta${S.offline ? " (nedladdad)" : ""}</button>
       <button class="btn" id="m-welcome">Så fungerar Kummel</button>
       <button class="btn" id="m-about">Om Kummel</button>
     </div>`, "menu");
   $("#m-boats").onclick = openBoats; $("#m-places").onclick = openPlaces; $("#m-routes").onclick = openRoutes;
-  $("#m-log").onclick = openLog; $("#m-catch").onclick = openCatches; $("#m-data").onclick = openData; $("#m-about").onclick = openAbout; $("#m-welcome").onclick = openWelcome;
+  $("#m-log").onclick = openLog; $("#m-catch").onclick = openCatches; $("#m-data").onclick = openData; $("#m-about").onclick = openAbout; $("#m-welcome").onclick = openWelcome; $("#m-anchor").onclick = openAnchor; $("#m-offline").onclick = openOffline;
 }
 $("#b-menu").onclick = openMenu;
 function openPlaces() {
@@ -1755,6 +1762,212 @@ function openAbout() {
     <div class="disclaimer">Kummel är inte ett certifierat navigationshjälpmedel. Ruttförslag och varningar är hjälpmedel: föraren ansvarar alltid för navigeringen. Sjökortsdata: Traficom, CC BY 4.0, ej för navigering. Bakgrund: OpenStreetMap. Väder: Open-Meteo.</div>`, "about");
 }
 
+/* ---------- ankarlarm ----------
+   Ankarpunkt + radie. Larmar med ljud, vibration och röd skärm om båten hamnar utanför
+   (tre GPS-punkter i rad, med hänsyn till GPS-osäkerheten) eller om GPS:en tystnar i över en minut.
+   Webbläsaren kör bara när appen är öppen och skärmen tänd, det sägs tydligt i panelen. */
+let anchorOut = 0, anchorMax = 0, anchorDist = null, anchorAlarmOn = false, anchorMuteUntil = 0, actx = null, beepTimer = null;
+function anchorDraw() {
+  if (!S.anchor) { setData("anchor", EMPTY); return; }
+  const out = anchorAlarmOn ? 1 : 0, c = circlePoly(S.anchor, S.anchor.r, 72);
+  c.features[0].properties.out = out;
+  c.features.push({ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: lnglat(S.anchor) } });
+  setData("anchor", c);
+}
+function unlockAudio() {
+  try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); actx.resume(); } catch (e) {}
+}
+function beep() {
+  if (!actx) return;
+  try {
+    const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime;
+    o.type = "square"; o.frequency.value = 880; o.connect(g); g.connect(actx.destination);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.5, t + .02); g.gain.setValueAtTime(.5, t + .4); g.gain.exponentialRampToValueAtTime(.0001, t + .45);
+    o.start(t); o.stop(t + .5);
+  } catch (e) {}
+}
+function anchorAlarm(on, why) {
+  anchorAlarmOn = on;
+  const el = $("#anchoralarm");
+  el.classList.toggle("hidden", !on);
+  if (on) {
+    $("#aa-why").textContent = why;
+    if (!beepTimer) beepTimer = setInterval(() => {
+      if (Date.now() < anchorMuteUntil) return;
+      beep(); try { navigator.vibrate && navigator.vibrate([400, 200, 400]); } catch (e) {}
+    }, 1200);
+  } else { clearInterval(beepTimer); beepTimer = null; }
+  anchorDraw(); anchorBar();
+}
+function anchorBar() {
+  const el = $("#anchorbar"); if (!el) return;
+  el.classList.toggle("hidden", !S.anchor);
+  if (!S.anchor) return;
+  el.classList.toggle("bad", anchorAlarmOn);
+  el.innerHTML = anchorDist == null ? `⚓ Ankarlarm · väntar på GPS` : `⚓ ${Math.round(anchorDist)} m av ${S.anchor.r} m · max ${Math.round(anchorMax)} m`;
+  if (sheetView === "anchor") { const d = $("#an-now"); if (d) d.textContent = anchorDist == null ? "–" : Math.round(anchorDist) + " m"; const m = $("#an-max"); if (m) m.textContent = Math.round(anchorMax) + " m"; }
+}
+function anchorCheck(pos) {
+  if (!S.anchor) return;
+  anchorDist = distNm(S.anchor, pos) * NM;
+  anchorMax = Math.max(anchorMax, anchorDist);
+  const slack = Math.min(gps && gps.acc || 10, 30) * .5;   // osäker GPS ska inte ge falsklarm
+  if (anchorDist - slack > S.anchor.r) { if (++anchorOut >= 3 && !anchorAlarmOn) anchorAlarm(true, `Båten är ${Math.round(anchorDist)} m från ankaret (gräns ${S.anchor.r} m).`); }
+  else { anchorOut = 0; if (anchorAlarmOn && anchorDist < S.anchor.r) anchorAlarm(false); }
+  anchorBar();
+}
+setInterval(() => {   // GPS-vakt
+  if (!S.anchor || anchorAlarmOn) return;
+  const age = lastFix ? Date.now() - lastFix.t : Infinity;
+  if (age > 60000 && watchId !== null) anchorAlarm(true, "Ingen GPS-position på över en minut. Kontrollera båten.");
+}, 10000);
+function setAnchor(at) {
+  unlockAudio(); startGps(); keepAwake();
+  S.anchor = { lat: at.lat, lng: at.lng, r: +($("#an-r") ? $("#an-r").value : 40), t: Date.now() }; save();
+  anchorOut = 0; anchorMax = 0; anchorDist = gps ? distNm(S.anchor, gps) * NM : null;
+  anchorDraw(); anchorBar(); openAnchor();
+  toast("Ankarlarmet är på. Håll appen öppen och skärmen tänd.", 3500);
+}
+function openAnchor() {
+  const r = S.anchor ? S.anchor.r : 40;
+  openSheet("Ankarlarm", S.anchor ? `
+    <div class="grid2"><div class="card"><div class="muted">Avstånd nu</div><b id="an-now" style="font-size:22px">${anchorDist == null ? "–" : Math.round(anchorDist) + " m"}</b></div>
+      <div class="card"><div class="muted">Längst bort</div><b id="an-max" style="font-size:22px">${Math.round(anchorMax)} m</b></div></div>
+    <label class="f">Larmgräns: <b id="an-rv">${r} m</b><input type="range" id="an-r" min="15" max="250" step="5" value="${r}"></label>
+    <div class="row"><button class="btn" id="an-show">Visa på kartan</button><button class="btn" id="an-test">Testa larmet</button><button class="btn warn" id="an-off">Ta upp ankaret</button></div>
+    <div class="callout"><b>Viktigt:</b> larmet fungerar bara när Kummel är öppen och skärmen är tänd. Låser du telefonen eller byter app kan larmet inte gå. Sätt telefonen på laddning och stäng av ljudlöst läge, annars hörs inte larmet.</div>`
+  : `
+    <div>Sätt ankarpunkten när ankaret ligger på botten. Om båten hamnar utanför cirkeln, eller om GPS:en tystnar, larmar telefonen med ljud och vibration.</div>
+    <label class="f">Larmgräns: <b id="an-rv">${r} m</b><input type="range" id="an-r" min="15" max="250" step="5" value="${r}"></label>
+    <div class="muted">Tumregel: utsläppt lina eller kätting plus båtens längd, och lite marginal.</div>
+    <div class="row"><button class="btn pri" id="an-here">Sätt ankare vid båten</button><button class="btn" id="an-cross">Vid korset</button></div>
+    <div class="callout"><b>Viktigt:</b> larmet fungerar bara när Kummel är öppen och skärmen är tänd. Låser du telefonen eller byter app kan larmet inte gå. Sätt telefonen på laddning och stäng av ljudlöst läge, annars hörs inte larmet. Kummel ersätter inte ankarvakt.</div>`, "anchor");
+  $("#an-r").oninput = e => {
+    $("#an-rv").textContent = e.target.value + " m";
+    if (S.anchor) { S.anchor.r = +e.target.value; save(); anchorDraw(); anchorBar(); }
+  };
+  if (S.anchor) {
+    $("#an-show").onclick = () => map.easeTo({ center: lnglat(S.anchor), zoom: Math.max(map.getZoom(), 16) });
+    $("#an-test").onclick = () => { unlockAudio(); beep(); setTimeout(beep, 600); try { navigator.vibrate && navigator.vibrate([400, 200, 400]); } catch (e) {} };
+    $("#an-off").onclick = () => { S.anchor = null; save(); anchorAlarm(false); anchorDist = null; anchorDraw(); anchorBar(); closeSheet(); toast("Ankarlarmet är avstängt", 1500); };
+  } else {
+    $("#an-here").onclick = () => {
+      if (gps) return setAnchor(gps);
+      startGps(); toast("Väntar på GPS-position …");
+      const t0 = Date.now(), iv = setInterval(() => { if (gps) { clearInterval(iv); setAnchor(gps); } else if (Date.now() - t0 > 30000) { clearInterval(iv); toast("Ingen GPS-position. Prova igen eller sätt ankaret vid korset.", 4000); } }, 500);
+    };
+    $("#an-cross").onclick = () => setAnchor(ll(map.getCenter()));
+  }
+}
+$("#aa-mute").onclick = () => { unlockAudio(); anchorMuteUntil = Date.now() + 60000; toast("Tyst i en minut. Larmet ljuder igen om båten fortfarande är utanför.", 3000); };
+$("#aa-off").onclick = () => { anchorAlarm(false); anchorOut = 0; anchorMuteUntil = 0; openAnchor(); };
+$("#anchorbar").onclick = openAnchor;
+
+/* ---------- offlinekarta ----------
+   Hela sjökortet (djup, sjömärken, stenar) för Åland sparas som filer i webbläsarens cache, plus
+   landkartan för området man ser. Service workern läser sjökortsfilen ur cachen med range-anrop. */
+const OFFLINE = "kummel-offline-v1";
+const OFF_BIG = ["data/chart-aland.pmtiles", "data/rocks-aland.pmtiles"];
+const OFF_SMALL = ["data/fairways.json", "data/marks.geojson"].concat(
+  ["Noto Sans Regular", "Noto Sans Medium", "Noto Sans Italic"].flatMap(f => ["0-255", "256-511", "8192-8447"].map(r => `fonts/${f}/${r}.pbf`)));
+const ALAND = { w: 19.0, s: 59.65, e: 21.35, n: 60.65 };
+const abs = p => new URL(p, location.href).href;
+function tileRange(b, z) {
+  const n = 2 ** z, X = lng => Math.floor((lng + 180) / 360 * n);
+  const Y = lat => { const r = lat * Math.PI / 180; return Math.floor((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * n); };
+  return { x0: Math.max(0, X(b.w)), x1: Math.min(n - 1, X(b.e)), y0: Math.max(0, Y(b.n)), y1: Math.min(n - 1, Y(b.s)) };
+}
+function landTiles(view) {
+  const out = [];
+  const push = (b, z0, z1) => { for (let z = z0; z <= z1; z++) { const r = tileRange(b, z); for (let x = r.x0; x <= r.x1; x++) for (let y = r.y0; y <= r.y1; y++) out.push([z, x, y]); } };
+  push(ALAND, 5, 11);
+  push(view, 12, 14);
+  const seen = new Set(); return out.filter(t => { const k = t.join("/"); if (seen.has(k)) return false; seen.add(k); return true; });
+}
+function viewBox() { const b = map.getBounds(); return { w: b.getWest(), s: b.getSouth(), e: b.getEast(), n: b.getNorth() }; }
+async function ofmTemplate() {
+  const s = map.getSource("ofm"); if (s && s.tiles && s.tiles[0]) return s.tiles[0];
+  const j = await (await fetch("https://tiles.openfreemap.org/planet")).json(); return j.tiles[0];
+}
+let offBusy = false;
+async function downloadOffline(withChart) {
+  if (offBusy) return; offBusy = true;
+  const bar = () => $("#off-prog"), say = t => { const el = $("#off-msg"); if (el) el.textContent = t; };
+  const prog = f => { const el = bar(); if (el) { el.hidden = false; el.value = f; } };
+  try {
+    if (!("caches" in window)) throw new Error("Webbläsaren saknar stöd för offlinelagring.");
+    try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch (e) {}
+    const c = await caches.open(OFFLINE);
+    let bytes = (S.offline && S.offline.bytes) || 0, etag = S.offline && S.offline.etag;
+    if (withChart) {
+      bytes = 0;
+      for (let i = 0; i < OFF_BIG.length; i++) {
+        const url = abs(OFF_BIG[i]);
+        say(i === 0 ? "Laddar ner sjökortet …" : "Laddar ner stenar och grund …");
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error("Kunde inte hämta " + OFF_BIG[i]);
+        const total = +res.headers.get("Content-Length") || 0, rd = res.body.getReader(), parts = []; let got = 0;
+        for (;;) { const { done, value } = await rd.read(); if (done) break; parts.push(value); got += value.length; if (total) prog((i + got / total) / (OFF_BIG.length + 1)); }
+        const blob = new Blob(parts);
+        if (i === 0) etag = res.headers.get("ETag") || "";
+        await c.put(url, new Response(blob, { headers: { "Content-Type": "application/octet-stream", "Content-Length": String(blob.size), "ETag": res.headers.get("ETag") || "" } }));
+        bytes += blob.size;
+      }
+      for (const p of OFF_SMALL) { try { const r = await fetch(abs(p), { cache: "no-store" }); if (r.ok) { const b = await r.clone().blob(); bytes += b.size; await c.put(abs(p), r); } } catch (e) {} }
+    }
+    try { const tj = "https://tiles.openfreemap.org/planet", r = await fetch(tj); if (r.ok) await c.put(tj, r); } catch (e) {}
+    say("Laddar ner landkartan för området …");
+    const tpl = await ofmTemplate(), tiles = landTiles(viewBox());
+    let done = 0, i = 0;
+    const work = async () => {
+      while (i < tiles.length) {
+        const [z, x, y] = tiles[i++], url = tpl.replace("{z}", z).replace("{x}", x).replace("{y}", y);
+        try {
+          if (!(await c.match(url, { ignoreVary: true }))) { const r = await fetch(url); if (r.ok) { const b = await r.clone().blob(); bytes += b.size; await c.put(url, r); } }
+        } catch (e) {}
+        done++; prog((withChart ? OFF_BIG.length : 0) / (OFF_BIG.length + 1) + done / tiles.length / (withChart ? OFF_BIG.length + 1 : 1));
+      }
+    };
+    await Promise.all(Array.from({ length: 6 }, work));
+    const areas = (S.offline && !withChart ? S.offline.areas : []) || [];
+    areas.push(viewBox());
+    S.offline = { date: Date.now(), bytes, etag, areas }; save();
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage("offline-changed");
+    toast("Offlinekartan är sparad", 2000);
+  } catch (e) {
+    toast("Nedladdningen misslyckades: " + (e.message || e), 4000);
+  } finally { offBusy = false; if (sheetView === "offline") openOffline(); }
+}
+async function deleteOffline() {
+  try { await caches.delete(OFFLINE); } catch (e) {}
+  S.offline = null; save();
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage("offline-changed");
+  toast("Offlinekartan är borttagen", 1500); openOffline();
+}
+async function openOffline() {
+  const o = S.offline, mb = n => (n / 1048576).toFixed(0) + " MB";
+  const z = map.getZoom(), n = landTiles(viewBox()).length, tooBig = n > 6000;
+  let est = "";
+  try { const e = await navigator.storage.estimate(); est = `Använt för Kummel: ${mb(e.usage)}.`; } catch (e) {}
+  openSheet("Offlinekarta", `
+    <div>Spara sjökortet så att kartan fungerar utan täckning ute i skärgården. Sjökortet (djup, sjömärken, stenar och grund) sparas för hela Åland, landkartan i detalj för området du ser nu.</div>
+    ${o ? `<div class="card"><h3>Sparad ${new Date(o.date).toLocaleDateString("sv-FI")}</h3><div class="muted">${mb(o.bytes)} · ${o.areas.length} område${o.areas.length === 1 ? "" : "n"} med detaljerad landkarta</div></div>` : ""}
+    ${tooBig ? `<div class="callout">Zooma in lite för att spara landkartan för området. Det du ser är för stort (${n} kartbitar).</div>` : ""}
+    <progress id="off-prog" max="1" value="0" hidden style="width:100%"></progress>
+    <div class="muted" id="off-msg">${offBusy ? "Laddar ner …" : ""}</div>
+    <div class="row">
+      ${o ? `<button class="btn pri" id="off-add" ${tooBig ? "disabled" : ""}>Spara området du ser</button><button class="btn" id="off-upd">Uppdatera sjökortet</button><button class="btn warn" id="off-del">Ta bort</button>`
+          : `<button class="btn pri" id="off-dl" ${tooBig ? "disabled" : ""}>Ladda ner (ca 60–100 MB)</button>`}
+    </div>
+    <div class="muted">Gör det helst på wifi. Väder, AIS och flygbild kräver fortfarande nät. På iPhone fungerar det bäst när Kummel ligger på hemskärmen, annars kan Safari rensa sparad data om appen inte används på ett tag. ${est}</div>`, "offline");
+  if (o) { $("#off-add").onclick = () => downloadOffline(false); $("#off-upd").onclick = () => downloadOffline(true); $("#off-del").onclick = deleteOffline; }
+  else $("#off-dl").onclick = () => downloadOffline(true);
+}
+/* finns ny sjökortsdata än den sparade? (en gång per start, bara med nät) */
+if (S.offline && navigator.onLine) fetch(abs(OFF_BIG[0]), { method: "HEAD", cache: "no-store" }).then(r => {
+  const et = r.headers.get("ETag"); if (et && S.offline.etag && et !== S.offline.etag) toast("Nytt sjökort finns. Uppdatera offlinekartan under Meny → Offlinekarta.", 5000);
+}).catch(() => {});
+
 /* ---------- välkomstruta första gången ---------- */
 const TERMS_V = 1;   // höj när villkoren ändras, så måste alla godkänna på nytt
 function termsOk() { return S.termsOk >= TERMS_V; }
@@ -1803,6 +2016,7 @@ applyTheme(false);
 /* ---------- init ---------- */
 setMode(S.mode);
 if (S.layers.ais) setAis(true);
+if (S.anchor) { anchorBar(); startGps(); keepAwake(); toast("Ankarlarmet är på", 2000); }
 if (!termsOk()) openWelcome();
 /* har man redan gett platsåtkomst öppnas kartan där båten ligger (ingen ny fråga) */
 else if (navigator.geolocation && navigator.permissions && navigator.permissions.query)

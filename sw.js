@@ -1,6 +1,7 @@
 /* Kummel service worker – app shell offline + cache of chart tiles you have viewed */
-const SHELL = "kummel-shell-v36";
+const SHELL = "kummel-shell-v37";
 const TILES = "kummel-tiles-v1";
+const OFFLINE = "kummel-offline-v1";   // nedladdad offlinekarta, rensas aldrig automatiskt
 const MAX_TILES = 6000;
 const SHELL_FILES = ["./", "./index.html", "./app.js", "./chartstyle.js", "./config.js", "./data/marks.geojson", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png",
   "https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js",
@@ -12,7 +13,7 @@ self.addEventListener("install", e => {
   e.waitUntil(caches.open(SHELL).then(c => c.addAll(SHELL_FILES)).then(() => self.skipWaiting()));
 });
 self.addEventListener("activate", e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== SHELL && k !== TILES).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== SHELL && k !== TILES && k !== OFFLINE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 
 let trimming = false;
@@ -24,15 +25,38 @@ async function trimTiles() {
   } finally { trimming = false; }
 }
 
+/* sjökortsfilen ur offlinecachen: svara på range-anrop med en bit av den sparade filen */
+const pmBlobs = {};
+self.addEventListener("message", e => { if (e.data === "offline-changed") for (const k in pmBlobs) delete pmBlobs[k]; });
+async function offlineRange(req, url) {
+  const key = url.origin + url.pathname;
+  let ent = pmBlobs[key];
+  if (!ent) {
+    const hit = await (await caches.open(OFFLINE)).match(key);
+    if (!hit) return null;
+    ent = pmBlobs[key] = { blob: await hit.blob(), etag: hit.headers.get("ETag") || "" };
+  }
+  const size = ent.blob.size, m = /bytes=(\d+)-(\d*)/.exec(req.headers.get("range") || "");
+  if (!m) return null;
+  const s = +m[1], end = m[2] ? Math.min(+m[2], size - 1) : size - 1;
+  return new Response(ent.blob.slice(s, end + 1), { status: 206, headers: {
+    "Content-Range": `bytes ${s}-${end}/${size}`, "Content-Length": String(end - s + 1), "Content-Type": "application/octet-stream", "Accept-Ranges": "bytes", "ETag": ent.etag } });
+}
+
 self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET") return;
-  // sjökortsfilen läses med range-anrop; webbläsarens egen cache hanterar den
-  if (url.pathname.endsWith(".pmtiles") || e.request.headers.has("range")) return;
+  // sjökortsfilen läses med range-anrop: ur offlinecachen om den är nedladdad, annars nätet
+  if (url.pathname.endsWith(".pmtiles")) {
+    if (!e.request.headers.has("range")) return;
+    e.respondWith(offlineRange(e.request, url).then(r => r || fetch(e.request)).catch(() => fetch(e.request)));
+    return;
+  }
+  if (e.request.headers.has("range")) return;
   if (TILE_HOSTS.some(h => url.hostname.endsWith(h)) && (/\/\d+\/\d+\/\d+/.test(url.pathname) || url.pathname.includes("/fonts/") || url.search.includes("GetTile"))) {
     // cache-first for map tiles (opaque responses are fine for <img>)
     e.respondWith(caches.open(TILES).then(async c => {
-      const hit = await c.match(e.request);
+      const hit = await caches.match(e.request, { ignoreVary: true });   // offlinekartan eller tidigare visade bitar
       if (hit) return hit;
       try {
         const res = await fetch(e.request);
