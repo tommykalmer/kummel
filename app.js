@@ -20,6 +20,7 @@ const DEFAULT_STATE = {
   boatId: "b1",
   places: [], routes: [], tracks: [], catches: [], v2: 1, v3: 1
 };
+let draftCatch = null;   // fångst som inte är sparad än (Fisk! utan att trycka Spara)
 let S = load();
 function load() {
   try {
@@ -324,8 +325,10 @@ document.querySelectorAll(".modes button").forEach(b => b.onclick = () => { setM
 let sheetView = null;
 function openSheet(title, html, view) {
   if (sheetView === "welcome" && view !== "welcome" && !termsOk()) return;
+  if (draftCatch && (view || title) !== "catch:" + draftCatch.id) discardDraft();   // osparad fångst försvinner om man byter panel
   $("#sh-title").textContent = title;
   $("#sh-body").innerHTML = html;
+  if (sheetView !== (view || title)) $("#sh-body").scrollTop = 0;   // en ny panel börjar alltid högst upp
   $("#sheet").classList.add("open");
   /* alla paneler öppnas i mellanläget; samma panel behåller sitt läge när innehållet uppdateras */
   // ruttplaneringen visas hel från början (höjden följer innehållet), övriga i mellanläget
@@ -338,6 +341,7 @@ function closeSheet() {
   if (sheetView === "welcome" && !termsOk()) return;   // villkoren måste godkännas först
   $("#sheet").classList.remove("open", "full", "peek"); document.body.classList.remove("sheet-open");
   if (sheetView === "route") stopPlanning(false);
+  if (draftCatch && sheetView === "catch:" + draftCatch.id) discardDraft();
   sheetView = null; sheetPref = null; syncRail();
 }
 /* vilken knapp hör panelen till? Knappen lyser medan panelen är öppen, och ett nytt tryck stänger den */
@@ -649,8 +653,7 @@ const SPECIES = ["Gädda", "Abborre", "Gös", "Havsöring", "Lax", "Sik", "Strö
 $("#b-fish").onclick = async () => {
   const pos = gps ? ll(gps) : ll(map.getCenter());
   const c = { id: uid(), t: Date.now(), ...pos, depth: depthAt(pos), species: "", kg: "", lure: "", note: "", wx: null };
-  S.catches.unshift(c); save(); refreshCatches();
-  toast("Fångst markerad! Fyll i detaljer när du har tid.");
+  draftCatch = c;   // finns först när man trycker Spara
   openCatch(c.id);
   try {
     const w = await fetchWx(pos.lat, pos.lng), h = hourIndex(w);
@@ -660,9 +663,14 @@ $("#b-fish").onclick = async () => {
       pTrend: h >= 3 ? +(w.hourly.pressure_msl[h] - w.hourly.pressure_msl[h - 3]).toFixed(1) : null,
       sst: (waterNear && distNm(pos, waterNear) * 1.852 < 25 ? waterNear.v : w.marine?.current?.sea_surface_temperature) ?? null, moon: moonPhase(new Date())
     };
-    save(); if (sheetView === "catch:" + c.id) openCatch(c.id);
+    save();
+    if (sheetView === "catch:" + c.id) { if ($("#cf-sp")) catchForm(c); openCatch(c.id); }   // behåll det man hunnit fylla i
   } catch (e) {}
 };
+const findCatch = id => S.catches.find(x => x.id === id) || (draftCatch && draftCatch.id === id ? draftCatch : null);
+function discardDraft() { if (!draftCatch) return; const c = draftCatch; draftCatch = null; if (c.photo) photoDel(c.id); }
+function commitDraft(c) { if (draftCatch !== c) return; draftCatch = null; S.catches.unshift(c); save(); refreshCatches(); }
+function catchForm(c) { c.species = $("#cf-sp").value; c.kg = $("#cf-kg").value; c.len = $("#cf-len").value; c.released = $("#cf-rel").checked; c.lure = $("#cf-lure").value; c.note = $("#cf-note").value; }
 /* väder vid en given tidpunkt: prognos med senaste dagarna, eller arkivet för äldre fångster */
 async function wxAt(pos, t) {
   const days = (Date.now() - t) / 86400000, d = new Date(t), iso = x => x.toISOString().slice(0, 10);
@@ -716,7 +724,8 @@ function newPastCatch() {
   };
 }
 function openCatch(id) {
-  const c = S.catches.find(x => x.id === id); if (!c) return;
+  const c = findCatch(id); if (!c) return;
+  const draft = c === draftCatch;
   const d = new Date(c.t), w = c.wx;
   openSheet("Fångst", `
     <div class="muted">${DAYS[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1} kl ${hm(d)} · ${fmtPosTxt(c)}${c.depth ? ` · djup ${c.depth}` : ""}</div>
@@ -738,9 +747,11 @@ function openCatch(id) {
         <div><b>${w.temp.toFixed(0)}°</b><span>Luft</span></div>
         <div><b>${w.moon.icon}</b><span>${w.moon.name}</span></div></div>` : `<div class="muted">Hämtar väder … (sparas automatiskt när nätet finns)</div>`}
     </div>
-    <div class="row"><button class="btn pri" id="cf-save">Spara</button><button class="btn" id="cf-share">Dela fångst</button><button class="btn warn" id="cf-del">Ta bort</button></div>`, "catch:" + c.id);
+    ${draft ? `<div class="row"><button class="btn pri" id="cf-save">Spara fångst</button><button class="btn" id="cf-share">Spara och dela</button><button class="btn" id="cf-del">Avbryt</button></div>
+      <div class="muted">Fångsten hamnar på kartan och i fångstloggen när du sparar.</div>`
+    : `<div class="row"><button class="btn pri" id="cf-save">Spara</button><button class="btn" id="cf-share">Dela fångst</button><button class="btn warn" id="cf-del">Ta bort</button></div>`}`, "catch:" + c.id);
   if (c.photo && $("#sheet").classList.contains("compact")) setSheetState($("#sheet"), 2);   // med foto: visa hela panelen
-  const read = () => { c.species = $("#cf-sp").value; c.kg = $("#cf-kg").value; c.len = $("#cf-len").value; c.released = $("#cf-rel").checked; c.lure = $("#cf-lure").value; c.note = $("#cf-note").value; save(); };
+  const read = () => { catchForm(c); save(); };
   if (c.photo) photoGet(c.id).then(b => { const el = $("#cf-ph"); if (b && el && sheetView === "catch:" + c.id) { el.innerHTML = ""; const im = new Image(); im.src = URL.createObjectURL(b); im.alt = "Foto på fångsten"; el.appendChild(im);
     im.onclick = () => { const o = document.createElement("div"); o.className = "ph-full"; const big = new Image(); big.src = im.src; o.appendChild(big); o.onclick = () => o.remove(); document.body.appendChild(o); }; } });
   $("#cf-file").onchange = async e => {
@@ -748,9 +759,12 @@ function openCatch(id) {
     try { read(); await photoPut(c.id, await shrinkPhoto(f)); c.photo = 1; save(); openCatch(c.id); toast("Fotot är sparat", 1500); }
     catch (err) { toast("Fotot kunde inte sparas."); }
   };
-  $("#cf-save").onclick = () => { read(); closeSheet(); toast("Fångsten sparad"); };
-  $("#cf-share").onclick = () => { read(); openShare(c.id); };
-  $("#cf-del").onclick = () => { S.catches = S.catches.filter(x => x.id !== c.id); photoDel(c.id); save(); refreshCatches(); closeSheet(); };
+  $("#cf-save").onclick = () => { read(); commitDraft(c); save(); refreshCatches(); closeSheet(); toast("Fångsten är sparad"); };
+  $("#cf-share").onclick = () => { read(); const was = draft; commitDraft(c); openShare(c.id, was); };
+  $("#cf-del").onclick = () => {
+    if (draft) { closeSheet(); toast("Fångsten sparades inte", 1500); return; }
+    S.catches = S.catches.filter(x => x.id !== c.id); photoDel(c.id); save(); refreshCatches(); closeSheet();
+  };
 }
 
 /* ---------- foton (IndexedDB, för stora för localStorage) ---------- */
@@ -821,8 +835,8 @@ async function catchCard(c, where) {
   g.fillStyle = "#93a5ae"; g.font = `500 32px ${F}`; const tag = "sjökort och fiske i skärgården"; g.fillText(tag, W - L - g.measureText(tag).width, fyB);
   return cv;
 }
-async function openShare(id) {
-  const c = S.catches.find(x => x.id === id); if (!c) return;
+async function openShare(id, justSaved) {
+  const c = findCatch(id); if (!c) return;
   const sel = S.shareWhere || "aland";
   openSheet("Dela fångst", `
     <div class="share-prev" id="sh-prev"><span class="muted">Skapar bild …</span></div>
@@ -830,8 +844,8 @@ async function openShare(id) {
       <option value="none" ${sel === "none" ? "selected" : ""}>Visa ingen plats</option>
       <option value="aland" ${sel === "aland" ? "selected" : ""}>Bara "Ålands skärgård"</option>
       <option value="exact" ${sel === "exact" ? "selected" : ""}>Exakt position (avslöjar platsen)</option></select></label>
-    <div class="row"><button class="btn pri" id="sh-go">Dela</button><button class="btn" id="sh-save">Spara bild</button><button class="btn" id="sh-back">Tillbaka</button></div>
-    <div class="muted">Bilden skapas i telefonen. Inget laddas upp av Kummel.</div>`, "share");
+    <div class="row"><button class="btn pri" id="sh-go">Dela</button><button class="btn" id="sh-save">Spara i Bilder</button><button class="btn" id="sh-back">Tillbaka</button></div>
+    <div class="muted">${justSaved ? "Fångsten är sparad i din fångstlogg. " : ""}Bilden skapas i telefonen. Inget laddas upp av Kummel.</div>`, "share");
   let cv = null;
   const where = () => ({ none: "", aland: "Ålands skärgård", exact: fmtPosTxt(c) })[$("#sh-where").value];
   const draw = async () => {
@@ -848,7 +862,14 @@ async function openShare(id) {
     if (navigator.canShare && navigator.canShare({ files: [f] })) { try { await navigator.share({ files: [f], text }); } catch (e) {} }
     else { saveImg(f, name); toast("Bilden är sparad. Dela den från bilderna i telefonen.", 3500); }
   };
-  $("#sh-save").onclick = async () => saveImg(await blob(), name);
+  /* "Spara i Bilder": webbappar får inte skriva direkt till bildbiblioteket, men telefonens delningsmeny har "Spara bild" som lägger den i Bilder */
+  $("#sh-save").onclick = async () => {
+    const f = new File([await blob()], name, { type: "image/jpeg" });
+    if (navigator.canShare && navigator.canShare({ files: [f] })) {
+      toast("Välj \"Spara bild\" i menyn som öppnas", 3500);
+      try { await navigator.share({ files: [f] }); } catch (e) {}
+    } else saveImg(f, name);
+  };
   $("#sh-back").onclick = () => openCatch(c.id);
 }
 function saveImg(b, name) { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); }
