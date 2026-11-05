@@ -2194,7 +2194,7 @@ async function openOffline() {
     <div class="muted" id="off-msg">${offBusy ? "Laddar ner …" : ""}</div>
     <div class="row">
       ${o ? `<button class="btn pri" id="off-add" ${tooBig ? "disabled" : ""}>Spara området du ser</button><button class="btn" id="off-upd">Uppdatera sjökortet</button><button class="btn warn" id="off-del">Ta bort</button>`
-          : `<button class="btn pri" id="off-dl" ${tooBig ? "disabled" : ""}>Ladda ner (ca 60–100 MB)</button>`}
+          : `<button class="btn pri" id="off-dl" ${tooBig ? "disabled" : ""}>Ladda ner (ca 80–120 MB)</button>`}
     </div>
     <div class="muted">Gör det helst på wifi. Väder, AIS och flygbild kräver fortfarande nät. På iPhone fungerar det bäst när Kummel ligger på hemskärmen, annars kan Safari rensa sparad data om appen inte används på ett tag. ${est}</div>`, "offline");
   if (o) { $("#off-add").onclick = () => downloadOffline(false); $("#off-upd").onclick = () => downloadOffline(true); $("#off-del").onclick = deleteOffline; }
