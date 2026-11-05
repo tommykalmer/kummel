@@ -47,7 +47,10 @@ body{background:var(--paper);color:var(--fg);font:15px/1.4 var(--f-ui);overflow:
 button,input,select,textarea{font:inherit;color:inherit}
 #map{position:fixed;inset:0;background:var(--water)}
 .maplibregl-ctrl-attrib{font-size:10px;background:var(--panel)!important;color:var(--muted)}
-.maplibregl-ctrl-attrib a{color:var(--accent)}
+.maplibregl-ctrl-attrib,.maplibregl-ctrl-attrib .maplibregl-ctrl-attrib-inner{color:var(--fg)!important}
+.maplibregl-ctrl-attrib a,.maplibregl-ctrl-attrib a:visited{color:var(--fg)!important}
+:root[data-theme="dark"] .maplibregl-ctrl-attrib-button{filter:invert(1)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .maplibregl-ctrl-attrib-button{filter:invert(1)}}
 .maplibregl-ctrl-bottom-left{bottom:calc(4px + var(--sab));left:var(--sal)}
 .maplibregl-ctrl-bottom-right{bottom:var(--sab);right:var(--sar)}
 .maplibregl-ctrl-scale{background:var(--panel);border-color:var(--fg);color:var(--fg);font:600 11px var(--f-ui)}
@@ -269,8 +272,8 @@ body.terms #top,body.terms #rail,body.terms #lrail,body.terms #fab,body.terms #n
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script src="config.js?v=202611051046"></script>
-<script src="chartstyle.js?v=202611051046"></script>
-<script src="app.js?v=202611051046"></script>
+<script src="config.js?v=202611051050"></script>
+<script src="chartstyle.js?v=202611051050"></script>
+<script src="app.js?v=202611051050"></script>
 </body>
 </html>
