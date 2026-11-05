@@ -654,8 +654,10 @@ function openCatch(id) {
         <div><b>${w.moon.icon}</b><span>${w.moon.name}</span></div></div>` : `<div class="muted">Hämtar väder … (sparas automatiskt när nätet finns)</div>`}
     </div>
     <div class="row"><button class="btn pri" id="cf-save">Spara</button><button class="btn" id="cf-share">Dela fångst</button><button class="btn warn" id="cf-del">Ta bort</button></div>`, "catch:" + c.id);
+  if (c.photo && $("#sheet").classList.contains("compact")) setSheetState($("#sheet"), 2);   // med foto: visa hela panelen
   const read = () => { c.species = $("#cf-sp").value; c.kg = $("#cf-kg").value; c.len = $("#cf-len").value; c.released = $("#cf-rel").checked; c.lure = $("#cf-lure").value; c.note = $("#cf-note").value; save(); };
-  if (c.photo) photoGet(c.id).then(b => { const el = $("#cf-ph"); if (b && el && sheetView === "catch:" + c.id) { el.innerHTML = ""; const im = new Image(); im.src = URL.createObjectURL(b); el.appendChild(im); } });
+  if (c.photo) photoGet(c.id).then(b => { const el = $("#cf-ph"); if (b && el && sheetView === "catch:" + c.id) { el.innerHTML = ""; const im = new Image(); im.src = URL.createObjectURL(b); im.alt = "Foto på fångsten"; el.appendChild(im);
+    im.onclick = () => { const o = document.createElement("div"); o.className = "ph-full"; const big = new Image(); big.src = im.src; o.appendChild(big); o.onclick = () => o.remove(); document.body.appendChild(o); }; } });
   $("#cf-file").onchange = async e => {
     const f = e.target.files[0]; if (!f) return;
     try { read(); await photoPut(c.id, await shrinkPhoto(f)); c.photo = 1; save(); openCatch(c.id); toast("Fotot är sparat", 1500); }
