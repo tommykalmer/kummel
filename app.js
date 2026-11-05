@@ -279,8 +279,8 @@ function openSheet(title, html, view) {
   $("#sh-title").textContent = title;
   $("#sh-body").innerHTML = html;
   $("#sheet").classList.add("open");
-  if (sheetView !== (view || title)) $("#sheet").classList.remove("full", "peek");
-  if (!$("#sheet").classList.contains("full")) $("#sheet").classList.toggle("compact", view === "route" || view === "depth");
+  /* alla paneler öppnas i mellanläget; samma panel behåller sitt läge när innehållet uppdateras */
+  if (sheetView !== (view || title)) { $("#sheet").classList.remove("full", "peek"); $("#sheet").classList.add("compact"); }
   document.body.classList.add("sheet-open");
   sheetView = view || title;
 }
@@ -291,28 +291,38 @@ function closeSheet() {
   sheetView = null;
 }
 $("#sh-close").onclick = closeSheet;
-/* dra i panelens överkant: upp = helskärm, ner = mindre / stäng */
-let dragY = null;
+/* dra i panelens överkant. Samma för alla paneler:
+   upp = större (liten -> mellan -> helskärm), ner = mindre (helskärm -> mellan -> liten), drar man ända ner stängs den.
+   En ruttplanering med punkter stängs inte med svep (då skulle rutten försvinna), den fälls bara ihop. */
+let dragY = null, dragT = 0, dragH = 0;
+const SH_STATES = ["peek", "compact", "full"];
+function sheetState(sh) { return sh.classList.contains("peek") ? 0 : sh.classList.contains("full") ? 2 : 1; }
+function setSheetState(sh, i) { sh.classList.remove("peek", "compact", "full"); sh.classList.add(SH_STATES[i]); }
+function mayClose() { return !(sheetView === "route" && wps.length) && !(sheetView === "welcome" && !termsOk()); }
 [".grab", ".sh-head"].forEach(sel => {
   const el = $(sel);
-  el.addEventListener("touchstart", e => { if (e.target.closest(".x")) return; dragY = e.touches[0].clientY; $("#sheet").style.transition = "none"; }, { passive: true });
-  el.addEventListener("touchmove", e => { if (dragY === null) return; const dy = e.touches[0].clientY - dragY; if (dy > 0) $("#sheet").style.transform = `translateY(${dy}px)`; }, { passive: true });
+  el.addEventListener("touchstart", e => {
+    if (e.target.closest(".x")) return;
+    const sh = $("#sheet"); dragY = e.touches[0].clientY; dragT = Date.now(); dragH = sh.getBoundingClientRect().height; sh.style.transition = "none";
+  }, { passive: true });
+  el.addEventListener("touchmove", e => {
+    if (dragY === null) return;
+    const dy = e.touches[0].clientY - dragY;
+    $("#sheet").style.transform = `translateY(${dy > 0 ? dy : dy / 4}px)`;   // följer fingret nedåt, lite motstånd uppåt
+  }, { passive: true });
   el.addEventListener("touchend", e => {
-    if (dragY === null) return; const dy = e.changedTouches[0].clientY - dragY; dragY = null;
+    if (dragY === null) return;
+    const dy = e.changedTouches[0].clientY - dragY, fast = Math.abs(dy) / Math.max(1, Date.now() - dragT) > .6; dragY = null;
     const sh = $("#sheet"); sh.style.transition = ""; sh.style.transform = "";
-    /* lägen: helskärm -> mellan -> liten (bara rubriken). Ruttplaneringen stängs aldrig med svep, bara med krysset */
-    const keep = sheetView === "route" || sheetView === "pastcatch" || sheetView === "depth";
-    if (dy < -40) {
-      if (sh.classList.contains("peek")) { sh.classList.remove("peek"); if (keep) sh.classList.add("compact"); }
-      else { sh.classList.add("full"); sh.classList.remove("compact"); }
-    } else if (dy > 60) {
-      if (sh.classList.contains("full")) { sh.classList.remove("full"); if (keep) sh.classList.add("compact"); }
-      else if (keep && !sh.classList.contains("peek")) { sh.classList.add("peek"); sh.classList.remove("compact"); }
-      else if (!keep) closeSheet();
+    const st = sheetState(sh), left = dragH - dy;   // hur mycket av panelen som fortfarande syns
+    if (dy < -30) setSheetState(sh, Math.min(2, st + (fast && st === 0 ? 2 : 1)));
+    else if (dy > 40) {
+      if (left < 90 || st === 0) { if (mayClose()) closeSheet(); else setSheetState(sh, 0); }   // ända ner = stäng
+      else setSheetState(sh, Math.max(0, st - (fast && st === 2 ? 2 : 1)));
     }
   });
   /* tryck på rubriken i det lilla läget fäller upp panelen igen */
-  el.addEventListener("click", e => { const sh = $("#sheet"); if (sh.classList.contains("peek") && !e.target.closest(".x")) { sh.classList.remove("peek"); sh.classList.add("compact"); } });
+  el.addEventListener("click", e => { const sh = $("#sheet"); if (sh.classList.contains("peek") && !e.target.closest(".x")) setSheetState(sh, 1); });
 });
 
 /* ---------- crosshair readout, north arrow ---------- */
@@ -1765,7 +1775,7 @@ function openWelcome() {
     <div class="muted">Håll fingret på kartan för att spara en plats. Lägg till Kummel på hemskärmen (Dela → Lägg till på hemskärmen) så öppnas den som en app.</div>
     ${must ? `<div class="muted"><b>Genom att trycka på en knapp nedan bekräftar du att du har läst och förstått texten ovan.</b></div>` : ""}
     <div class="row"><button class="btn pri" id="wl-go">${must ? "Jag förstår – visa min position" : "Visa min position"}</button><button class="btn" id="wl-skip">${must ? "Jag förstår – bara kartan" : "Stäng"}</button></div>`, "welcome");
-  $("#sheet").classList.add("full");
+  setSheetState($("#sheet"), 2);
   $("#sheet").classList.toggle("locked", must); document.body.classList.toggle("terms", must);
   const ok = () => { S.termsOk = TERMS_V; S.welcomed = 1; save(); $("#sheet").classList.remove("locked"); document.body.classList.remove("terms"); };
   $("#wl-go").onclick = () => { ok(); closeSheet(); $("#b-locate").click(); };
