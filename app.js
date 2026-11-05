@@ -280,7 +280,8 @@ function openSheet(title, html, view) {
   $("#sh-body").innerHTML = html;
   $("#sheet").classList.add("open");
   /* alla paneler öppnas i mellanläget; samma panel behåller sitt läge när innehållet uppdateras */
-  if (sheetView !== (view || title)) { $("#sheet").classList.remove("full", "peek"); $("#sheet").classList.add("compact"); }
+  // ruttplaneringen visas hel från början (höjden följer innehållet), övriga i mellanläget
+  if (sheetView !== (view || title)) { $("#sheet").classList.remove("full", "peek", "compact"); $("#sheet").classList.add(view === "route" ? "full" : "compact"); }
   document.body.classList.add("sheet-open");
   sheetView = view || title;
 }
