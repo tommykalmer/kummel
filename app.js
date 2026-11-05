@@ -266,6 +266,7 @@ document.querySelectorAll(".modes button").forEach(b => b.onclick = () => { setM
 /* ---------- sheet ---------- */
 let sheetView = null;
 function openSheet(title, html, view) {
+  if (sheetView === "welcome" && view !== "welcome" && !termsOk()) return;
   $("#sh-title").textContent = title;
   $("#sh-body").innerHTML = html;
   $("#sheet").classList.add("open");
@@ -275,6 +276,7 @@ function openSheet(title, html, view) {
   sheetView = view || title;
 }
 function closeSheet() {
+  if (sheetView === "welcome" && !termsOk()) return;   // villkoren måste godkännas först
   $("#sheet").classList.remove("open", "full", "peek"); document.body.classList.remove("sheet-open");
   if (sheetView === "route") stopPlanning(false);
   sheetView = null;
@@ -1734,11 +1736,14 @@ function openAbout() {
 }
 
 /* ---------- välkomstruta första gången ---------- */
+const TERMS_V = 1;   // höj när villkoren ändras, så måste alla godkänna på nytt
+function termsOk() { return S.termsOk >= TERMS_V; }
 function openWelcome() {
-  S.welcomed = 1; save();
+  const must = !termsOk();
   const ic = id => `<span class="wl-ic">${$(id).innerHTML}</span>`;
   const row = (id, txt) => `<div class="wl-row">${ic(id)}<div>${txt}</div></div>`;
   openSheet("Välkommen till Kummel", `
+    <div class="warnbox"><b>Kummel är inte ett sjökort för navigering.</b> Appen är ett hjälpmedel för planering och överblick, inte certifierad för navigering. Djup, sjömärken, ruttförslag, ankomsttider och väder kan vara felaktiga, ofullständiga eller inaktuella. Använd alltid officiella, uppdaterade sjökort och gott sjömanskap. Du som förare ansvarar själv för navigeringen och för båtens säkerhet. Kummel tillhandahålls gratis och i befintligt skick, utan garantier.</div>
     <div>Sjökort, sjöväder och rutter för skärgården, direkt i webbläsaren. Välj <b>Båttur</b> eller <b>Fiske</b> uppe till vänster.</div>
     <div class="wl">
       ${row("#b-locate", "<b>Min position.</b> Ett tryck: kartan följer båten. Två tryck: kurs upp.")}
@@ -1749,13 +1754,15 @@ function openWelcome() {
       ${row("#b-night", "<b>Nattläge.</b> Mörk karta eller rött ljus för kvällen.")}
     </div>
     <div class="muted">Håll fingret på kartan för att spara en plats. Lägg till Kummel på hemskärmen (Dela → Lägg till på hemskärmen) så öppnas den som en app.</div>
-    <div class="disclaimer"><b>Inte ett officiellt sjökort.</b> Kummel är ett hjälpmedel och inte certifierat för navigering. Djupdata och ruttförslag kan vara fel eller inaktuella. Använd alltid godkända sjökort och gott sjömanskap: föraren ansvarar för navigeringen.</div>
-    <div class="row"><button class="btn pri" id="wl-go">Visa min position</button><button class="btn" id="wl-boat">Ställ in min båt</button><button class="btn" id="wl-skip">Bara kartan</button></div>`, "welcome");
+    ${must ? `<div class="muted"><b>Genom att trycka på en knapp nedan bekräftar du att du har läst och förstått texten ovan.</b></div>` : ""}
+    <div class="row"><button class="btn pri" id="wl-go">${must ? "Jag förstår – visa min position" : "Visa min position"}</button><button class="btn" id="wl-skip">${must ? "Jag förstår – bara kartan" : "Stäng"}</button></div>`, "welcome");
   $("#sheet").classList.add("full");
-  $("#wl-go").onclick = () => { closeSheet(); $("#b-locate").click(); };
-  $("#wl-boat").onclick = openBoats;
-  $("#wl-skip").onclick = closeSheet;
+  $("#sheet").classList.toggle("locked", must); document.body.classList.toggle("terms", must);
+  const ok = () => { S.termsOk = TERMS_V; S.welcomed = 1; save(); $("#sheet").classList.remove("locked"); document.body.classList.remove("terms"); };
+  $("#wl-go").onclick = () => { ok(); closeSheet(); $("#b-locate").click(); };
+  $("#wl-skip").onclick = () => { ok(); closeSheet(); };
 }
+$("#nonav").onclick = openWelcome;
 
 /* ---------- night mode ---------- */
 const THEMES = { day: "Dagläge", dark: "Nattläge: mörk karta", red: "Nattläge: rött ljus" };
@@ -1776,7 +1783,7 @@ applyTheme(false);
 /* ---------- init ---------- */
 setMode(S.mode);
 if (S.layers.ais) setAis(true);
-if (!S.welcomed) openWelcome();
+if (!termsOk()) openWelcome();
 /* har man redan gett platsåtkomst öppnas kartan där båten ligger (ingen ny fråga) */
 else if (navigator.geolocation && navigator.permissions && navigator.permissions.query)
   navigator.permissions.query({ name: "geolocation" }).then(p => { if (p.state === "granted") { startGps(); setFollow(true, true); } }).catch(() => {});
