@@ -1659,10 +1659,11 @@ function openMenu() {
       <button class="btn" id="m-log">Loggbok (${S.tracks.length} turer)</button>
       <button class="btn" id="m-catch">Fångstlogg (${S.catches.length})</button>
       <button class="btn" id="m-data">Säkerhetskopia</button>
+      <button class="btn" id="m-welcome">Så fungerar Kummel</button>
       <button class="btn" id="m-about">Om Kummel</button>
     </div>`, "menu");
   $("#m-boats").onclick = openBoats; $("#m-places").onclick = openPlaces; $("#m-routes").onclick = openRoutes;
-  $("#m-log").onclick = openLog; $("#m-catch").onclick = openCatches; $("#m-data").onclick = openData; $("#m-about").onclick = openAbout;
+  $("#m-log").onclick = openLog; $("#m-catch").onclick = openCatches; $("#m-data").onclick = openData; $("#m-about").onclick = openAbout; $("#m-welcome").onclick = openWelcome;
 }
 $("#b-menu").onclick = openMenu;
 function openPlaces() {
@@ -1732,6 +1733,30 @@ function openAbout() {
     <div class="disclaimer">Kummel är inte ett certifierat navigationshjälpmedel. Ruttförslag och varningar är hjälpmedel: föraren ansvarar alltid för navigeringen. Sjökortsdata: Traficom, CC BY 4.0, ej för navigering. Bakgrund: OpenStreetMap. Väder: Open-Meteo.</div>`, "about");
 }
 
+/* ---------- välkomstruta första gången ---------- */
+function openWelcome() {
+  S.welcomed = 1; save();
+  const ic = id => `<span class="wl-ic">${$(id).innerHTML}</span>`;
+  const row = (id, txt) => `<div class="wl-row">${ic(id)}<div>${txt}</div></div>`;
+  openSheet("Välkommen till Kummel", `
+    <div>Sjökort, sjöväder och rutter för skärgården, direkt i webbläsaren. Välj <b>Båttur</b> eller <b>Fiske</b> uppe till vänster.</div>
+    <div class="wl">
+      ${row("#b-locate", "<b>Min position.</b> Ett tryck: kartan följer båten. Två tryck: kurs upp.")}
+      ${row("#b-route", "<b>Planera rutt.</b> Välj start och mål, så föreslås en väg längs farlederna med ankomsttid.")}
+      ${row("#b-wx", "<b>Sjöväder.</b> Vind, vågor och vattentemperatur, nu och framåt.")}
+      ${row("#b-layers", "<b>Kartlager.</b> Sjökort, flygbild, AIS-fartyg med mera.")}
+      ${row("#b-menu", "<b>Meny.</b> Ställ in din båts djupgående, så markeras grunt vatten för just din båt.")}
+      ${row("#b-night", "<b>Nattläge.</b> Mörk karta eller rött ljus för kvällen.")}
+    </div>
+    <div class="muted">Håll fingret på kartan för att spara en plats. Lägg till Kummel på hemskärmen (Dela → Lägg till på hemskärmen) så öppnas den som en app.</div>
+    <div class="disclaimer"><b>Inte ett officiellt sjökort.</b> Kummel är ett hjälpmedel och inte certifierat för navigering. Djupdata och ruttförslag kan vara fel eller inaktuella. Använd alltid godkända sjökort och gott sjömanskap: föraren ansvarar för navigeringen.</div>
+    <div class="row"><button class="btn pri" id="wl-go">Visa min position</button><button class="btn" id="wl-boat">Ställ in min båt</button><button class="btn" id="wl-skip">Bara kartan</button></div>`, "welcome");
+  $("#sheet").classList.add("full");
+  $("#wl-go").onclick = () => { closeSheet(); $("#b-locate").click(); };
+  $("#wl-boat").onclick = openBoats;
+  $("#wl-skip").onclick = closeSheet;
+}
+
 /* ---------- night mode ---------- */
 const THEMES = { day: "Dagläge", dark: "Nattläge: mörk karta", red: "Nattläge: rött ljus" };
 function applyTheme(rebuild) {
@@ -1751,5 +1776,9 @@ applyTheme(false);
 /* ---------- init ---------- */
 setMode(S.mode);
 if (S.layers.ais) setAis(true);
+if (!S.welcomed) openWelcome();
+/* har man redan gett platsåtkomst öppnas kartan där båten ligger (ingen ny fråga) */
+else if (navigator.geolocation && navigator.permissions && navigator.permissions.query)
+  navigator.permissions.query({ name: "geolocation" }).then(p => { if (p.state === "granted") { startGps(); setFollow(true, true); } }).catch(() => {});
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
 window.addEventListener("beforeunload", e => { if (recording) { e.preventDefault(); e.returnValue = ""; } });
