@@ -358,7 +358,7 @@ let dragY = null, dragT = 0, dragH = 0;
 const SH_STATES = ["peek", "compact", "full"];
 function sheetState(sh) { return sh.classList.contains("peek") ? 0 : sh.classList.contains("full") ? 2 : 1; }
 const SH_EASE = "cubic-bezier(.22,1,.36,1)";   // mjuk inbromsning, som i iOS
-const wideUI = () => window.innerWidth >= 900;   // dator/iPad liggande: panelen ligger på sidan
+const wideUI = () => matchMedia("(min-width:900px), (orientation:landscape) and (max-height:540px)").matches;   // panelen ligger på sidan   // dator/iPad liggande: panelen ligger på sidan
 /* byt läge och låt höjden glida från nuvarande till den nya */
 function animSheet(sh, fromH, change) {
   change();

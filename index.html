@@ -241,9 +241,45 @@ body:has(#navbar:not(.hidden)) #anchorbar,body:has(#wxbar:not(.hidden)) #anchorb
 .sign-pop{font:13px/1.4 var(--f-ui);color:#14232e;display:flex;flex-direction:column;gap:2px}.sign-pop .muted{color:#5d6b73;font-size:12px}
 .disclaimer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
 .hidden{display:none!important}
+label.row{flex-wrap:nowrap;align-items:center}
 @media (max-width:520px){.brand .bt{display:none}#wxchip small{display:none}
   .fab.rec{width:56px;padding:0;justify-content:center}.fab.rec span{display:none}
   #inst{max-width:calc(100% - 86px)}}
+/* stående mobil: djupförklaringen får inte gå in under fisk-knappen */
+#satlegend{max-width:calc(100% - 130px - var(--sal) - var(--sar))}
+
+/* ---------- liggande mobil: allt får plats i höjd 320–540 px ----------
+   Knapparna blir lite mindre och ligger i två kolumner, mätare och knappar längst ner på rad,
+   och panelerna öppnas på sidan (som på dator) i stället för nerifrån. */
+@media (orientation:landscape) and (max-height:540px){
+  #top{top:calc(6px + var(--sat))}
+  .brand{padding:6px 10px}.modes{padding:3px}.modes button{padding:5px 10px}#wxchip{padding:4px 10px}
+  #nonav{top:calc(54px + var(--sat))}
+  #anchorbar{top:calc(82px + var(--sat))}
+  .rb,.rb.sm,#rail .rb{width:42px;height:42px}.rb svg,.rb.sm svg{width:20px;height:20px}
+  #rail{top:calc(54px + var(--sat));display:grid;grid-template-rows:repeat(4,42px);grid-auto-flow:column;gap:6px;direction:rtl}
+  #rail > *{direction:ltr}
+  #lrail{top:calc(86px + var(--sat));transform:none;display:grid;grid-template-rows:repeat(2,42px);grid-auto-flow:column;gap:6px}
+  #lrail .hidden{display:none!important}
+  #inst{bottom:calc(30px + var(--sab));max-width:52%;flex-wrap:nowrap}
+  .gauge{padding:4px 8px;min-width:58px}.gauge b{font-size:19px}.gauge.pos b{font-size:12.5px}.gauge span{font-size:10px}
+  #fab{flex-direction:row;align-items:flex-end;bottom:calc(30px + var(--sab));gap:8px}
+  .fab{min-height:46px;font-size:15px;padding:0 14px}
+  .fab.fish{width:60px;height:60px;min-height:60px;font-size:11px}.fab.fish svg{width:24px;height:24px}
+  .fab.rec{width:46px;padding:0;justify-content:center}.fab.rec span{display:none}
+  #satlegend{bottom:calc(96px + var(--sab));max-width:min(52%,560px);font-size:12px;padding:4px 8px}
+  #b-follow{bottom:calc(96px + var(--sab))}
+  /* paneler på vänster sida */
+  #sheet,#sheet.peek,#sheet.compact,#sheet.full{left:calc(8px + var(--sal));right:auto;top:calc(54px + var(--sat));bottom:calc(8px + var(--sab));width:min(380px,46vw);max-height:none;height:auto;border-radius:16px;padding-bottom:0}
+  #sheet{transform:translateX(-110%)}#sheet.open{transform:none}
+  #sheet.peek .sh-body{display:flex}#sheet.peek .sh-head h2::after{display:none}
+  .grab{display:none}
+  .sh-body,body.sheet-open .sh-body{padding-bottom:16px}
+  body.sheet-open .sh-head,body.sheet-open .sh-body{padding-right:max(16px,var(--sar))}
+  body.sheet-open #lrail,body.sheet-open #nonav,body.sheet-open #anchorbar,body.sheet-open #inst,body.sheet-open #satlegend{visibility:hidden}
+  body.sheet-open #fab{visibility:visible}
+  .toast{top:auto;bottom:calc(96px + var(--sab))}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -313,8 +349,8 @@ body:has(#navbar:not(.hidden)) #anchorbar,body:has(#wxbar:not(.hidden)) #anchorb
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script src="config.js?v=202611052058"></script>
-<script src="chartstyle.js?v=202611052058"></script>
-<script src="app.js?v=202611052058"></script>
+<script src="config.js?v=202611052159"></script>
+<script src="chartstyle.js?v=202611052159"></script>
+<script src="app.js?v=202611052159"></script>
 </body>
 </html>
