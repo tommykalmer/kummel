@@ -308,16 +308,27 @@ function openSheet(title, html, view) {
   $("#sheet").classList.add("open");
   /* alla paneler öppnas i mellanläget; samma panel behåller sitt läge när innehållet uppdateras */
   // ruttplaneringen visas hel från början (höjden följer innehållet), övriga i mellanläget
-  if (sheetView !== (view || title)) { $("#sheet").classList.remove("full", "peek", "compact"); $("#sheet").classList.add(view === "route" ? "full" : "compact"); }
+  // ny panel: samma höjd som du senast drog till (tills panelen stängs), annars mellanläget. Ruttplaneringen visas hel.
+  if (sheetView !== (view || title)) { $("#sheet").classList.remove("full", "peek", "compact"); $("#sheet").classList.add(view === "route" ? "full" : sheetPref || "compact"); }
   document.body.classList.add("sheet-open");
-  sheetView = view || title;
+  sheetView = view || title; syncRail();
 }
 function closeSheet() {
   if (sheetView === "welcome" && !termsOk()) return;   // villkoren måste godkännas först
   $("#sheet").classList.remove("open", "full", "peek"); document.body.classList.remove("sheet-open");
   if (sheetView === "route") stopPlanning(false);
-  sheetView = null;
+  sheetView = null; sheetPref = null; syncRail();
 }
+/* vilken knapp hör panelen till? Knappen lyser medan panelen är öppen, och ett nytt tryck stänger den */
+let sheetPref = null;
+const MENU_VIEWS = ["menu", "places", "routes", "log", "catches", "data", "about", "anchor", "offline", "boats", "boatedit", "welcome", "share", "pastcatch"];
+function railOwner(v) {
+  if (!v) return null;
+  if (v === "layers") return "#b-layers"; if (v === "place") return "#b-place"; if (v === "fishidx") return "#b-idx"; if (v === "depth") return "#b-depth";
+  if (MENU_VIEWS.includes(v) || v.startsWith("track")) return "#b-menu";
+  return null;
+}
+function syncRail() { ["#b-layers", "#b-menu", "#b-place", "#b-idx", "#b-depth"].forEach(id => { const el = $(id); if (el) el.setAttribute("aria-pressed", railOwner(sheetView) === id); }); }
 $("#sh-close").onclick = closeSheet;
 /* dra i panelens överkant. Samma för alla paneler:
    upp = större (liten -> mellan -> helskärm), ner = mindre (helskärm -> mellan -> liten), drar man ända ner stängs den.
@@ -348,6 +359,7 @@ function mayClose() { return !(sheetView === "route" && wps.length) && !(sheetVi
       if (left < 90 || st === 0) { if (mayClose()) closeSheet(); else setSheetState(sh, 0); }   // ända ner = stäng
       else setSheetState(sh, Math.max(0, st - (fast && st === 2 ? 2 : 1)));
     }
+    if (sh.classList.contains("open")) { const ns = sheetState(sh); if (ns > 0) sheetPref = SH_STATES[ns]; }
   });
   /* tryck på rubriken i det lilla läget fäller upp panelen igen */
   el.addEventListener("click", e => { const sh = $("#sheet"); if (sh.classList.contains("peek") && !e.target.closest(".x")) setSheetState(sh, 1); });
@@ -2272,6 +2284,12 @@ $("#b-night").onclick = () => {
   applyTheme(true); toast(THEMES[S.theme], 1500);
 };
 applyTheme(false);
+
+/* ---------- knapparna växlar: tryck igen så stängs panelen ---------- */
+["#b-layers", "#b-menu", "#b-place", "#b-idx", "#b-depth"].forEach(id => {
+  const el = $(id), orig = el && el.onclick; if (!el || !orig) return;
+  el.onclick = e => { if ($("#sheet").classList.contains("open") && railOwner(sheetView) === id) { closeSheet(); } else orig(e); };
+});
 
 /* ---------- init ---------- */
 setMode(S.mode);
