@@ -185,9 +185,11 @@ function addOverlays() {
   add({ id: "track", type: "line", source: "live", paint: { "line-color": "#d64545", "line-width": 4, "line-opacity": .85 } });
   add({ id: "route", type: "line", source: "route", paint: { "line-color": ["case", ["==", ["get", "off"], 1], "#e07b00", "#d64545"], "line-width": ["case", ["==", ["get", "off"], 1], 3, 3.5], "line-dasharray": [2, 1.5] } });
   add({ id: "route-lbl", type: "symbol", source: "route", layout: { "symbol-placement": "line-center", "text-field": ["get", "label"], "text-font": ["Noto Sans Medium"], "text-size": 12, "text-allow-overlap": false }, paint: { "text-color": "#d64545", "text-halo-color": "#fff", "text-halo-width": 2 } });
-  const aisColor = ["match", ["get", "cat"], "pass", "#2b6cd6", "cargo", "#2f8f5b", "tank", "#c0392b", "fish", "#e07b00", "sail", "#7a4fb0", "leis", "#c2185b", "serv", "#0097a7", "#6b7780"];
+  /* AIS: klara färger som inte är blå (vattnet och djupkurvorna är blå), mörk kant och en ljus ring bakom */
+  const aisColor = ["match", ["get", "cat"], "pass", "#e8175d", "cargo", "#16a34a", "tank", "#dc2626", "fish", "#f97316", "sail", "#9333ea", "leis", "#facc15", "serv", "#84cc16", "#334155"];
   add({ id: "ais-vec", type: "line", source: "aisvec", paint: { "line-color": "#14232e", "line-width": 1.4, "line-dasharray": [2, 1.5], "line-opacity": .7 } });
-  add({ id: "ais", type: "symbol", source: "ais", layout: { "icon-image": ["case", ["==", ["get", "moving"], 1], "ship", "ship-still"], "icon-size": ["interpolate", ["linear"], ["zoom"], 7, .55, 12, .9, 16, 1.2], "icon-rotate": ["get", "rot"], "icon-rotation-alignment": "map", "icon-allow-overlap": true, "text-field": ["step", ["zoom"], "", 11.5, ["get", "name"]], "text-font": ["Noto Sans Regular"], "text-size": 10.5, "text-offset": [0, 1.4], "text-anchor": "top", "text-optional": true }, paint: { "icon-color": aisColor, "icon-halo-color": "#ffffff", "icon-halo-width": 1.2, "text-color": "#14232e", "text-halo-color": "#ffffff", "text-halo-width": 1.5 } });
+  add({ id: "ais-bg", type: "circle", source: "ais", paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 7, 9, 12, 15, 16, 20], "circle-color": "#ffffff", "circle-opacity": .82, "circle-stroke-color": "#0b1620", "circle-stroke-width": 1, "circle-stroke-opacity": .5 } });
+  add({ id: "ais", type: "symbol", source: "ais", layout: { "icon-image": ["case", ["==", ["get", "moving"], 1], "ship", "ship-still"], "icon-size": ["interpolate", ["linear"], ["zoom"], 7, .75, 12, 1.15, 16, 1.5], "icon-rotate": ["get", "rot"], "icon-rotation-alignment": "map", "icon-allow-overlap": true, "text-field": ["step", ["zoom"], "", 11.5, ["get", "name"]], "text-font": ["Noto Sans Medium"], "text-size": 11, "text-offset": [0, 1.7], "text-anchor": "top", "text-optional": true }, paint: { "icon-color": aisColor, "icon-halo-color": "#0b1620", "icon-halo-width": 1.6, "text-color": "#14232e", "text-halo-color": "#ffffff", "text-halo-width": 1.8 } });
   add({ id: "navto", type: "line", source: "navto", paint: { "line-color": "#2f8f5b", "line-width": 3, "line-dasharray": [1, 1.2] } });
   add({ id: "heading", type: "line", source: "heading", paint: { "line-color": "#d64545", "line-width": 2, "line-dasharray": [3, 3] } });
   add({ id: "catch-heat", type: "heatmap", source: "catches", maxzoom: 16, layout: { visibility: "none" }, paint: { "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 8, 18, 14, 40], "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 8, .8, 14, 1.6], "heatmap-opacity": .75,
@@ -1878,7 +1880,7 @@ function openShip(mmsi, refresh) {
   if (refresh && sheetView === "ais:" + mmsi) { $("#sh-body").innerHTML = html; return; }
   openSheet((m.name || "Fartyg").trim(), html, "ais:" + mmsi);
 }
-map.on("click", "ais", e => { e.preventDefault(); openShip(+e.features[0].properties.mmsi); });
+["ais", "ais-bg"].forEach(l => map.on("click", l, e => { if (e.defaultPrevented) return; e.preventDefault(); openShip(+e.features[0].properties.mmsi); }));
 map.on("mouseenter", "ais", () => map.getCanvas().style.cursor = "pointer");
 map.on("mouseleave", "ais", () => map.getCanvas().style.cursor = "");
 function setAis(on) {
