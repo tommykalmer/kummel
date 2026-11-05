@@ -193,9 +193,9 @@ body.night{filter:brightness(.65)}
 .pl-icon span{transform:rotate(45deg);font-size:15px;line-height:1}
 .boat-icon{width:34px;height:34px}
 .wl{display:flex;flex-direction:column;gap:8px}.wl-row{display:flex;gap:10px;align-items:center}.wl-ic{flex:none;width:36px;height:36px;border-radius:10px;border:1px solid var(--line);display:grid;place-items:center}.wl-ic svg{width:20px;height:20px}
-#nonav{position:fixed;z-index:499;top:calc(62px + var(--sat));left:calc(12px + var(--sal));font:600 11px/1 system-ui,sans-serif;color:var(--ink);background:color-mix(in srgb,var(--panel) 85%,transparent);border:0;border-radius:8px;padding:5px 8px;box-shadow:var(--shadow);cursor:pointer}
+#nonav{position:fixed;z-index:499;top:calc(62px + var(--sat));left:calc(12px + var(--sal));font:600 11px/1 system-ui,sans-serif;color:var(--fg);background:color-mix(in srgb,var(--panel) 85%,transparent);border:0;border-radius:8px;padding:5px 8px;box-shadow:var(--shadow);cursor:pointer}
 body:has(#navbar:not(.hidden)) #nonav,body:has(#wxbar:not(.hidden)) #nonav{display:none}
-.warnbox{border:1px solid var(--port);border-radius:12px;padding:10px 12px;color:var(--ink);font-size:13px}
+.warnbox{border:1px solid var(--port);border-radius:12px;padding:10px 12px;color:var(--fg);font-size:13px}
 #sheet.locked #sh-close{display:none}
 body.terms #top,body.terms #rail,body.terms #lrail,body.terms #fab,body.terms #nonav{pointer-events:none;opacity:.35}
 .disclaimer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
@@ -269,8 +269,8 @@ body.terms #top,body.terms #rail,body.terms #lrail,body.terms #fab,body.terms #n
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script src="config.js?v=202611051041"></script>
-<script src="chartstyle.js?v=202611051041"></script>
-<script src="app.js?v=202611051041"></script>
+<script src="config.js?v=202611051046"></script>
+<script src="chartstyle.js?v=202611051046"></script>
+<script src="app.js?v=202611051046"></script>
 </body>
 </html>
