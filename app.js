@@ -142,6 +142,16 @@ map.on("styleimagemissing", e => {
     if (!map.hasImage("wind")) map.addImage("wind", g.getImageData(0, 0, 48, 48), { sdf: true, pixelRatio: 2 });
     return;
   }
+  if (e.id === "catch-fish") { // fångst: liten gul fisk med mörk kant
+    const c = document.createElement("canvas"); c.width = 64; c.height = 44; const g = c.getContext("2d");
+    g.translate(4, -4); g.scale(2.4, 2.4); g.lineJoin = "round";
+    const body = new Path2D("M3 12c3-4 7-6 11-6 4 0 7 3 8 6-1 3-4 6-8 6-4 0-8-2-11-6z"), tail = new Path2D("M4 12 0.5 7.5v9z");
+    g.fillStyle = "#f2c14e"; g.strokeStyle = "#1b1500"; g.lineWidth = 1.1;
+    g.fill(tail); g.stroke(tail); g.fill(body); g.stroke(body);
+    g.fillStyle = "#1b1500"; g.beginPath(); g.arc(17.2, 10.6, 1.25, 0, 7); g.fill();
+    if (!map.hasImage(e.id)) map.addImage(e.id, g.getImageData(0, 0, 64, 44), { pixelRatio: 2 });
+    return;
+  }
   KummelChart.image(map, e.id);
 });
 map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
@@ -182,7 +192,7 @@ function addOverlays() {
   add({ id: "heading", type: "line", source: "heading", paint: { "line-color": "#d64545", "line-width": 2, "line-dasharray": [3, 3] } });
   add({ id: "catch-heat", type: "heatmap", source: "catches", maxzoom: 16, layout: { visibility: "none" }, paint: { "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 8, 18, 14, 40], "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 8, .8, 14, 1.6], "heatmap-opacity": .75,
     "heatmap-color": ["interpolate", ["linear"], ["heatmap-density"], 0, "rgba(255,200,0,0)", .2, "rgba(255,200,0,.5)", .5, "#ff8a00", .8, "#e0218a", 1, "#7a1fa2"] } });
-  add({ id: "catches", type: "circle", source: "catches", paint: { "circle-radius": 7, "circle-color": "#f2c14e", "circle-stroke-color": "#1b1500", "circle-stroke-width": 2 } });
+  add({ id: "catches", type: "symbol", source: "catches", layout: { "icon-image": "catch-fish", "icon-size": ["interpolate", ["linear"], ["zoom"], 8, .7, 14, 1, 17, 1.2], "icon-allow-overlap": true, "icon-ignore-placement": true } });
   add({ id: "anchor-fill", type: "fill", source: "anchor", filter: ["==", ["geometry-type"], "Polygon"], paint: { "fill-color": ["case", ["==", ["get", "out"], 1], "#d64545", "#2f8f5b"], "fill-opacity": .12 } });
   add({ id: "anchor-line", type: "line", source: "anchor", filter: ["==", ["geometry-type"], "Polygon"], paint: { "line-color": ["case", ["==", ["get", "out"], 1], "#d64545", "#2f8f5b"], "line-width": 2.5, "line-dasharray": [2, 1.5] } });
   add({ id: "anchor-pt", type: "circle", source: "anchor", filter: ["==", ["geometry-type"], "Point"], paint: { "circle-radius": 7, "circle-color": "#ffffff", "circle-stroke-color": "#0f2a3d", "circle-stroke-width": 3 } });
