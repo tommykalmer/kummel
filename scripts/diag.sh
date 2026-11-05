@@ -1,26 +1,21 @@
 #!/usr/bin/env bash
-# Diagnostik: Maanmittauslaitos terrängdatabas (OGC API Features), samlingar för stenar och grund
-key=$(grep -o 'mmlKey: "[^"]*"' config.js | cut -d'"' -f2)
+# Diagnostik: Väyläviraston tietokuvaus (xlsx) – koder för vattentrafikmärken (vlmlajityyppi m.fl.)
 out=data/diag.md
 echo "# Diagnostik $(date -u)" > $out
-base="https://avoin-paikkatieto.maanmittauslaitos.fi/maastotiedot/features/v1"
-curl -s -m 60 "$base/collections?api-key=$key&f=json" -o /tmp/c.json
+pip install --quiet --break-system-packages openpyxl 2>/dev/null || pip install --quiet openpyxl
+curl -sL -m 120 "https://ava.vaylapilvi.fi/ava/Muut/Paikkatietopalvelut/Tietokuvaus/Vesivayla-_ja_rataverkkoaineistojen_tietokuvaus.xlsx" -o /tmp/t.xlsx
+ls -la /tmp/t.xlsx >> $out
 python3 - >> $out <<'PY'
-import json
-d=json.load(open('/tmp/c.json'))
-cs=d.get('collections',[])
-print("antal samlingar:",len(cs))
-for c in cs:
-  t=(c.get('id','')+' '+c.get('title','')).lower()
-  if any(k in t for k in ('kivi','kari','luoto','sten','rock','vesi','syvyys','matal')):
-    print("-",c.get('id'),"|",c.get('title'))
-open('/tmp/ids','w').write("\n".join(c['id'] for c in cs if any(k in (c.get('id','')+c.get('title','')).lower() for k in ('kivi','kari'))))
+import openpyxl
+wb = openpyxl.load_workbook('/tmp/t.xlsx', read_only=True, data_only=True)
+print("blad:", wb.sheetnames)
+keys = ("vlm", "liikennemerk", "pata", "pako", "kaapeli", "ankkur")
+for ws in wb.worksheets:
+    hit = 0
+    for row in ws.iter_rows(values_only=True):
+        s = " | ".join("" if v is None else str(v) for v in row)
+        if any(k in s.lower() for k in keys):
+            print(f"[{ws.title}] {s[:400]}"); hit += 1
+            if hit > 400: break
 PY
-for id in $(cat /tmp/ids); do
-  echo "## $id" >> $out
-  curl -s -m 60 "$base/collections/$id/items?api-key=$key&f=json&bbox=19.85,60.0,20.05,60.12&limit=5" -o /tmp/i.json
-  python3 -c "
-import json; d=json.load(open('/tmp/i.json')); f=d.get('features',[]); print('  träffar:',d.get('numberMatched'),'returnerade',len(f))
-for x in f[:3]: print('  ',json.dumps(x)[:400])" >> $out
-done
-cat $out
+cat $out | head -50
