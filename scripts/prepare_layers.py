@@ -42,6 +42,60 @@ for name in ("unsurveyedarea_a",):
 for name in ("dredgedarea_a", "ruoppausalueet_uusi"):
     for f in read(name): emit("dredged", f["geometry"], {}, 11)
 
+# --- branter (för fiske) --------------------------------------------------
+# Längs varje djupkurva provas punkter var 15:e meter. Ligger en djupare kurva nära (djupet ökar
+# minst 3 m på högst 60 m och lutningen är minst 1:8) räknas stället som brant. Sammanhängande
+# branta punkter blir en linje med största djupskillnad och lutning, som visas i fiskeläget.
+def steep_edges():
+    try:
+        from shapely.geometry import LineString, Point
+        from shapely.strtree import STRtree
+    except Exception as e:
+        print("branter: shapely saknas, hoppar över", e); return 0
+    kx, ky = 111320 * math.cos(math.radians(60.2)), 111320.0
+    lines, vals = [], []
+    for f in read("depthcontour_l"):
+        v = num(f["properties"].get("VALDCO")); g = f.get("geometry") or {}
+        if v is None: continue
+        parts = [g["coordinates"]] if g.get("type") == "LineString" else g.get("coordinates", []) if g.get("type") == "MultiLineString" else []
+        for c in parts:
+            if len(c) > 1:
+                lines.append(LineString([(q[0] * kx, q[1] * ky) for q in c])); vals.append(v)
+    if not lines: return 0
+    tree = STRtree(lines)
+    STEP, MAXD, MIND, SLOPE = 15.0, 60.0, 3.0, 0.125
+    n = 0
+    for i, ln in enumerate(lines):
+        v = vals[i]; L = ln.length
+        if L < STEP: continue
+        run = []
+        def flush():
+            nonlocal n
+            if len(run) >= 2:
+                emit("steep", {"type": "LineString", "coordinates": [[round(x / kx, 6), round(y / ky, 6)] for x, y, _, _ in run]},
+                     {"dv": max(r[2] for r in run), "s": round(max(r[3] for r in run), 2), "v": v}, 11)
+                n += 1
+            run.clear()
+        k = 0.0
+        while k <= L:
+            pt = ln.interpolate(k)
+            best = None
+            for j in tree.query(pt.buffer(MAXD)):
+                dv = vals[j] - v
+                if dv < MIND: continue
+                d = lines[j].distance(pt)
+                if d <= MAXD and d > 0 and dv / d >= SLOPE:
+                    s = dv / d
+                    if best is None or s > best[1]: best = (dv, s)
+            if best: run.append((pt.x, pt.y, best[0], best[1]))
+            else: flush()
+            k += STEP
+        flush()
+    return n
+_ns = steep_edges()
+print("branter:", _ns)
+with open("data/chart-log.md", "a") as fh: fh.write(f"\n## Branter\n- {_ns} branta kurvavsnitt\n")
+
 # --- sjömärken ----------------------------------------------------------
 for f in read("turvalaitteet_uusi"):
     p = f["properties"]

@@ -35,6 +35,7 @@ jobs:
             make -C /tmp/tippecanoe -j"$(nproc)" && sudo make -C /tmp/tippecanoe install
           fi
           tippecanoe --version
+          pip install --quiet --break-system-packages shapely || pip install --quiet shapely
 
       - name: Hämta Traficoms data
         run: python3 scripts/fetch_chart.py
