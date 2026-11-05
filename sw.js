@@ -1,5 +1,5 @@
 /* Kummel service worker – app shell offline + cache of chart tiles you have viewed */
-const SHELL = "kummel-shell-v48";
+const SHELL = "kummel-shell-v49";
 const TILES = "kummel-tiles-v1";
 const OFFLINE = "kummel-offline-v1";   // nedladdad offlinekarta, rensas aldrig automatiskt
 const MAX_TILES = 6000;
@@ -74,7 +74,8 @@ self.addEventListener("fetch", e => {
   }
   // app shell: nätet först (nya versioner direkt), cache om man är offline
   if (url.origin === self.location.origin && /\.(html|js|geojson)$|\/$/.test(url.pathname)) {
-    e.respondWith(fetch(e.request).then(res => { if (res.ok) { const cl = res.clone(); caches.open(SHELL).then(c => c.put(e.request, cl)); } return res; }).catch(() => caches.match(e.request, { ignoreSearch: true })));
+    // cache: "no-cache" = fråga alltid servern om filen ändrats (GitHub Pages låter annars webbläsaren använda en gammal kopia i upp till 10 min)
+    e.respondWith(fetch(e.request.url, { cache: "no-cache", credentials: "same-origin" }).then(res => { if (res.ok) { const cl = res.clone(); caches.open(SHELL).then(c => c.put(e.request, cl)); } return res; }).catch(() => caches.match(e.request, { ignoreSearch: true })));
     return;
   }
   // övrigt: stale-while-revalidate

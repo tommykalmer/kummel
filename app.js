@@ -2333,5 +2333,5 @@ if (!termsOk()) openWelcome();
 /* har man redan gett platsåtkomst öppnas kartan där båten ligger (ingen ny fråga) */
 else if (navigator.geolocation && navigator.permissions && navigator.permissions.query)
   navigator.permissions.query({ name: "geolocation" }).then(p => { if (p.state === "granted") { startGps(); setFollow(true, true); } }).catch(() => {});
-if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(r => r.update()).catch(() => {});
 window.addEventListener("beforeunload", e => { if (recording) { e.preventDefault(); e.returnValue = ""; } });
