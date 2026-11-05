@@ -149,6 +149,7 @@ body:has(#satlegend:not([hidden])) #b-follow{bottom:calc(112px + var(--legend-h,
   #rail{z-index:650}
   body.sheet-open .sh-body,body.sheet-open .sh-head{padding-right:calc(70px + var(--sar))}
   body.sheet-open #fab,body.sheet-open #inst{visibility:hidden}
+  body.sheet-open:not(:has(#sheet.peek)) #lrail{visibility:hidden}   /* vänsterknapparna skulle annars hamna under panelen */
 }
 @media (min-width:900px){
   #sheet{left:calc(10px + var(--sal));right:auto;top:calc(70px + var(--sat));bottom:calc(10px + var(--sab));width:390px;max-height:none;border-radius:18px;transform:translateX(-110%)}
@@ -212,7 +213,7 @@ body:has(#navbar:not(.hidden)) #anchorbar,body:has(#wxbar:not(.hidden)) #anchorb
 #anchoralarm .aa-big{font:800 34px var(--f-ui);letter-spacing:.04em}
 #anchoralarm .btn{color:#fff;border-color:#fff;padding:14px 18px;font-size:17px}
 @keyframes aa{from{background:rgba(190,30,30,.94)}to{background:rgba(120,10,10,.96)}}
-#b-idx{position:relative}#b-idx .badge{position:absolute;right:-4px;top:-4px;min-width:22px;height:20px;border-radius:10px;color:#fff;font:700 11px/20px var(--f-ui);padding:0 4px;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+#b-idx{position:relative}#b-idx .badge{position:absolute;right:-6px;bottom:-2px;min-width:22px;height:20px;border-radius:10px;color:#fff;font:700 11px/20px var(--f-ui);padding:0 4px;box-shadow:0 1px 3px rgba(0,0,0,.3)}
 .ph-box{border-radius:12px;background:var(--paper);min-height:56px;display:grid;place-items:center;overflow:hidden}.ph-box img{width:100%;max-height:260px;object-fit:cover;display:block}
 .ph-btn{text-align:center}.f-chk{align-self:end;display:flex;align-items:center;gap:8px;flex-wrap:nowrap;padding-bottom:10px}
 .share-prev{border-radius:12px;overflow:hidden;background:var(--paper);min-height:80px;display:grid;place-items:center}.share-prev img{width:100%;display:block}
@@ -297,8 +298,8 @@ body:has(#navbar:not(.hidden)) #anchorbar,body:has(#wxbar:not(.hidden)) #anchorb
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script src="config.js?v=202611051442"></script>
-<script src="chartstyle.js?v=202611051442"></script>
-<script src="app.js?v=202611051442"></script>
+<script src="config.js?v=202611051454"></script>
+<script src="chartstyle.js?v=202611051454"></script>
+<script src="app.js?v=202611051454"></script>
 </body>
 </html>

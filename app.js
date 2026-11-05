@@ -697,7 +697,8 @@ async function catchCard(c, where) {
     const im = new Image(), u = URL.createObjectURL(blob);
     await new Promise(r => { im.onload = r; im.onerror = r; im.src = u; });
     const k = Math.max(W / im.naturalWidth, PH / im.naturalHeight), iw = im.naturalWidth * k, ih = im.naturalHeight * k;
-    g.drawImage(im, (W - iw) / 2, (PH - ih) / 2, iw, ih); URL.revokeObjectURL(u);
+    g.save(); g.beginPath(); g.rect(0, 0, W, PH); g.clip();   // fotot bara i bildytan, inte under texten
+    g.drawImage(im, (W - iw) / 2, (PH - ih) / 2, iw, ih); g.restore(); URL.revokeObjectURL(u);
   } else {
     const gr = g.createLinearGradient(0, 0, 0, PH); gr.addColorStop(0, "#3d9ed6"); gr.addColorStop(1, "#123a55");
     g.fillStyle = gr; g.fillRect(0, 0, W, PH);
