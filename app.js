@@ -290,13 +290,14 @@ map.on("click", "signs", e => {
   if (planning || e.defaultPrevented) return;
   e.preventDefault();
   const p = e.features[0].properties, nm = p.name && p.name !== "?" ? p.name : "";
-  const head = p.val ? `Fartbegränsning ${Math.round(p.val)} km/h` : "Vattentrafikmärke";
+  const cable = +p.lt === 31 || +p.lt === 32;   // kabel- och ledningstavlor (ägs av elbolag, kommuner m.fl.)
+  const head = p.val ? `Fartbegränsning ${Math.round(p.val)} km/h` : cable ? "Kabel eller ledning på botten" : "Vattentrafikmärke";
   const rows = [p.t1, p.t2].filter(Boolean).map(t => `<div>Tilläggstavla: <b>${esc(t)}</b></div>`).join("")
     + (p.loc ? `<div>${esc(p.loc)}</div>` : "") + (nm ? `<div>${esc(nm)}</div>` : "")
     + (p.own ? `<div class="muted">Ägare: ${esc(p.own)}</div>` : "");
   if (signPop) signPop.remove();
   signPop = new maplibregl.Popup({ closeButton: false, maxWidth: "260px", offset: 12 }).setLngLat(e.features[0].geometry.coordinates)
-    .setHTML(`<div class="sign-pop"><b>${head}</b>${rows}<div class="muted">${p.val ? "Gäller i området runt märket." : "Förbud, begränsning eller anvisning. Läs skylten på plats."} Källa: Väylävirasto.</div></div>`).addTo(map);
+    .setHTML(`<div class="sign-pop"><b>${head}</b>${rows}<div class="muted">${p.val ? "Gäller i området runt märket." : cable ? "Ankra eller tråla inte i närheten. Läs skylten på plats." : "Förbud, begränsning eller anvisning. Läs skylten på plats."} Källa: Väylävirasto.</div></div>`).addTo(map);
   const pop = signPop; pop.getElement().addEventListener("click", ev => { ev.stopPropagation(); pop.remove(); });
   setTimeout(() => pop.remove(), 9000);
 });
