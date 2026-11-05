@@ -25,9 +25,12 @@ def first(*vals):
     return None
 
 out = {}
+# Lägsta zoom per lager. Skrivs till build/layers/zooms.json och blir ett zoomfilter (-j) i tippecanoe.
+# (En "tippecanoe": {"minzoom": …} på varje objekt får tippecanoe 2.x att gallra bort nästan alla linjer.)
+ZOOMS = {}
 def emit(name, geom, props, minzoom=None):
     f = {"type": "Feature", "geometry": geom, "properties": {k: v for k, v in props.items() if v is not None}}
-    if minzoom is not None: f["tippecanoe"] = {"minzoom": minzoom}
+    if minzoom is not None: ZOOMS[name] = min(ZOOMS.get(name, 99), minzoom)
     out.setdefault(name, []).append(f)
 
 # --- djup -------------------------------------------------------------
@@ -178,6 +181,7 @@ for name, feats in out.items():
     with open(f"{OUT}/{name}.geojsonl", "w") as fh:
         for ft in feats: fh.write(json.dumps(ft, ensure_ascii=False, separators=(",", ":")) + "\n")
     print(f"{name}: {len(feats)}")
+with open(f"{OUT}/zooms.json", "w") as fh: json.dump(ZOOMS, fh)
 # sjömärken som en enda GeoJSON-fil: få objekt, och då gallras inga bort i någon zoomnivå
 mk = []
 def rnd(c): return [round(c[0], 6), round(c[1], 6)] if isinstance(c[0], (int, float)) else [rnd(q) for q in c]

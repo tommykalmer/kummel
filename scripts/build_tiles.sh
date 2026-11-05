@@ -11,10 +11,12 @@ if [ -f build/rocks.geojsonl ]; then
     --name "Kummel stenar Åland" --attribution "Maanmittauslaitos, CC BY 4.0" -L rocks:build/rocks.geojsonl 2>&1 | { grep -v "%" || true; } | tail -3
   cp build/rocks-aland.pmtiles data/
 fi
+# zoomfilter per lager, t.ex. {"soundg": [">=", "$zoom", 12]}
+zfilter() { python3 -c 'import json,sys; z=json.load(open("build/layers/zooms.json")); print(json.dumps({k: [">=", "$zoom", v] for k, v in z.items() if k in sys.argv[1:]}))' "$@"; }
 largs=()
 for n in $LINES; do [ -f "build/layers/$n.geojsonl" ] && largs+=(-L "$n:build/layers/$n.geojsonl"); done
 if [ ${#largs[@]} -gt 0 ]; then
-  tippecanoe -o build/lines-aland.pmtiles --force -Z11 -z14 --no-feature-limit --no-tile-size-limit --simplification=4 \
+  tippecanoe -o build/lines-aland.pmtiles --force -Z11 -z14 --no-feature-limit --no-tile-size-limit --simplification=4 -j "$(zfilter $LINES)" \
     --name "Kummel djupkurvor Åland" --attribution "Traficom, CC BY 4.0. Ej för navigering." "${largs[@]}" 2>&1 | { grep -v "%" || true; } | tail -3
   lsize=$(stat -c %s build/lines-aland.pmtiles)
   echo "- Djupkurvor och branter: $((lsize/1024/1024)) MB" >> data/chart-log.md
@@ -24,7 +26,8 @@ files=(build/layers/*.geojsonl)
 if [ ${#files[@]} -eq 0 ]; then echo "Inga lager att bygga"; exit 1; fi
 args=()
 for f in "${files[@]}"; do n=$(basename "$f" .geojsonl); case " $MARKS $LINES " in *" $n "*) continue;; esac; args+=(-L "$n:${f}"); done
-tippecanoe -o build/chart-aland.pmtiles --force -P \
+names=$(for f in "${files[@]}"; do basename "$f" .geojsonl; done)
+tippecanoe -o build/chart-aland.pmtiles --force -P -j "$(zfilter $names)" \
   -Z5 -z14 --simplification=4 --detect-shared-borders \
   --drop-densest-as-needed --extend-zooms-if-still-dropping \
   --name "Kummel sjökort Åland" \
