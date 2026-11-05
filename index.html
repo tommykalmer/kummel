@@ -52,7 +52,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 :root[data-theme="dark"] .maplibregl-ctrl-attrib-button{filter:invert(1)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .maplibregl-ctrl-attrib-button{filter:invert(1)}}
 .maplibregl-ctrl-bottom-left{bottom:calc(4px + var(--sab));left:var(--sal)}
-.maplibregl-ctrl-bottom-right{bottom:var(--sab);right:var(--sar)}
+.maplibregl-ctrl-bottom-right{bottom:var(--sab);right:var(--sar);z-index:530}
+.maplibregl-ctrl-attrib.maplibregl-compact-show{background:var(--paper)!important;box-shadow:var(--shadow);max-width:calc(100vw - 20px - var(--sal) - var(--sar));line-height:1.35;padding:6px 30px 6px 10px}
 .maplibregl-ctrl-scale{background:var(--panel);border-color:var(--fg);color:var(--fg);font:600 11px var(--f-ui)}
 .maplibregl-canvas:focus{outline:none}
 
@@ -127,6 +128,7 @@ body:has(#navbar:not(.hidden)) #wxbar{top:calc(170px + var(--sat))}
 body:has(#navbar:not(.hidden)) .toast{top:auto;bottom:calc(130px + var(--sab))}
 #satlegend{position:fixed;z-index:505;left:calc(10px + var(--sal));bottom:calc(112px + var(--sab));display:flex;flex-wrap:wrap;gap:4px 10px;max-width:calc(100% - 100px);background:rgba(5,16,26,.78);color:#fff;border-radius:10px;padding:6px 10px;font-size:11.5px;align-items:center}
 #satlegend b{font:700 12px var(--f-num);letter-spacing:.05em;text-transform:uppercase}#satlegend span{white-space:nowrap}#satlegend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+#satlegend[hidden]{display:none}
 body.sheet-open #satlegend{visibility:hidden}
 body:has(#satlegend:not([hidden])) #b-follow{bottom:calc(112px + var(--legend-h, 80px) + 12px + var(--sab))}
 /* sheet / panel */
@@ -272,8 +274,8 @@ body.terms #top,body.terms #rail,body.terms #lrail,body.terms #fab,body.terms #n
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script src="config.js?v=202611051050"></script>
-<script src="chartstyle.js?v=202611051050"></script>
-<script src="app.js?v=202611051050"></script>
+<script src="config.js?v=202611051117"></script>
+<script src="chartstyle.js?v=202611051117"></script>
+<script src="app.js?v=202611051117"></script>
 </body>
 </html>

@@ -144,6 +144,15 @@ map.on("styleimagemissing", e => {
   KummelChart.image(map, e.id);
 });
 map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
+/* källrutan: alltid hopfälld från start, stängs själv efter en stund när man öppnat den */
+const attribEl = () => document.querySelector(".maplibregl-ctrl-attrib");
+function foldAttrib() { const el = attribEl(); if (!el) return; el.classList.remove("maplibregl-compact-show"); el.removeAttribute("open"); }
+let attribTimer = null;
+map.once("idle", foldAttrib); setTimeout(foldAttrib, 1500);
+document.addEventListener("click", e => {
+  if (!e.target.closest(".maplibregl-ctrl-attrib-button")) return;
+  clearTimeout(attribTimer); attribTimer = setTimeout(foldAttrib, 7000);
+}, true);
 map.addControl(new maplibregl.ScaleControl({ unit: "nautical", maxWidth: 110 }), "bottom-left");
 map.touchZoomRotate.enableRotation();
 let mapReady = false;
