@@ -396,15 +396,25 @@ boatEl.innerHTML = `<svg width="34" height="34" viewBox="0 0 34 34"><path d="M17
 const boatMarker = new maplibregl.Marker({ element: boatEl, rotationAlignment: "map" });
 let boatShown = false;
 
+/* GPS: om bevakningen tystnar (t.ex. efter att appen legat i bakgrunden på iPhone) startas den om */
+let gpsErrT = 0;
+function stopGps() { if (watchId !== null) { try { navigator.geolocation.clearWatch(watchId); } catch (e) {} watchId = null; } }
+function gpsStale() { return !lastFix || Date.now() - lastFix.t > 15000; }
+function restartGps() { stopGps(); startGps(); }
 function startGps() {
   if (!("geolocation" in navigator)) { toast("Den här enheten saknar platstjänster."); return; }
   if (watchId !== null) return;
   watchId = navigator.geolocation.watchPosition(onFix, err => {
-    toast(err.code === 1 ? "Platsåtkomst nekad. Tillåt plats för sidan i webbläsarens inställningar." : "Ingen GPS-position ännu.", 4000);
+    if (err.code === 1) { stopGps(); toast("Platsåtkomst nekad. Tillåt plats för sidan: Inställningar → Integritet → Platstjänster → Safari-webbplatser (eller webbläsaren du använder).", 6000); return; }
+    // ingen position än: be om en snabb, grövre position (wifi/mobilnät) och försök igen
+    navigator.geolocation.getCurrentPosition(onFix, () => {}, { enableHighAccuracy: false, maximumAge: 60000, timeout: 10000 });
+    if (Date.now() - gpsErrT > 30000) { gpsErrT = Date.now(); toast("Söker GPS-position … Det går snabbast utomhus.", 3000); }
+    if (gpsStale()) setTimeout(() => { if (gpsStale()) restartGps(); }, 5000);
   }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 });
   keepAwake();
   $("#b-mob").classList.remove("hidden");
 }
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && watchId !== null && gpsStale()) restartGps(); });
 async function keepAwake() {
   try { if ("wakeLock" in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release", () => wakeLock = null); } } catch (e) {}
 }
@@ -440,7 +450,7 @@ function onFix(p) {
   anchorCheck(pos);
 }
 $("#b-locate").onclick = () => {
-  startGps();
+  if (watchId !== null && gpsStale()) restartGps(); else startGps();
   if (!follow) {
     setFollow(true);
     if (gps) map.easeTo({ center: lnglat(gps), zoom: Math.max(map.getZoom(), 13) });
