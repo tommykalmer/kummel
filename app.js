@@ -336,40 +336,65 @@ $("#sh-close").onclick = closeSheet;
 let dragY = null, dragT = 0, dragH = 0;
 const SH_STATES = ["peek", "compact", "full"];
 function sheetState(sh) { return sh.classList.contains("peek") ? 0 : sh.classList.contains("full") ? 2 : 1; }
-function setSheetState(sh, i) { sh.classList.remove("peek", "compact", "full"); sh.classList.add(SH_STATES[i]); }
+const SH_EASE = "cubic-bezier(.22,1,.36,1)";   // mjuk inbromsning, som i iOS
+const wideUI = () => window.innerWidth >= 900;   // dator/iPad liggande: panelen ligger på sidan
+/* byt läge och låt höjden glida från nuvarande till den nya */
+function animSheet(sh, fromH, change) {
+  change();
+  if (wideUI() || !sh.classList.contains("open")) { sh.style.height = ""; sh.style.maxHeight = ""; return; }
+  sh.style.transition = "none"; sh.style.height = ""; sh.style.maxHeight = "";
+  const to = sh.getBoundingClientRect().height;
+  sh.style.height = fromH + "px"; sh.offsetHeight;   // starta från där panelen är nu
+  sh.style.transition = `height .42s ${SH_EASE}, transform .32s ${SH_EASE}`;
+  sh.style.height = to + "px";
+  clearTimeout(sh._t); sh._t = setTimeout(() => { sh.style.height = ""; sh.style.transition = ""; }, 460);
+}
+function setSheetState(sh, i, anim) {
+  const go = () => { sh.classList.remove("peek", "compact", "full"); sh.classList.add(SH_STATES[i]); };
+  if (anim) animSheet(sh, sh.getBoundingClientRect().height, go); else go();
+}
 function mayClose() { return !(sheetView === "route" && wps.length) && !(sheetView === "welcome" && !termsOk()); }
+let dragSt = 0;
 [".grab", ".sh-head"].forEach(sel => {
   const el = $(sel);
   el.addEventListener("touchstart", e => {
-    if (e.target.closest(".x")) return;
-    const sh = $("#sheet"); dragY = e.touches[0].clientY; dragT = Date.now(); dragH = sh.getBoundingClientRect().height; sh.style.transition = "none";
+    if (e.target.closest(".x") || wideUI()) return;
+    const sh = $("#sheet"); dragY = e.touches[0].clientY; dragT = Date.now(); dragSt = sheetState(sh);
+    dragH = sh.getBoundingClientRect().height;
+    sh.style.transition = "none"; sh.style.maxHeight = "none"; sh.style.height = dragH + "px";
+    sh.classList.add("dragging");
   }, { passive: true });
   el.addEventListener("touchmove", e => {
     if (dragY === null) return;
-    const dy = e.touches[0].clientY - dragY;
-    $("#sheet").style.transform = `translateY(${dy > 0 ? dy : dy / 4}px)`;   // följer fingret nedåt, lite motstånd uppåt
+    const dy = e.touches[0].clientY - dragY, max = window.innerHeight * .9;
+    let h = dragH - dy;
+    if (h > max) h = max + (h - max) / 4;   // lite motstånd högst upp
+    $("#sheet").style.height = Math.max(40, h) + "px";   // panelen följer fingret åt båda hållen
   }, { passive: true });
   el.addEventListener("touchend", e => {
     if (dragY === null) return;
     const dy = e.changedTouches[0].clientY - dragY, v = dy / Math.max(1, Date.now() - dragT); dragY = null;
-    const sh = $("#sheet"); sh.style.transition = ""; sh.style.transform = "";
-    const st = sheetState(sh);
-    if (Math.abs(dy) < 25) return;                         // för litet drag: ingen ändring
-    const vh = window.innerHeight, h = dragH - dy;         // så hög panelen var när fingret släppte
+    const sh = $("#sheet"), st = dragSt, nowH = sh.getBoundingClientRect().height;
+    sh.classList.remove("dragging");
+    if (Math.abs(dy) < 25) { animSheet(sh, nowH, () => setSheetState(sh, st)); return; }   // för litet drag: tillbaka
+    const vh = window.innerHeight, h = dragH - dy;
     let to;
     if (Math.abs(v) > .9) to = st + (dy < 0 ? 1 : -1);    // snabbt svep: ett steg i den riktningen
     else {                                                 // annars: närmaste läge (liten, mellan, helskärm)
       const H = [72, vh * .44, vh * .88];
       to = H.reduce((b, x, i) => Math.abs(x - h) < Math.abs(H[b] - h) ? i : b, 0);
-      if (to === st && dy > 0 && st > 0 && h < H[st] - 60) to = st - 1;   // drog ner en bra bit: minst ett steg
+      if (to === st && dy > 0 && st > 0 && h < H[st] - 60) to = st - 1;
       if (to === st && dy < 0 && st < 2 && h > H[st] + 60) to = st + 1;
     }
-    if (to < 0 || (st === 0 && dy > 30) || h < 40) { if (mayClose()) closeSheet(); else setSheetState(sh, 0); }   // ända ner = stäng
-    else setSheetState(sh, Math.min(2, Math.max(0, to)));
+    if (to < 0 || (st === 0 && dy > 30) || h < 40) {
+      if (mayClose()) { sh.style.transition = ""; closeSheet(); setTimeout(() => { sh.style.height = ""; sh.style.maxHeight = ""; }, 350); return; }   // ända ner = stäng
+      to = 0;
+    }
+    animSheet(sh, nowH, () => setSheetState(sh, Math.min(2, Math.max(0, to))));
     if (sh.classList.contains("open")) { const ns = sheetState(sh); if (ns > 0) sheetPref = SH_STATES[ns]; }
   });
   /* tryck på rubriken i det lilla läget fäller upp panelen igen */
-  el.addEventListener("click", e => { const sh = $("#sheet"); if (sh.classList.contains("peek") && !e.target.closest(".x")) setSheetState(sh, 1); });
+  el.addEventListener("click", e => { const sh = $("#sheet"); if (sh.classList.contains("peek") && !e.target.closest(".x")) setSheetState(sh, 1, true); });
 });
 
 /* ---------- crosshair readout, north arrow ---------- */

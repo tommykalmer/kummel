@@ -139,7 +139,18 @@ body:has(#satlegend:not([hidden])) #b-follow{bottom:calc(112px + var(--legend-h,
 #sheet.compact{max-height:44%}
 #sheet.full{max-height:calc(100% - 64px - var(--sat))}
 #sheet.peek{max-height:none;height:auto}#sheet.peek .sh-body{display:none}#sheet.peek .sh-head{border-bottom:0;cursor:pointer}
-#sheet.peek .sh-head h2::after{content:" · dra upp";font:500 13px var(--f-ui);letter-spacing:0;text-transform:none;color:var(--muted)}
+/* miniläge: en flytande list med rubrik och en uppåtpil */
+@media (max-width:899px){
+  #sheet{transition:transform .32s cubic-bezier(.22,1,.36,1),left .32s cubic-bezier(.22,1,.36,1),right .32s cubic-bezier(.22,1,.36,1),bottom .32s cubic-bezier(.22,1,.36,1),border-radius .32s}
+  #sheet.peek{left:calc(10px + var(--sal));right:calc(10px + var(--sar));bottom:calc(8px + var(--sab));border-radius:16px;padding-bottom:0;box-shadow:0 6px 24px rgba(0,0,0,.28)}
+  #sheet.peek .grab{display:none}
+  #sheet.peek .sh-head{padding:6px 6px 6px 16px;min-height:52px}
+  #sheet.peek .sh-head h2{font-size:15px;letter-spacing:.06em;display:flex;align-items:center;gap:10px}
+  #sheet.peek .sh-head h2::after{content:"";width:8px;height:8px;border-left:2.5px solid var(--muted);border-top:2.5px solid var(--muted);transform:translateY(2px) rotate(45deg);flex:none}
+  #sheet.peek .x{width:32px;height:32px;font-size:20px}
+  #sheet.dragging .sh-body{display:flex}
+  body:has(#sheet.peek) #fab, body:has(#sheet.peek) #inst{visibility:hidden}
+}
 .sh-head{touch-action:none;cursor:grab}
 .wp-menu{display:flex;align-items:center;gap:6px;font:600 14px var(--f-ui);color:#14232e}
 .wp-pop .maplibregl-popup-content{border-radius:12px;padding:8px 10px}
@@ -299,8 +310,8 @@ body:has(#navbar:not(.hidden)) #anchorbar,body:has(#wxbar:not(.hidden)) #anchorb
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script src="config.js?v=202611051934"></script>
-<script src="chartstyle.js?v=202611051934"></script>
-<script src="app.js?v=202611051934"></script>
+<script src="config.js?v=202611052009"></script>
+<script src="chartstyle.js?v=202611052009"></script>
+<script src="app.js?v=202611052009"></script>
 </body>
 </html>
