@@ -3,11 +3,18 @@
 out=data/diag.md
 echo "# Diagnostik $(date -u)" > $out
 pip install --quiet --break-system-packages openpyxl 2>/dev/null || pip install --quiet openpyxl
-curl -sL -m 120 "https://ava.vaylapilvi.fi/ava/Muut/Paikkatietopalvelut/Tietokuvaus/Vesivayla-_ja_rataverkkoaineistojen_tietokuvaus.xlsx" -o /tmp/t.xlsx
+curl -sSL -A "Mozilla/5.0 kummel-diag" -w "http %{http_code} %{url_effective}\n" -m 120 "https://ava.vaylapilvi.fi/ava/Muut/Paikkatietopalvelut/Tietokuvaus/Vesivayla-_ja_rataverkkoaineistojen_tietokuvaus.xlsx" -o /tmp/t.xlsx >> $out 2>&1
+file /tmp/t.xlsx >> $out 2>&1
+curl -sS -m 60 "https://avoinapi.vaylapilvi.fi/vaylatiedot/ows?service=WFS&version=2.0.0&request=DescribeFeatureType&typeNames=vesivaylatiedot:vesiliikennemerkit_uusi" | head -c 4000 >> $out
+echo >> $out
 ls -la /tmp/t.xlsx >> $out
 python3 - >> $out <<'PY'
 import openpyxl
-wb = openpyxl.load_workbook('/tmp/t.xlsx', read_only=True, data_only=True)
+import sys
+try:
+  wb = openpyxl.load_workbook('/tmp/t.xlsx', read_only=True, data_only=True)
+except Exception as e:
+  print('xlsx fel', e); sys.exit()
 print("blad:", wb.sheetnames)
 keys = ("vlm", "liikennemerk", "pata", "pako", "kaapeli", "ankkur")
 for ws in wb.worksheets:
