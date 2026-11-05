@@ -351,14 +351,21 @@ function mayClose() { return !(sheetView === "route" && wps.length) && !(sheetVi
   }, { passive: true });
   el.addEventListener("touchend", e => {
     if (dragY === null) return;
-    const dy = e.changedTouches[0].clientY - dragY, fast = Math.abs(dy) / Math.max(1, Date.now() - dragT) > .6; dragY = null;
+    const dy = e.changedTouches[0].clientY - dragY, v = dy / Math.max(1, Date.now() - dragT); dragY = null;
     const sh = $("#sheet"); sh.style.transition = ""; sh.style.transform = "";
-    const st = sheetState(sh), left = dragH - dy;   // hur mycket av panelen som fortfarande syns
-    if (dy < -30) setSheetState(sh, Math.min(2, st + (fast && st === 0 ? 2 : 1)));
-    else if (dy > 40) {
-      if (left < 90 || st === 0) { if (mayClose()) closeSheet(); else setSheetState(sh, 0); }   // ända ner = stäng
-      else setSheetState(sh, Math.max(0, st - (fast && st === 2 ? 2 : 1)));
+    const st = sheetState(sh);
+    if (Math.abs(dy) < 25) return;                         // för litet drag: ingen ändring
+    const vh = window.innerHeight, h = dragH - dy;         // så hög panelen var när fingret släppte
+    let to;
+    if (Math.abs(v) > .9) to = st + (dy < 0 ? 1 : -1);    // snabbt svep: ett steg i den riktningen
+    else {                                                 // annars: närmaste läge (liten, mellan, helskärm)
+      const H = [72, vh * .44, vh * .88];
+      to = H.reduce((b, x, i) => Math.abs(x - h) < Math.abs(H[b] - h) ? i : b, 0);
+      if (to === st && dy > 0 && st > 0 && h < H[st] - 60) to = st - 1;   // drog ner en bra bit: minst ett steg
+      if (to === st && dy < 0 && st < 2 && h > H[st] + 60) to = st + 1;
     }
+    if (to < 0 || (st === 0 && dy > 30) || h < 40) { if (mayClose()) closeSheet(); else setSheetState(sh, 0); }   // ända ner = stäng
+    else setSheetState(sh, Math.min(2, Math.max(0, to)));
     if (sh.classList.contains("open")) { const ns = sheetState(sh); if (ns > 0) sheetPref = SH_STATES[ns]; }
   });
   /* tryck på rubriken i det lilla läget fäller upp panelen igen */
