@@ -108,6 +108,7 @@ function baseStyle() {
       ofm: { type: "vector", url: "https://tiles.openfreemap.org/planet", attribution: "OpenFreeMap © OpenStreetMap" },
       marks: { type: "geojson", data: "data/marks.geojson" },
       rocks: { type: "vector", url: "pmtiles://" + new URL("data/rocks-aland.pmtiles", location.href).href, attribution: "Stenar: Maanmittauslaitos" },
+      lines: { type: "vector", url: "pmtiles://" + new URL("data/lines-aland.pmtiles", location.href).href },
       chart: { type: "vector", url: CHART_URL, attribution: "Källa: Traficom (CC BY 4.0). Ej för navigering." }
     },
     layers: [
@@ -179,6 +180,8 @@ function addOverlays() {
   add({ id: "ais", type: "symbol", source: "ais", layout: { "icon-image": ["case", ["==", ["get", "moving"], 1], "ship", "ship-still"], "icon-size": ["interpolate", ["linear"], ["zoom"], 7, .55, 12, .9, 16, 1.2], "icon-rotate": ["get", "rot"], "icon-rotation-alignment": "map", "icon-allow-overlap": true, "text-field": ["step", ["zoom"], "", 11.5, ["get", "name"]], "text-font": ["Noto Sans Regular"], "text-size": 10.5, "text-offset": [0, 1.4], "text-anchor": "top", "text-optional": true }, paint: { "icon-color": aisColor, "icon-halo-color": "#ffffff", "icon-halo-width": 1.2, "text-color": "#14232e", "text-halo-color": "#ffffff", "text-halo-width": 1.5 } });
   add({ id: "navto", type: "line", source: "navto", paint: { "line-color": "#2f8f5b", "line-width": 3, "line-dasharray": [1, 1.2] } });
   add({ id: "heading", type: "line", source: "heading", paint: { "line-color": "#d64545", "line-width": 2, "line-dasharray": [3, 3] } });
+  add({ id: "catch-heat", type: "heatmap", source: "catches", maxzoom: 16, layout: { visibility: "none" }, paint: { "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 8, 18, 14, 40], "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 8, .8, 14, 1.6], "heatmap-opacity": .75,
+    "heatmap-color": ["interpolate", ["linear"], ["heatmap-density"], 0, "rgba(255,200,0,0)", .2, "rgba(255,200,0,.5)", .5, "#ff8a00", .8, "#e0218a", 1, "#7a1fa2"] } });
   add({ id: "catches", type: "circle", source: "catches", paint: { "circle-radius": 7, "circle-color": "#f2c14e", "circle-stroke-color": "#1b1500", "circle-stroke-width": 2 } });
   add({ id: "anchor-fill", type: "fill", source: "anchor", filter: ["==", ["geometry-type"], "Polygon"], paint: { "fill-color": ["case", ["==", ["get", "out"], 1], "#d64545", "#2f8f5b"], "fill-opacity": .12 } });
   add({ id: "anchor-line", type: "line", source: "anchor", filter: ["==", ["geometry-type"], "Polygon"], paint: { "line-color": ["case", ["==", ["get", "out"], 1], "#d64545", "#2f8f5b"], "line-width": 2.5, "line-dasharray": [2, 1.5] } });
@@ -234,6 +237,7 @@ function applyLayers() {
   KummelChart.detailIds().forEach(id => { vis(id, base === "chart" && !!S.layers.detail); if (map.getLayer(id)) map.setLayerZoomRange(id, id === "detail-harbour" ? Math.max(14, dz()) : dz(), 24); });
   const G = KummelChart.groups(), on = g => (S.layers.groups || {})[g] !== false;
   Object.entries(G).forEach(([g, ids]) => { if (!on(g)) ids.forEach(id => vis(id, false)); });
+  if (S.mode !== "fiske") (G.steep || []).forEach(id => vis(id, false));   // branter bara i fiskeläget
 }
 
 /* ---------- places (markers) ---------- */
@@ -257,9 +261,17 @@ function drawPlaces() {
   });
 }
 function refreshCatches() {
+  if (mapReady && map.getLayer("catch-heat")) map.setLayoutProperty("catch-heat", "visibility", S.mode === "fiske" && S.heat ? "visible" : "none");
   setData("catches", { type: "FeatureCollection", features: S.mode === "fiske" ? S.catches.map(c => ({ type: "Feature", properties: { id: c.id }, geometry: { type: "Point", coordinates: [c.lng, c.lat] } })) : [] });
 }
 map.on("click", "catches", e => { const id = e.features[0].properties.id; e.preventDefault(); openCatch(id); });
+map.on("click", "steep", e => {
+  if (planning || e.defaultPrevented) return;
+  const p = e.features[0].properties, v = +p.v, dv = +p.dv, s = +p.s;
+  e.preventDefault();
+  new maplibregl.Popup({ closeButton: false, maxWidth: "240px" }).setLngLat(e.lngLat)
+    .setHTML(`<div style="font:600 13px var(--f-ui);color:#14232e"><b>Brant</b><br>Djupet ökar från ${v} m till ${v + dv} m på ungefär ${Math.max(1, Math.round(dv / s))} m.<div style="font-weight:400;color:#5d6b73;margin-top:4px">Branter och kanter är ofta bra ställen för gädda, abborre och gös.</div></div>`).addTo(map);
+});
 map.on("mouseenter", "catches", () => map.getCanvas().style.cursor = "pointer");
 map.on("mouseleave", "catches", () => map.getCanvas().style.cursor = "");
 
@@ -267,10 +279,11 @@ map.on("mouseleave", "catches", () => map.getCanvas().style.cursor = "");
 const MODES = { tur: "Båttur", fiske: "Fiske" };
 function setMode(m) {
   if (!MODES[m]) m = "tur";   // äldre sparade lägen (segling, paddling) blir Båttur
-  S.mode = m; save();
+  S.mode = m; save(); applyLayers();
   document.querySelectorAll(".modes button").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === m));
   $("#b-fish").classList.toggle("hidden", m !== "fiske");
   $("#b-depth").classList.toggle("hidden", m !== "fiske");
+  $("#b-idx").classList.toggle("hidden", m !== "fiske"); idxBadge();
   refreshCatches(); updateFishZone();
   if (wx) renderChip();
 }
@@ -596,6 +609,8 @@ function newPastCatch() {
     <div class="grid2">
       <label class="f">Art<select id="pc-sp"><option value="">Välj</option>${SPECIES.map(s => `<option>${s}</option>`).join("")}</select></label>
       <label class="f">Vikt (kg)<input id="pc-kg" inputmode="decimal"></label>
+      <label class="f">Längd (cm)<input id="pc-len" inputmode="decimal"></label>
+      <label class="row f-chk"><input type="checkbox" id="pc-rel"> Fångad och släppt</label>
     </div>
     <label class="f">Bete / metod<input id="pc-lure" placeholder="t.ex. jigg 10 cm"></label>
     <label class="f">Anteckning<textarea id="pc-note" rows="2"></textarea></label>
@@ -609,7 +624,7 @@ function newPastCatch() {
     const t = new Date($("#pc-t").value).getTime();
     if (!isFinite(t) || t > Date.now() + 60000) { toast("Ange en tidpunkt som har varit."); return; }
     const pos = ll(map.getCenter());
-    const c = { id: uid(), t, ...pos, depth: depthAt(pos), species: $("#pc-sp").value, kg: $("#pc-kg").value, lure: $("#pc-lure").value, note: $("#pc-note").value, wx: null, past: true };
+    const c = { id: uid(), t, ...pos, depth: depthAt(pos), species: $("#pc-sp").value, kg: $("#pc-kg").value, len: $("#pc-len").value, released: $("#pc-rel").checked, lure: $("#pc-lure").value, note: $("#pc-note").value, wx: null, past: true };
     S.catches.push(c); S.catches.sort((x, y) => y.t - x.t); save(); refreshCatches();
     toast("Fångsten är sparad"); openCatch(c.id);
     try { c.wx = await wxAt(pos, t); save(); if (sheetView === "catch:" + c.id) openCatch(c.id); } catch (e) { toast("Vädret för den tiden kunde inte hämtas."); }
@@ -620,9 +635,13 @@ function openCatch(id) {
   const d = new Date(c.t), w = c.wx;
   openSheet("Fångst", `
     <div class="muted">${DAYS[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1} kl ${hm(d)} · ${fmtPosTxt(c)}${c.depth ? ` · djup ${c.depth}` : ""}</div>
+    <div class="ph-box" id="cf-ph"><span class="muted">Inget foto</span></div>
+    <label class="btn ph-btn">${c.photo ? "Byt foto" : "📷 Lägg till foto"}<input type="file" id="cf-file" accept="image/*" hidden></label>
     <div class="grid2">
       <label class="f">Art<select id="cf-sp"><option value="">Välj</option>${SPECIES.map(s => `<option ${s === c.species ? "selected" : ""}>${s}</option>`).join("")}</select></label>
       <label class="f">Vikt (kg)<input id="cf-kg" inputmode="decimal" value="${esc(c.kg)}"></label>
+      <label class="f">Längd (cm)<input id="cf-len" inputmode="decimal" value="${esc(c.len || "")}"></label>
+      <label class="row f-chk"><input type="checkbox" id="cf-rel" ${c.released ? "checked" : ""}> Fångad och släppt</label>
     </div>
     <label class="f">Bete / metod<input id="cf-lure" value="${esc(c.lure)}" placeholder="t.ex. jigg 10 cm, trolling 2,5 kn"></label>
     <label class="f">Anteckning<textarea id="cf-note" rows="2">${esc(c.note)}</textarea></label>
@@ -634,10 +653,118 @@ function openCatch(id) {
         <div><b>${w.temp.toFixed(0)}°</b><span>Luft</span></div>
         <div><b>${w.moon.icon}</b><span>${w.moon.name}</span></div></div>` : `<div class="muted">Hämtar väder … (sparas automatiskt när nätet finns)</div>`}
     </div>
-    <div class="row"><button class="btn pri" id="cf-save">Spara</button><button class="btn warn" id="cf-del">Ta bort</button></div>`, "catch:" + c.id);
-  $("#cf-save").onclick = () => { c.species = $("#cf-sp").value; c.kg = $("#cf-kg").value; c.lure = $("#cf-lure").value; c.note = $("#cf-note").value; save(); closeSheet(); toast("Fångsten sparad"); };
-  $("#cf-del").onclick = () => { S.catches = S.catches.filter(x => x.id !== c.id); save(); refreshCatches(); closeSheet(); };
+    <div class="row"><button class="btn pri" id="cf-save">Spara</button><button class="btn" id="cf-share">Dela fångst</button><button class="btn warn" id="cf-del">Ta bort</button></div>`, "catch:" + c.id);
+  const read = () => { c.species = $("#cf-sp").value; c.kg = $("#cf-kg").value; c.len = $("#cf-len").value; c.released = $("#cf-rel").checked; c.lure = $("#cf-lure").value; c.note = $("#cf-note").value; save(); };
+  if (c.photo) photoGet(c.id).then(b => { const el = $("#cf-ph"); if (b && el && sheetView === "catch:" + c.id) { el.innerHTML = ""; const im = new Image(); im.src = URL.createObjectURL(b); el.appendChild(im); } });
+  $("#cf-file").onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try { read(); await photoPut(c.id, await shrinkPhoto(f)); c.photo = 1; save(); openCatch(c.id); toast("Fotot är sparat", 1500); }
+    catch (err) { toast("Fotot kunde inte sparas."); }
+  };
+  $("#cf-save").onclick = () => { read(); closeSheet(); toast("Fångsten sparad"); };
+  $("#cf-share").onclick = () => { read(); openShare(c.id); };
+  $("#cf-del").onclick = () => { S.catches = S.catches.filter(x => x.id !== c.id); photoDel(c.id); save(); refreshCatches(); closeSheet(); };
 }
+
+/* ---------- foton (IndexedDB, för stora för localStorage) ---------- */
+let phDb = null;
+function phOpen() {
+  if (phDb) return phDb;
+  return phDb = new Promise((res, rej) => { const r = indexedDB.open("kummel-photos", 1); r.onupgradeneeded = () => r.result.createObjectStore("p"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+}
+async function phTx(mode, fn) { const db = await phOpen(); return new Promise((res, rej) => { const t = db.transaction("p", mode), q = fn(t.objectStore("p")); t.oncomplete = () => res(q && q.result); t.onerror = () => rej(t.error); }); }
+const photoPut = (id, blob) => phTx("readwrite", s => s.put(blob, id));
+const photoGet = id => phTx("readonly", s => s.get(id)).catch(() => null);
+const photoDel = id => phTx("readwrite", s => s.delete(id)).catch(() => {});
+async function shrinkPhoto(file, max = 1600) {
+  const url = URL.createObjectURL(file), im = new Image();
+  await new Promise((res, rej) => { im.onload = res; im.onerror = rej; im.src = url; });
+  const k = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight)), cv = document.createElement("canvas");
+  cv.width = Math.round(im.naturalWidth * k); cv.height = Math.round(im.naturalHeight * k);
+  cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height); URL.revokeObjectURL(url);
+  return new Promise(res => cv.toBlob(res, "image/jpeg", .85));
+}
+
+/* ---------- dela fångst som bild ---------- */
+const FISH_PATH = "M2 12c3-4 7-6 11-6 4 0 7 3 8 6-1 3-4 6-8 6-4 0-8-2-11-6zm15-1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM2 12 0 8v8z";
+function rrect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+async function catchCard(c, where) {
+  const W = 1080, H = 1350, PH = 860, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const g = cv.getContext("2d"), F = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+  g.fillStyle = "#0f2a3d"; g.fillRect(0, 0, W, H);
+  const blob = c.photo ? await photoGet(c.id) : null;
+  if (blob) {
+    const im = new Image(), u = URL.createObjectURL(blob);
+    await new Promise(r => { im.onload = r; im.onerror = r; im.src = u; });
+    const k = Math.max(W / im.naturalWidth, PH / im.naturalHeight), iw = im.naturalWidth * k, ih = im.naturalHeight * k;
+    g.drawImage(im, (W - iw) / 2, (PH - ih) / 2, iw, ih); URL.revokeObjectURL(u);
+  } else {
+    const gr = g.createLinearGradient(0, 0, 0, PH); gr.addColorStop(0, "#3d9ed6"); gr.addColorStop(1, "#123a55");
+    g.fillStyle = gr; g.fillRect(0, 0, W, PH);
+    g.strokeStyle = "rgba(255,255,255,.12)"; g.lineWidth = 4;
+    for (let y = 120; y < PH; y += 90) { g.beginPath(); for (let x = 0; x <= W; x += 20) g.lineTo(x, y + Math.sin(x / 70 + y) * 10); g.stroke(); }
+    g.save(); g.translate(W / 2 - 330, PH / 2 - 330); g.scale(27.5, 27.5); g.fillStyle = "rgba(255,255,255,.88)"; g.fill(new Path2D(FISH_PATH), "evenodd"); g.restore();
+  }
+  const sh = g.createLinearGradient(0, PH - 260, 0, PH); sh.addColorStop(0, "rgba(15,42,61,0)"); sh.addColorStop(1, "rgba(15,42,61,1)");
+  g.fillStyle = sh; g.fillRect(0, PH - 260, W, 260);
+  const L = 72; let y = PH + 20;
+  g.fillStyle = "#fff"; g.font = `800 96px ${F}`; g.textBaseline = "alphabetic";
+  g.fillText(c.species || "Fångst", L, y + 70);
+  const size = [c.kg && `${String(c.kg).replace(".", ",")} kg`, c.len && `${String(c.len).replace(".", ",")} cm`].filter(Boolean).join("  ·  ");
+  y += 150;
+  if (size) { g.fillStyle = "#f2c14e"; g.font = `800 64px ${F}`; g.fillText(size, L, y); }
+  if (c.released) {
+    g.font = `700 34px ${F}`; const t = "Fångad och släppt", tw = g.measureText(t).width;
+    const bx = W - L - tw - 48, by = (size ? y : y - 30) - 52; rrect(g, bx, by, tw + 48, 64, 32); g.fillStyle = "#2f8f5b"; g.fill();
+    g.fillStyle = "#fff"; g.fillText(t, bx + 24, by + 44);
+  }
+  const d = new Date(c.t), w = c.wx;
+  const facts = [`${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()} kl ${hm(d)}`];
+  if (w) { facts.push(`Vind ${w.wind.toFixed(0)} m/s ${compass(w.dir)}`); if (w.sst != null) facts.push(`Vatten ${w.sst.toFixed(1).replace(".", ",")}°`); if (w.pTrend != null) facts.push(w.pTrend < -0.5 ? "Fallande tryck" : w.pTrend > 0.5 ? "Stigande tryck" : "Stabilt tryck"); facts.push(`${w.moon.icon} ${w.moon.name}`); }
+  if (c.lure) facts.push(c.lure);
+  g.font = `500 36px ${F}`; g.fillStyle = "#c8d6de";
+  let fx = L, fy = y + (size ? 76 : 30);
+  facts.forEach((t, i) => { const s = (i ? "  ·  " : "") + t, tw = g.measureText(s).width; if (fx + tw > W - L && fx > L) { fx = L; fy += 52; g.fillText(t, fx, fy); fx += g.measureText(t).width; } else { g.fillText(s, fx, fy); fx += tw; } });
+  if (where) { fy += 60; g.fillStyle = "#fff"; g.font = `600 36px ${F}`; g.fillText("📍 " + where, L, fy); }
+  // fot: logga
+  const fyB = H - 64;
+  g.save(); g.translate(L, fyB - 44); g.scale(2.2, 2.2); g.fillStyle = "#f2c14e"; g.fill(new Path2D("M12 2 20 21H4Z")); g.strokeStyle = "#0f2a3d"; g.lineWidth = 2; g.beginPath(); g.moveTo(7.5, 16); g.lineTo(16.5, 16); g.stroke(); g.restore();
+  g.fillStyle = "#fff"; g.font = `800 44px ${F}`; g.fillText("Kummel", L + 66, fyB);
+  g.fillStyle = "#93a5ae"; g.font = `500 32px ${F}`; const tag = "sjökort och fiske i skärgården"; g.fillText(tag, W - L - g.measureText(tag).width, fyB);
+  return cv;
+}
+async function openShare(id) {
+  const c = S.catches.find(x => x.id === id); if (!c) return;
+  const sel = S.shareWhere || "aland";
+  openSheet("Dela fångst", `
+    <div class="share-prev" id="sh-prev"><span class="muted">Skapar bild …</span></div>
+    <label class="f">Plats på bilden<select id="sh-where">
+      <option value="none" ${sel === "none" ? "selected" : ""}>Visa ingen plats</option>
+      <option value="aland" ${sel === "aland" ? "selected" : ""}>Bara "Ålands skärgård"</option>
+      <option value="exact" ${sel === "exact" ? "selected" : ""}>Exakt position (avslöjar platsen)</option></select></label>
+    <div class="row"><button class="btn pri" id="sh-go">Dela</button><button class="btn" id="sh-save">Spara bild</button><button class="btn" id="sh-back">Tillbaka</button></div>
+    <div class="muted">Bilden skapas i telefonen. Inget laddas upp av Kummel.</div>`, "share");
+  let cv = null;
+  const where = () => ({ none: "", aland: "Ålands skärgård", exact: fmtPosTxt(c) })[$("#sh-where").value];
+  const draw = async () => {
+    cv = await catchCard(c, where()); const p = $("#sh-prev"); if (!p) return;
+    p.innerHTML = ""; const im = new Image(); im.src = cv.toDataURL("image/jpeg", .8); p.appendChild(im);
+  };
+  $("#sh-where").onchange = () => { S.shareWhere = $("#sh-where").value; save(); draw(); };
+  await draw();
+  const blob = () => new Promise(r => cv.toBlob(r, "image/jpeg", .9));
+  const name = `kummel-${(c.species || "fangst").toLowerCase()}-${new Date(c.t).toISOString().slice(0, 10)}.jpg`;
+  $("#sh-go").onclick = async () => {
+    const f = new File([await blob()], name, { type: "image/jpeg" });
+    const text = `${c.species || "Fångst"}${c.kg ? " " + c.kg + " kg" : ""}${c.len ? " " + c.len + " cm" : ""} 🎣`;
+    if (navigator.canShare && navigator.canShare({ files: [f] })) { try { await navigator.share({ files: [f], text }); } catch (e) {} }
+    else { saveImg(f, name); toast("Bilden är sparad. Dela den från bilderna i telefonen.", 3500); }
+  };
+  $("#sh-save").onclick = async () => saveImg(await blob(), name);
+  $("#sh-back").onclick = () => openCatch(c.id);
+}
+function saveImg(b, name) { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); }
+
 function moonPhase(d) {
   const syn = 29.530588853, ref = Date.UTC(2000, 0, 6, 18, 14);
   const age = (((d - ref) / 86400000) % syn + syn) % syn, f = age / syn;
@@ -645,6 +772,109 @@ function moonPhase(d) {
   const [icon, name] = names[Math.round(f * 8) % 8];
   return { icon, name, age: +age.toFixed(1) };
 }
+/* ---------- sol (för fiskeindex och statistik) ---------- */
+function sunTimes(date, lat, lng) {   // förenklad suncalc: soluppgång och solnedgång
+  const rad = Math.PI / 180, dayMs = 86400000, J1970 = 2440588, J2000 = 2451545, e = rad * 23.4397;
+  const toDays = d => (d.valueOf() / dayMs - 0.5 + J1970) - J2000, fromJ = j => new Date((j + 0.5 - J1970) * dayMs);
+  const lw = rad * -lng, phi = rad * lat, d = toDays(date), n = Math.round(d - 0.0009 - lw / (2 * Math.PI));
+  const ds = 0.0009 + lw / (2 * Math.PI) + n, M = rad * (357.5291 + 0.98560028 * ds);
+  const C = rad * (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M)), L = M + C + rad * 102.9372 + Math.PI;
+  const dec = Math.asin(Math.sin(e) * Math.sin(L)), Jnoon = J2000 + ds + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L);
+  const cw = (Math.sin(-0.833 * rad) - Math.sin(phi) * Math.sin(dec)) / (Math.cos(phi) * Math.cos(dec));
+  if (cw < -1 || cw > 1) return null;   // midnattssol eller polarnatt
+  const w = Math.acos(cw), a = 0.0009 + (w + lw) / (2 * Math.PI) + n, Jset = J2000 + a + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L);
+  return { rise: fromJ(Jnoon - (Jset - Jnoon)), set: fromJ(Jset) };
+}
+/* hinkar som både fiskeindexet och statistiken använder */
+const bPress = t => t == null ? null : t <= -3 ? "fallsnabbt" : t <= -0.7 ? "faller" : t < 0.7 ? "stabilt" : t < 2 ? "stiger" : "stigersnabbt";
+const bWind = v => v == null ? null : v < 2 ? "stilla" : v < 7 ? "lagom" : v < 11 ? "frisk" : "hård";
+function bLight(t, lat, lng) {
+  const s = sunTimes(new Date(t), lat, lng); if (!s) return "dag";
+  const h = 5400000;
+  if (Math.abs(t - s.rise) < h) return "gryning"; if (Math.abs(t - s.set) < h) return "skymning";
+  return t > s.rise && t < s.set ? "dag" : "natt";
+}
+const BUCKET_TXT = { fallsnabbt: "snabbt fallande tryck", faller: "fallande tryck", stabilt: "stabilt tryck", stiger: "stigande tryck", stigersnabbt: "snabbt stigande tryck",
+  stilla: "stilla väder", lagom: "lagom vind (2–7 m/s)", frisk: "frisk vind (7–11 m/s)", hård: "hård vind",
+  gryning: "gryningen", skymning: "skymningen", dag: "dagtid", natt: "natten" };
+/* vad som har fungerat för just dig: vanligaste hinken per faktor, när det finns minst 5 fångster med väder */
+function myPatterns() {
+  const cs = S.catches.filter(c => c.wx); if (cs.length < 5) return null;
+  const top = f => { const n = {}; cs.forEach(c => { const k = f(c); if (k) n[k] = (n[k] || 0) + 1; }); const e = Object.entries(n).sort((x, y) => y[1] - x[1])[0]; return e ? { k: e[0], n: e[1], of: cs.length } : null; };
+  return { press: top(c => bPress(c.wx.pTrend)), wind: top(c => bWind(c.wx.wind)), light: top(c => bLight(c.t, c.lat, c.lng)), n: cs.length };
+}
+
+/* ---------- fiskeindex ----------
+   Tumregler många sportfiskare använder: fallande tryck före ett väderomslag, lagom vind som rör om,
+   gryning och skymning, nymåne och fullmåne. Plus en bonus när läget liknar dina egna fångster. */
+function fishIndex(w) {
+  if (!w || !w.hourly) return null;
+  const H = w.hourly, i0 = hourIndex(w), mine = myPatterns(), out = [];
+  for (let i = i0; i < Math.min(H.time.length, i0 + 24); i++) {
+    const t = new Date(H.time[i]).getTime(), why = [];
+    let s = 45;
+    const pt = i >= 3 ? H.pressure_msl[i] - H.pressure_msl[i - 3] : null, bp = bPress(pt);
+    const pv = { fallsnabbt: -5, faller: 20, stabilt: 10, stiger: 0, stigersnabbt: -10 }[bp] ?? 0; s += pv;
+    if (bp === "faller") why.push(["+", "Fallande lufttryck, fisken brukar äta inför ett väderomslag"]);
+    else if (bp === "stabilt") why.push(["+", "Stabilt lufttryck"]);
+    else if (bp === "stigersnabbt") why.push(["−", "Snabbt stigande tryck, ofta trögt efter en front"]);
+    else if (bp === "fallsnabbt") why.push(["−", "Mycket snabbt fallande tryck, ostadigt väder på väg"]);
+    const ws = H.wind_speed_10m[i], bw = bWind(ws);
+    s += { stilla: 5, lagom: 15, frisk: 0, hård: -20 }[bw];
+    if (bw === "lagom") why.push(["+", "Lagom vind som rör om i vattnet"]); else if (bw === "hård") why.push(["−", `Hård vind (${ws.toFixed(0)} m/s)`]); else if (bw === "stilla") why.push(["·", "Nästan stilla"]);
+    const bl = bLight(t, w.lat, w.lng);
+    s += { gryning: 20, skymning: 20, dag: 0, natt: -5 }[bl];
+    if (bl === "gryning" || bl === "skymning") why.push(["+", `${bl === "gryning" ? "Gryning" : "Skymning"}, ofta bästa tiden`]);
+    const m = moonPhase(new Date(t)); if (m.age < 2 || m.age > 27.5 || Math.abs(m.age - 14.8) < 2) { s += 5; why.push(["+", `${m.icon} ${m.age < 2 || m.age > 27.5 ? "Nymåne" : "Fullmåne"}`]); }
+    let mineHit = 0;
+    if (mine) { if (mine.press && mine.press.k === bp) mineHit++; if (mine.wind && mine.wind.k === bw) mineHit++; if (mine.light && mine.light.k === bl) mineHit++; s += mineHit * 4; if (mineHit >= 2) why.push(["+", "Liknar läget när du brukar få fisk"]); }
+    out.push({ t, s: Math.max(0, Math.min(100, Math.round(s))), why });
+  }
+  return out;
+}
+const idxLabel = s => s >= 70 ? "Mycket bra" : s >= 55 ? "Bra" : s >= 40 ? "Medel" : "Svagt";
+const idxColor = s => s >= 70 ? "#2f8f5b" : s >= 55 ? "#7cb342" : s >= 40 ? "#e2a90c" : "#c0563b";
+function idxBadge() {
+  const b = $("#b-idx .badge"); if (!b) return;
+  const ix = S.mode === "fiske" && wx ? fishIndex(wx) : null;
+  b.hidden = !ix; if (ix) { b.textContent = ix[0].s; b.style.background = idxColor(ix[0].s); }
+}
+$("#b-idx").onclick = openFishIndex;
+async function openFishIndex() {
+  if (!wx) { openSheet("Fiskeläge", `<div class="muted">Hämtar väder …</div>`, "fishidx"); await loadWx(true); }
+  const ix = fishIndex(wx);
+  if (!ix || !ix.length) { openSheet("Fiskeläge", `<div class="muted">Vädret kunde inte hämtas. Fiskeläget behöver nät.</div>`, "fishidx"); return; }
+  const now = ix[0], sst = sstInfo(), mine = myPatterns();
+  // bästa sammanhängande fönster idag och i morgon
+  const wins = []; let cur = null, top = Math.max(...ix.map(h => h.s)), lim = Math.max(60, top - 8);
+  ix.forEach(h => { if (h.s >= lim) { if (!cur) cur = { a: h.t, b: h.t, s: h.s }; else { cur.b = h.t; cur.s = Math.max(cur.s, h.s); } } else if (cur) { wins.push(cur); cur = null; } });
+  if (cur) wins.push(cur);
+  const fmtWin = x => x.b - x.a >= 22 * 3600000 ? "hela dygnet" : `${hm(new Date(x.a))}–${hm(new Date(x.b + 3600000))}`;
+  openSheet("Fiskeläge", `
+    <div class="idx-now"><div class="idx-ring" style="--c:${idxColor(now.s)};--p:${now.s}"><b>${now.s}</b></div>
+      <div><h3 style="margin:0">${idxLabel(now.s)} just nu</h3><div class="muted">${wins.length ? "Bäst närmaste dygnet: " + wins.slice(0, 3).map(fmtWin).join(", ") : "Inget tydligt toppläge närmaste dygnet"}</div></div></div>
+    <div class="idx-bars">${ix.map(h => `<i style="height:${Math.max(6, h.s)}%;background:${idxColor(h.s)}" title="${hm(new Date(h.t))}: ${h.s}"></i>`).join("")}</div>
+    <div class="idx-axis">${ix.filter((_, k) => k % 6 === 0).map(h => `<span>${hm(new Date(h.t))}</span>`).join("")}</div>
+    <div class="card"><h3>Varför</h3>${now.why.map(([k, t]) => `<div class="idx-why"><b class="${k === "+" ? "up" : k === "−" ? "down" : ""}">${k}</b>${esc(t)}</div>`).join("") || `<div class="muted">Inget särskilt talar för eller emot just nu.</div>`}
+      ${sst && sst.v != null ? `<div class="idx-why"><b>·</b>Vattnet är ${sst.v.toFixed(1).replace(".", ",")}°</div>` : ""}</div>
+    <div class="card"><h3>Dina fångster</h3>${mine ? [mine.press, mine.wind, mine.light].filter(Boolean).map(p => `<div class="idx-why"><b>·</b>${p.n} av ${p.of} vid ${BUCKET_TXT[p.k]}</div>`).join("") + `<div class="muted">Indexet ger extra poäng när läget liknar dina fångster.</div>`
+      : `<div class="muted">När du har loggat minst 5 fångster lär sig fiskeläget vad som brukar fungera för dig.</div>`}</div>
+    <div class="muted">Fiskeläget bygger på tumregler som många sportfiskare använder, för platsen mitt på kartan. Ingen garanti för napp.</div>`, "fishidx");
+}
+
+/* ---------- fångstrekord och statistik ---------- */
+const fmt1 = v => String(Math.round(v * 10) / 10).replace(".", ",");
+function catchStats() {
+  const num = v => parseFloat(String(v || "").replace(",", ".")) || 0, rec = {}, yr = new Date().getFullYear(), season = {};
+  S.catches.forEach(c => {
+    const sp = c.species || "Okänd art", kg = num(c.kg), len = num(c.len);
+    const r = rec[sp] || (rec[sp] = { n: 0, kg: 0, len: 0, kgC: null, lenC: null });
+    r.n++; if (kg > r.kg) { r.kg = kg; r.kgC = c; } if (len > r.len) { r.len = len; r.lenC = c; }
+    if (new Date(c.t).getFullYear() === yr) season[sp] = (season[sp] || 0) + 1;
+  });
+  return { rec, season, yr };
+}
+
 /* depth band filter: highlights water between two depths (fishing mode) */
 let fishOn = false;
 function updateFishZone() {
@@ -1296,8 +1526,9 @@ async function loadWx(force) {
   try {
     wx = await fetchWx(c.lat, c.lng); wxKey = key;
     sunInfo = { sunrise: wx.daily.sunrise.map(s => new Date(s)), sunset: wx.daily.sunset.map(s => new Date(s)) };
-    renderChip();
+    renderChip(); idxBadge();
     if (sheetView === "wx") openWx();
+    if (sheetView === "fishidx") openFishIndex();
     loadWaterNear(c);
   } catch (e) { $("#wxtxt").textContent = "–"; $("#wxsub").textContent = "inget väder"; }
 }
@@ -1627,7 +1858,7 @@ function editBoat(id) {
 /* ---------- layers ---------- */
 /* vilka val som har betydelse för vald karta */
 const OPTS = {
-  fairways: ["chart", "sat"], marks: ["chart", "sat"], rocks: ["chart", "sat"], sectors: ["chart", "sat"],
+  steep: ["chart", "sat"], fairways: ["chart", "sat"], marks: ["chart", "sat"], rocks: ["chart", "sat"], sectors: ["chart", "sat"],
   contours: ["chart", "sat"], satdepth: ["sat"], limits: ["chart", "sat"], land: ["chart"],
   soundings: ["chart", "sat"], detail: ["chart"], props: ["chart", "sat", "osm"], ais: ["chart", "sat", "osm"]
 };
@@ -1648,7 +1879,7 @@ function openLayers() {
       <div class="muted">Traficoms inskannade sjökort ovanpå vektorkortet. Längre ut blir det svårläst eftersom kortet förminskas.</div>
     </div>` : ""}
     <div class="card"><h3>Visa på kartan</h3>
-      ${[["fairways", "Farleder, ledlinjer och farledsdjup"], ["marks", "Sjömärken och fyrar"], ["rocks", "Stenar och grund"], ["sectors", "Ljussektorer"], ["contours", "Djupkurvor"], ["satdepth", "Djupfärg på flygfotot"], ["limits", "Fartbegränsningar och förbudsområden"], ["land", "Ortnamn, vägar och hus"]].filter(([g]) => applies(g)).map(([g, t]) => `<label class="row"><input type="checkbox" data-grp="${g}" ${(S.layers.groups || {})[g] !== false ? "checked" : ""}> ${t}</label>`).join("")}
+      ${[["fairways", "Farleder, ledlinjer och farledsdjup"], ["marks", "Sjömärken och fyrar"], ["rocks", "Stenar och grund"], ["sectors", "Ljussektorer"], ["contours", "Djupkurvor"], ["satdepth", "Djupfärg på flygfotot"], ["limits", "Fartbegränsningar och förbudsområden"], ["land", "Ortnamn, vägar och hus"], ["steep", "Branter (syns i läget Fiske)"]].filter(([g]) => applies(g)).map(([g, t]) => `<label class="row"><input type="checkbox" data-grp="${g}" ${(S.layers.groups || {})[g] !== false ? "checked" : ""}> ${t}</label>`).join("")}
       ${applies("soundings") ? `<label class="row"><input type="checkbox" id="ly-snd" ${S.layers.soundings ? "checked" : ""}> Djupsiffror${S.layers.base === "sat" ? " (bara grundare än din båt)" : ""}</label>` : ""}
       <label class="row"><input type="checkbox" id="ly-ais" ${S.layers.ais ? "checked" : ""}> AIS-fartyg i realtid</label>
     </div>
@@ -1734,16 +1965,22 @@ function downloadGpx(t) {
   downloadBlob(`kummel-${new Date(t.start).toISOString().slice(0, 10)}.gpx`, `<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="Kummel" xmlns="http://www.topografix.com/GPX/1/1"><trk><name>Tur ${new Date(t.start).toLocaleString("sv")}</name><trkseg>${pts}</trkseg></trk></gpx>`, "application/gpx+xml");
 }
 function openCatches() {
-  const by = {}; S.catches.forEach(c => { const k = c.species || "Okänd art"; by[k] = (by[k] || 0) + 1; });
+  const st = catchStats(), recs = Object.entries(st.rec).filter(([, r]) => r.kg || r.len).sort((x, y) => y[1].n - x[1].n);
+  const seasonN = Object.values(st.season).reduce((s, v) => s + v, 0), released = S.catches.filter(c => c.released).length;
   openSheet("Fångstlogg", `
-    <div class="row">${Object.entries(by).map(([k, v]) => `<span class="pill">${esc(k)} ${v}</span>`).join("")}</div>
-    <div class="list">${S.catches.map(c => { const d = new Date(c.t); return `<div class="card"><h3>${esc(c.species || "Fångst")} ${c.kg ? `· ${esc(c.kg)} kg` : ""}</h3>
+    ${S.catches.length ? `<div class="card"><h3>Säsongen ${st.yr}</h3><div class="muted">${seasonN} fångster${released ? ` · ${released} släppta totalt` : ""}</div>
+      <div class="row">${Object.entries(st.season).map(([k, v]) => `<span class="pill">${esc(k)} ${v}</span>`).join("") || `<span class="muted">Inga fångster i år ännu.</span>`}</div></div>` : ""}
+    ${recs.length ? `<div class="card"><h3>Dina rekord</h3>${recs.map(([sp, r]) => `<div class="rec-row"><b>${esc(sp)}</b><span>${r.kg ? `${fmt1(r.kg)} kg` : ""}${r.kg && r.len ? " · " : ""}${r.len ? `${fmt1(r.len)} cm` : ""}</span><button class="btn sm" data-c="${(r.kgC || r.lenC).id}">Visa</button></div>`).join("")}</div>` : ""}
+    ${S.catches.length >= 3 ? `<label class="row"><input type="checkbox" id="ct-heat" ${S.heat ? "checked" : ""}> Visa var du fått mest fisk (värmekarta)</label>` : ""}
+    <div class="list">${S.catches.map(c => { const d = new Date(c.t); return `<div class="card"><h3>${c.photo ? "📷 " : ""}${esc(c.species || "Fångst")} ${c.kg ? `· ${esc(c.kg)} kg` : ""}${c.len ? ` · ${esc(c.len)} cm` : ""}${c.released ? ` <span class="pill">släppt</span>` : ""}</h3>
       <div class="muted">${DAYS[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1} kl ${hm(d)}${c.depth ? ` · ${esc(c.depth)}` : ""}${c.wx ? ` · ${c.wx.wind.toFixed(0)} m/s ${compass(c.wx.dir)} · ${Math.round(c.wx.p)} hPa · ${c.wx.moon.icon}` : ""}${c.lure ? " · " + esc(c.lure) : ""}</div>
-      <div class="row"><button class="btn" data-c="${c.id}">Visa</button></div></div>`; }).join("") || `<div class="muted">Inga fångster ännu. Välj läget Fiske och tryck på Fisk! när det nappar.</div>`}</div>
+      <div class="row"><button class="btn" data-c="${c.id}">Visa</button><button class="btn" data-share="${c.id}">Dela</button></div></div>`; }).join("") || `<div class="muted">Inga fångster ännu. Välj läget Fiske och tryck på Fisk! när det nappar.</div>`}</div>
     <button class="btn pri" id="ct-past">Lägg till fångst i efterhand</button>
-    <div class="muted">Dina fiskeplatser sparas bara på den här enheten och delas aldrig.</div>`, "catches");
+    <div class="muted">Dina fiskeplatser och foton sparas bara på den här enheten och delas aldrig, om du inte själv delar en fångst.</div>`, "catches");
   $("#ct-past").onclick = newPastCatch;
+  const heat = $("#ct-heat"); if (heat) heat.onchange = () => { S.heat = heat.checked; save(); if (S.mode !== "fiske") setMode("fiske"); refreshCatches(); };
   document.querySelectorAll("[data-c]").forEach(x => x.onclick = () => { const c = S.catches.find(q => q.id === x.dataset.c); if (S.mode !== "fiske") setMode("fiske"); map.easeTo({ center: lnglat(c), zoom: 14 }); openCatch(c.id); });
+  document.querySelectorAll("[data-share]").forEach(x => x.onclick = () => openShare(x.dataset.share));
 }
 function openData() {
   openSheet("Säkerhetskopia", `
@@ -1867,7 +2104,7 @@ $("#anchorbar").onclick = openAnchor;
    Hela sjökortet (djup, sjömärken, stenar) för Åland sparas som filer i webbläsarens cache, plus
    landkartan för området man ser. Service workern läser sjökortsfilen ur cachen med range-anrop. */
 const OFFLINE = "kummel-offline-v1";
-const OFF_BIG = ["data/chart-aland.pmtiles", "data/rocks-aland.pmtiles"];
+const OFF_BIG = ["data/chart-aland.pmtiles", "data/rocks-aland.pmtiles", "data/lines-aland.pmtiles"];
 const OFF_SMALL = ["data/fairways.json", "data/marks.geojson"].concat(
   ["Noto Sans Regular", "Noto Sans Medium", "Noto Sans Italic"].flatMap(f => ["0-255", "256-511", "8192-8447"].map(r => `fonts/${f}/${r}.pbf`)));
 const ALAND = { w: 19.0, s: 59.65, e: 21.35, n: 60.65 };
@@ -1903,9 +2140,9 @@ async function downloadOffline(withChart) {
       bytes = 0;
       for (let i = 0; i < OFF_BIG.length; i++) {
         const url = abs(OFF_BIG[i]);
-        say(i === 0 ? "Laddar ner sjökortet …" : "Laddar ner stenar och grund …");
+        say(["Laddar ner sjökortet …", "Laddar ner stenar och grund …", "Laddar ner djupkurvor och branter …"][i]);
         const res = await fetch(url, { cache: "no-store" });
-        if (!res.ok) throw new Error("Kunde inte hämta " + OFF_BIG[i]);
+        if (!res.ok) { if (i === 0) throw new Error("Kunde inte hämta sjökortet"); continue; }
         const total = +res.headers.get("Content-Length") || 0, rd = res.body.getReader(), parts = []; let got = 0;
         for (;;) { const { done, value } = await rd.read(); if (done) break; parts.push(value); got += value.length; if (total) prog((i + got / total) / (OFF_BIG.length + 1)); }
         const blob = new Blob(parts);

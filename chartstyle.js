@@ -76,9 +76,9 @@ const KummelChart = (() => {
       { id: "dredged", type: "fill", source: CH, "source-layer": "dredged", paint: { "fill-color": C.dredged, "fill-outline-color": C.secLeg } },
 
       /* djupkurvor */
-      { id: "depcnt", type: "line", source: CH, "source-layer": "depcnt", paint: { "line-color": C.contour, "line-width": ["interpolate", ["linear"], ["zoom"], 9, .4, 14, .9] } },
-      { id: "depcnt-safety", type: "line", source: CH, "source-layer": "depcnt", filter: ["==", ["get", "v"], sc], paint: { "line-color": C.safety, "line-width": ["interpolate", ["linear"], ["zoom"], 9, 1, 14, 2.2] } },
-      { id: "depcnt-lbl", type: "symbol", source: CH, "source-layer": "depcnt", minzoom: 12, layout: { "symbol-placement": "line", "symbol-spacing": 320, "text-field": ["to-string", ["get", "v"]], "text-font": FONT_I, "text-size": 10, "text-keep-upright": true }, paint: { "text-color": C.contour, "text-halo-color": C.halo, "text-halo-width": 1.5 } },
+      { id: "depcnt", type: "line", source: "lines", "source-layer": "depcnt", paint: { "line-color": C.contour, "line-width": ["interpolate", ["linear"], ["zoom"], 9, .4, 14, .9] } },
+      { id: "depcnt-safety", type: "line", source: "lines", "source-layer": "depcnt", filter: ["==", ["get", "v"], sc], paint: { "line-color": C.safety, "line-width": ["interpolate", ["linear"], ["zoom"], 9, 1, 14, 2.2] } },
+      { id: "depcnt-lbl", type: "symbol", source: "lines", "source-layer": "depcnt", minzoom: 12, layout: { "symbol-placement": "line", "symbol-spacing": 320, "text-field": ["to-string", ["get", "v"]], "text-font": FONT_I, "text-size": 10, "text-keep-upright": true }, paint: { "text-color": C.contour, "text-halo-color": C.halo, "text-halo-width": 1.5 } },
 
       /* stenar och grund (Maanmittauslaitos terrängdatabas) */
       { id: "rock-area", type: "fill", source: "rocks", "source-layer": "rocks", minzoom: 12, filter: ["all", ["in", ["get", "k"], ["literal", [4, 5]]], ["==", ["geometry-type"], "Polygon"]], paint: { "fill-color": C.unsafe, "fill-opacity": .55 } },
@@ -138,7 +138,12 @@ const KummelChart = (() => {
       /* ovanpå detaljkortet: farozon för den aktiva båten och djupintervall för fiske */
       { id: "danger-ovl", type: "fill", source: CH, "source-layer": "depare", minzoom: DETAIL_Z, filter: dangerFilter(need), paint: { "fill-color": C.red, "fill-opacity": .16 } },
       { id: "fishband", type: "fill", source: CH, "source-layer": "depare", filter: ["==", ["get", "d1"], -9999], paint: { "fill-color": C.fish, "fill-opacity": .45 } },
-      { id: "fishband-line", type: "line", source: CH, "source-layer": "depare", filter: ["==", ["get", "d1"], -9999], paint: { "line-color": C.fishLine, "line-width": 1 } }
+      { id: "fishband-line", type: "line", source: CH, "source-layer": "depare", filter: ["==", ["get", "d1"], -9999], paint: { "line-color": C.fishLine, "line-width": 1 } },
+      /* branter (fiskeläget): där djupet ökar snabbt, räknat ur djupkurvorna */
+      { id: "steep-glow", type: "line", source: "lines", "source-layer": "steep", minzoom: 11, layout: { "line-cap": "round", "line-join": "round", visibility: "none" },
+        paint: { "line-color": "#ff7a1a", "line-opacity": .35, "line-blur": 3, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 5, 15, 12] } },
+      { id: "steep", type: "line", source: "lines", "source-layer": "steep", minzoom: 11, layout: { "line-cap": "round", "line-join": "round", visibility: "none" },
+        paint: { "line-color": ["interpolate", ["linear"], ["get", "s"], .12, "#ffb000", .3, "#ff6a00", .6, "#e0218a"], "line-width": ["interpolate", ["linear"], ["zoom"], 11, 1.5, 15, 3.5] } }
     ];
   }
 
@@ -151,10 +156,11 @@ const KummelChart = (() => {
     contours: ["depcnt", "depcnt-safety", "depcnt-lbl"],
     satdepth: ["depare-sat", "depare-sat-line", "depare-sat-lbl"],
     limits: ["speed", "speed-lbl", "restrict", "tss-fill", "tss-line"],
-    land: ["ofm-place", "ofm-water-name", "ofm-road", "ofm-building"]
+    land: ["ofm-place", "ofm-water-name", "ofm-road", "ofm-building"],
+    steep: ["steep-glow", "steep"]
   };
   const ALL = layers({ need: 1 }).map(l => l.id).filter(id => !DETAIL_IDS.includes(id) && !id.startsWith("depare-sat"));
-  const OVERLAY = ["rocks", "rock-area-line", "depcnt", "depcnt-safety", "depcnt-lbl", "soundg", "navline-case", "navline", "navline-lbl", "leadline", "fwyname", "sectors", "seclegs", "lights", "aids", "faults", "speed", "speed-lbl", "restrict", "tss-line", "pilot", "signs", "soundg-shallow", "fishband", "fishband-line"];
+  const OVERLAY = ["rocks", "rock-area-line", "depcnt", "depcnt-safety", "depcnt-lbl", "soundg", "navline-case", "navline", "navline-lbl", "leadline", "fwyname", "sectors", "seclegs", "lights", "aids", "faults", "speed", "speed-lbl", "restrict", "tss-line", "pilot", "signs", "soundg-shallow", "fishband", "fishband-line", "steep-glow", "steep"];
 
   function setNeed(map, need) {
     if (map.getLayer("depare")) map.setPaintProperty("depare", "fill-color", depthFill(need));
