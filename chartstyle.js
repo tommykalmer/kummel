@@ -212,6 +212,15 @@ const KummelChart = (() => {
     "sign": () => canvas(18, 18, g => { g.fillStyle = C.paper; g.strokeStyle = C.red; g.lineWidth = 2.2; g.beginPath(); g.arc(9, 9, 7, 0, 7); g.fill(); g.stroke(); }),
     "fault": () => canvas(24, 22, g => { g.fillStyle = C.red; g.strokeStyle = "#fff"; g.lineWidth = 1.5; g.beginPath(); g.moveTo(12, 2); g.lineTo(22, 20); g.lineTo(2, 20); g.closePath(); g.fill(); g.stroke(); g.fillStyle = "#fff"; g.fillRect(11, 8, 2, 6); g.fillRect(11, 15.5, 2, 2); })
   };
+  /* ikon som bild (dagfärger) för teckenförklaringen */
+  function iconURL(id) {
+    if (!ICONS[id]) return "";
+    const keep = C; C = PAL.day; const im = ICONS[id](); C = keep;
+    const cv = document.createElement("canvas"); cv.width = im.width; cv.height = im.height;
+    cv.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(im.data), im.width, im.height), 0, 0);
+    return cv.toDataURL();
+  }
+  const dayColors = () => PAL.day;
   function image(map, id) {
     if (!ICONS[id] || map.hasImage(id)) return;
     map.addImage(id, ICONS[id](), { pixelRatio: R });
@@ -221,7 +230,7 @@ const KummelChart = (() => {
   return {
     colors: () => ({ water: C.d10, land: C.land }),
     setTheme, groups: () => GROUPS,
-    layers, setNeed, setFishBand, image, rasterSources,
+    layers, setNeed, setFishBand, image, rasterSources, iconURL, dayColors,
     detailIds: () => DETAIL_IDS,
     layerIds: () => ALL,
     isOverlay: id => OVERLAY.includes(id),

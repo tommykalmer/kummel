@@ -284,6 +284,24 @@ map.on("click", "steep", e => {
   new maplibregl.Popup({ closeButton: false, maxWidth: "240px" }).setLngLat(e.lngLat)
     .setHTML(`<div style="font:600 13px var(--f-ui);color:#14232e"><b>Brant</b><br>Djupet ökar från ${v} m till ${v + dv} m på ungefär ${Math.max(1, Math.round(dv / s))} m.<div style="font-weight:400;color:#5d6b73;margin-top:4px">Branter och kanter är ofta bra ställen för gädda, abborre och gös.</div></div>`).addTo(map);
 });
+/* vattentrafikmärke: liten ruta med vad märket gäller. Stängs av sig själv, vid tryck någon annanstans eller när kartan flyttas */
+let signPop = null;
+map.on("click", "signs", e => {
+  if (planning || e.defaultPrevented) return;
+  e.preventDefault();
+  const p = e.features[0].properties, nm = p.name && p.name !== "?" ? p.name : "";
+  const head = p.val ? `Fartbegränsning ${Math.round(p.val)} km/h` : "Vattentrafikmärke";
+  const rows = [p.t1, p.t2].filter(Boolean).map(t => `<div>Tilläggstavla: <b>${esc(t)}</b></div>`).join("")
+    + (p.loc ? `<div>${esc(p.loc)}</div>` : "") + (nm ? `<div>${esc(nm)}</div>` : "")
+    + (p.own ? `<div class="muted">Ägare: ${esc(p.own)}</div>` : "");
+  if (signPop) signPop.remove();
+  signPop = new maplibregl.Popup({ closeButton: false, maxWidth: "260px", offset: 12 }).setLngLat(e.features[0].geometry.coordinates)
+    .setHTML(`<div class="sign-pop"><b>${head}</b>${rows}<div class="muted">${p.val ? "Gäller i området runt märket." : "Förbud, begränsning eller anvisning. Läs skylten på plats."} Källa: Väylävirasto.</div></div>`).addTo(map);
+  const pop = signPop; pop.getElement().addEventListener("click", ev => { ev.stopPropagation(); pop.remove(); });
+  setTimeout(() => pop.remove(), 9000);
+});
+map.on("movestart", e => { if (e.originalEvent && signPop) { signPop.remove(); signPop = null; } });
+map.on("click", e => { if (signPop && !e.defaultPrevented && !map.queryRenderedFeatures(e.point, { layers: ["signs"].filter(l => map.getLayer(l)) }).length) { signPop.remove(); signPop = null; } });
 map.on("mouseenter", "catches", () => map.getCanvas().style.cursor = "pointer");
 map.on("mouseleave", "catches", () => map.getCanvas().style.cursor = "");
 
@@ -323,7 +341,7 @@ function closeSheet() {
 }
 /* vilken knapp hör panelen till? Knappen lyser medan panelen är öppen, och ett nytt tryck stänger den */
 let sheetPref = null;
-const MENU_VIEWS = ["menu", "places", "routes", "log", "catches", "data", "about", "anchor", "offline", "boats", "boatedit", "welcome", "share", "pastcatch"];
+const MENU_VIEWS = ["legend", "menu", "places", "routes", "log", "catches", "data", "about", "anchor", "offline", "boats", "boatedit", "welcome", "share", "pastcatch"];
 function railOwner(v) {
   if (!v) return null;
   if (v === "layers") return "#b-layers"; if (v === "place") return "#b-place"; if (v === "fishidx") return "#b-idx"; if (v === "depth") return "#b-depth";
@@ -1988,11 +2006,12 @@ function openMenu() {
       <button class="btn" id="m-data">Säkerhetskopia</button>
       <button class="btn" id="m-anchor">Ankarlarm${S.anchor ? " (på)" : ""}</button>
       <button class="btn" id="m-offline">Offlinekarta${S.offline ? " (nedladdad)" : ""}</button>
+      <button class="btn" id="m-legend">Teckenförklaring</button>
       <button class="btn" id="m-welcome">Så fungerar Kummel</button>
       <button class="btn" id="m-about">Om Kummel</button>
     </div>`, "menu");
   $("#m-boats").onclick = openBoats; $("#m-places").onclick = openPlaces; $("#m-routes").onclick = openRoutes;
-  $("#m-log").onclick = openLog; $("#m-catch").onclick = openCatches; $("#m-data").onclick = openData; $("#m-about").onclick = openAbout; $("#m-welcome").onclick = openWelcome; $("#m-anchor").onclick = openAnchor; $("#m-offline").onclick = openOffline;
+  $("#m-log").onclick = openLog; $("#m-catch").onclick = openCatches; $("#m-data").onclick = openData; $("#m-about").onclick = openAbout; $("#m-welcome").onclick = openWelcome; $("#m-legend").onclick = openLegend; $("#m-anchor").onclick = openAnchor; $("#m-offline").onclick = openOffline;
 }
 $("#b-menu").onclick = openMenu;
 function openPlaces() {
@@ -2273,6 +2292,59 @@ async function openOffline() {
 if (S.offline && navigator.onLine) fetch(abs(OFF_BIG[0]), { method: "HEAD", cache: "no-store" }).then(r => {
   const et = r.headers.get("ETag"); if (et && S.offline.etag && et !== S.offline.etag) toast("Nytt sjökort finns. Uppdatera offlinekartan under Meny → Offlinekarta.", 5000);
 }).catch(() => {});
+
+/* ---------- teckenförklaring ---------- */
+function openLegend() {
+  const P = KummelChart.dayColors(), ic = id => `<span class="lg-ic"><img src="${KummelChart.iconURL(id)}" alt=""></span>`;
+  const sw = (c, b) => `<span class="lg-ic"><i style="background:${c};${b ? `border:${b}` : ""}"></i></span>`;
+  const ln = (c, dash, w = 3) => `<span class="lg-ic"><svg viewBox="0 0 36 12"><line x1="2" y1="6" x2="34" y2="6" stroke="${c}" stroke-width="${w}" ${dash ? `stroke-dasharray="${dash}"` : ""} stroke-linecap="round"/></svg></span>`;
+  const row = (i, t, d) => `<div class="lg-row">${i}<div><b>${t}</b>${d ? `<div class="muted">${d}</div>` : ""}</div></div>`;
+  const need = needDepth().toFixed(1).replace(".", ",");
+  openSheet("Teckenförklaring", `
+    <div class="card"><h3>Sjömärken</h3>
+      ${row(ic("aid-port"), "Babordsmärke (rött)", "Lämnas till vänster (babord) när du följer farledens riktning, som i regel går från havet in mot land eller hamn. Åt andra hållet: till höger.")}
+      ${row(ic("aid-stbd"), "Styrbordsmärke (grönt)", "Lämnas till höger (styrbord) i farledens riktning, alltså på väg in mot land.")}
+      ${row(ic("aid-n"), "Nordprick", "Säkert vatten norr om märket.")}
+      ${row(ic("aid-s"), "Sydprick", "Säkert vatten söder om märket.")}
+      ${row(ic("aid-e"), "Ostprick", "Säkert vatten öster om märket.")}
+      ${row(ic("aid-w"), "Västprick", "Säkert vatten väster om märket.")}
+      ${row(ic("aid-iso"), "Grundmärke", "En enstaka fara precis vid märket. Håll avstånd runt om.")}
+      ${row(ic("aid-safe"), "Mittledsmärke", "Säkert vatten runt märket, ofta mitt i en farled.")}
+      ${row(ic("aid-spec"), "Specialmärke (gult)", "Till exempel kabel, rörledning, gräns eller område.")}
+      ${row(ic("light"), "Fyr eller ljus", "Tryck för att se ljusets karaktär.")}
+      ${row(ln(P.yellow, "", 5) + "", "Ljussektorer", "Vit: den säkra sektorn, oftast farleden. Röd eller grön: utanför den säkra sektorn.")}
+      ${row(ic("fault"), "Fel på sjömärke", "Ett märke i närheten är ur funktion eller borta enligt Väylävirasto.")}
+      ${row(ic("sign"), "Vattentrafikmärke", "Förbud, fartgräns eller anvisning. Tryck på märket för mer.")}
+    </div>
+    <div class="card"><h3>Stenar och grund</h3>
+      ${row(ic("rock-under"), "Sten under vattnet", "Syns inte. Gå inte nära.")}
+      ${row(ic("rock-awash"), "Sten i vattenytan", "Syns ibland, beroende på vattenstånd och vågor.")}
+      ${row(ic("rock-dry"), "Sten ovanför vattnet", "Kobbe eller sten som syns.")}
+      ${row(sw(P.unsafe, "1px dashed #111"), "Område med många stenar", "Inramat med prickad linje.")}
+    </div>
+    <div class="card"><h3>Djup på sjökortet</h3>
+      ${row(sw(P.unsafe), `Grundare än ${need} m`, "Grundare än din båts djupgående plus säkerhetsmarginal.")}
+      ${row(sw(P.d0, "1px solid #9cc"), "Grunt, till 3 m")}
+      ${row(sw(P.d3, "1px solid #9cc"), "3–6 m")}
+      ${row(sw(P.d6, "1px solid #9cc"), "6–10 m")}
+      ${row(sw(P.d10, "1px solid #9cc"), "Över 10 m")}
+      ${row(sw(P.drying), "Torrfallande", "Under vatten bara vid högt vattenstånd.")}
+      ${row(ln(P.contour, "", 2), "Djupkurva", "Siffran visar djupet i meter.")}
+      ${row(ln("#ff6a00", "", 4), "Brant (läget Fiske)", "Djupet ökar snabbt. Ofta bra fiskeställen.")}
+    </div>
+    <div class="card"><h3>Farleder och områden</h3>
+      ${row(ln(P.nav, "", 2.5), "Farled", "Siffran (t.ex. 2,4 m) är farledens djupgående.")}
+      ${row(ln(P.nav, "6 3", 1.5), "Ensmärkeslinje", "Linjen mellan två ensmärken som visar farledens riktning.")}
+      ${row(ln(P.magenta, "2 3", 2), "Fartbegränsning", "Siffran i km/h.")}
+      ${row(ln(P.magenta, "6 4", 2), "Förbud eller begränsning", "Till exempel ankringsförbud eller mötesförbud.")}
+    </div>
+    <div class="card"><h3>Ditt och appens</h3>
+      ${row(`<span class="lg-ic"><svg viewBox="0 0 34 34" width="22" height="22"><path d="M17 3 25 29 17 24 9 29Z" fill="#d64545" stroke="#fff" stroke-width="2"/></svg></span>`, "Din båt", "Linjen framför visar vart du är på väg de närmaste 10 minuterna.")}
+      ${row(ln("#d64545", "4 3", 3), "Rutt", "Orange del: utanför farlederna.")}
+      ${row(`<span class="lg-ic"><i style="background:#f2c14e;border:2px solid #1b1500;border-radius:50% 40% 40% 50%"></i></span>`, "Fångst (läget Fiske)")}
+      ${row(`<span class="lg-ic"><i style="background:#fff;border:2px solid #0b1620;border-radius:50%"></i></span>`, "AIS-fartyg", "Färgen visar typ: rosa passagerare, grön last, röd tank, orange fiske, lila segel, gul fritid.")}
+    </div>`, "legend");
+}
 
 /* ---------- välkomstruta första gången ---------- */
 const TERMS_V = 1;   // höj när villkoren ändras, så måste alla godkänna på nytt

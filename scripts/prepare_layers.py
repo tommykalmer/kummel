@@ -122,7 +122,9 @@ for name in ("vesivaylien_turvalaiteviat_kauppamerenkulku", "vesivaylien_turvala
     for f in read(name): emit("faults", f["geometry"], {"txt": first(*(v for k, v in f["properties"].items() if "selite" in k.lower() or "kuvaus" in k.lower()))}, 9)
 for f in read("vesiliikennemerkit_uusi"):
     p = f["properties"]
-    emit("signs", f["geometry"], {"val": num(p.get("rajoitusarvo")), "name": first(p.get("nimisv"), p.get("nimifi"))}, 12)
+    emit("signs", f["geometry"], {"val": num(p.get("rajoitusarvo")), "name": first(p.get("nimisv"), p.get("nimifi")),
+        "loc": first(p.get("sijaintisv"), p.get("sijaintifi")), "t1": p.get("lisakilventeksti1"), "t2": p.get("lisakilventeksti2"),
+        "own": p.get("omistaja"), "dec": p.get("paatos"), "lt": p.get("vlmlajityyppi"), "area": p.get("vaikutusalue")}, 12)
 for f in read("pilotboardingplace_p"):
     emit("pilot", f["geometry"], {}, 9)
 
