@@ -98,7 +98,7 @@ function mmlSources() {
   if (!mmlKey()) return {};
   return {
     "mml-orto": { type: "raster", tiles: [MML("ortokuva", "jpg")], tileSize: 256, maxzoom: 16, bounds: [19, 59.3, 32, 70.2], attribution: "Flygbild © Maanmittauslaitos" },
-    "mml-prop": { type: "raster", tiles: [MML("kiinteistojaotus", "png")], tileSize: 256, minzoom: 15, maxzoom: 16, bounds: [19, 59.3, 32, 70.2], attribution: "Fastighetsgränser © Maanmittauslaitos" }
+    "mml-prop": { type: "raster", tiles: [MML("kiinteistojaotus", "png")], tileSize: 256, minzoom: 12, maxzoom: 16, bounds: [19, 59.3, 32, 70.2], attribution: "Fastighetsgränser © Maanmittauslaitos" }
   };
 }
 function baseStyle() {
@@ -122,7 +122,7 @@ function baseStyle() {
       { id: "sat", type: "raster", source: "sat", layout: { visibility: "none" } },
       ...(mmlKey() ? [{ id: "mml-orto", type: "raster", source: "mml-orto", layout: { visibility: "none" } }] : []),
       ...KummelChart.layers({ need: needDepth(), fish: null, soundings: S.layers.soundings }),
-      ...(mmlKey() ? [{ id: "mml-prop", type: "raster", source: "mml-prop", minzoom: 15, layout: { visibility: "none" }, paint: { "raster-opacity": .9 } }] : [])
+      ...(mmlKey() ? [{ id: "mml-prop", type: "raster", source: "mml-prop", minzoom: 12, layout: { visibility: "none" }, paint: { "raster-opacity": ["interpolate", ["linear"], ["zoom"], 12, .65, 14, .9] } }] : [])
     ]
   };
 }
@@ -1993,7 +1993,7 @@ function openLayers() {
   openSheet("Kartlager", `
     <div class="card"><h3>Karta</h3>${r("chart", "Sjökort")}${r("sat", "Flygfoto med farleder och sjömärken")}${r("osm", "Gatukarta")}</div>
     <div class="card"><h3>Flygbild och fastighetsgränser</h3>
-      <label class="row"><input type="checkbox" id="ly-prop" ${S.layers.props ? "checked" : ""} ${mmlKey() ? "" : "disabled"}> Fastighetsgränser (vid inzoomning)</label>
+      <label class="row"><input type="checkbox" id="ly-prop" ${S.layers.props ? "checked" : ""} ${mmlKey() ? "" : "disabled"}> Fastighetsgränser</label>
       <label class="f">${window.KUMMEL_CONFIG?.mmlKey ? "Egen API-nyckel (valfritt, appen har en inbyggd)" : "API-nyckel från Maanmittauslaitos"}<input id="ly-mml" value="${esc(S.mmlKey || "")}" placeholder="Klistra in nyckeln här" autocomplete="off" spellcheck="false"></label>
       <div class="muted">${mmlKey() ? "Flygfotot använder Lantmäteriverkets bilder i Finland och på Åland." : "Med en gratis nyckel från Lantmäteriverket i Finland blir flygfotot skarpare och fastighetsgränser kan visas. Skapa den på omatili.maanmittauslaitos.fi. Nyckeln sparas bara på den här enheten."}</div>
       <button class="btn" id="ly-mml-save">Spara nyckel</button>
