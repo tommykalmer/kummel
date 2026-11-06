@@ -1,7 +1,7 @@
 {
-  "name": "Kummel – sjökort och väder",
+  "name": "Kummel – sjökort för Ålands skärgård",
   "short_name": "Kummel",
-  "description": "Sjökort, väder och båtliv i skärgården.",
+  "description": "Sjökort, sjöväder, rutter och fiske för Ålands skärgård. www.kummel.app",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -10,7 +10,17 @@
   "theme_color": "#0f2a3d",
   "lang": "sv",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ]
 }

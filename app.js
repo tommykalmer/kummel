@@ -20,6 +20,7 @@ const DEFAULT_STATE = {
   boatId: "b1",
   places: [], routes: [], tracks: [], catches: [], v2: 1, v3: 1
 };
+const SITE = "www.kummel.app", SITE_URL = "https://www.kummel.app/";   // appens adress, visas på delade bilder m.m.
 let draftCatch = null;   // fångst som inte är sparad än (Fisk! utan att trycka Spara)
 let S = load();
 function load() {
@@ -790,7 +791,7 @@ async function shrinkPhoto(file, max = 1600) {
 const FISH_PATH = "M2 12c3-4 7-6 11-6 4 0 7 3 8 6-1 3-4 6-8 6-4 0-8-2-11-6zm15-1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM2 12 0 8v8z";
 function rrect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
 async function catchCard(c, where) {
-  const W = 1080, H = 1350, PH = 860, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const W = 1080, H = 1350, PH = 800, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
   const g = cv.getContext("2d"), F = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
   g.fillStyle = "#0f2a3d"; g.fillRect(0, 0, W, H);
   const blob = c.photo ? await photoGet(c.id) : null;
@@ -828,11 +829,13 @@ async function catchCard(c, where) {
   let fx = L, fy = y + (size ? 76 : 30);
   facts.forEach((t, i) => { const s = (i ? "  ·  " : "") + t, tw = g.measureText(s).width; if (fx + tw > W - L && fx > L) { fx = L; fy += 52; g.fillText(t, fx, fy); fx += g.measureText(t).width; } else { g.fillText(s, fx, fy); fx += tw; } });
   if (where) { fy += 60; g.fillStyle = "#fff"; g.font = `600 36px ${F}`; g.fillText("📍 " + where, L, fy); }
-  // fot: logga
+  // fot: logga och adress, avskild med en tunn linje
   const fyB = H - 64;
+  g.fillStyle = "rgba(255,255,255,.14)"; g.fillRect(L, H - 140, W - 2 * L, 2);
   g.save(); g.translate(L, fyB - 44); g.scale(2.2, 2.2); g.fillStyle = "#f2c14e"; g.fill(new Path2D("M12 2 20 21H4Z")); g.strokeStyle = "#0f2a3d"; g.lineWidth = 2; g.beginPath(); g.moveTo(7.5, 16); g.lineTo(16.5, 16); g.stroke(); g.restore();
-  g.fillStyle = "#fff"; g.font = `800 44px ${F}`; g.fillText("Kummel", L + 66, fyB);
-  g.fillStyle = "#93a5ae"; g.font = `500 32px ${F}`; const tag = "sjökort och fiske i skärgården"; g.fillText(tag, W - L - g.measureText(tag).width, fyB);
+  g.fillStyle = "#fff"; g.font = `800 44px ${F}`; g.fillText("Kummel", L + 66, fyB - 10);
+  g.fillStyle = "#93a5ae"; g.font = `500 26px ${F}`; g.fillText("sjökort och fiske i skärgården", L + 66, fyB + 26);
+  g.fillStyle = "#f2c14e"; g.font = `800 42px ${F}`; g.fillText(SITE, W - L - g.measureText(SITE).width, fyB + 8);   // adressen syns för den som blir nyfiken
   return cv;
 }
 async function openShare(id, justSaved) {
@@ -858,7 +861,7 @@ async function openShare(id, justSaved) {
   const name = `kummel-${(c.species || "fangst").toLowerCase()}-${new Date(c.t).toISOString().slice(0, 10)}.jpg`;
   $("#sh-go").onclick = async () => {
     const f = new File([await blob()], name, { type: "image/jpeg" });
-    const text = `${c.species || "Fångst"}${c.kg ? " " + c.kg + " kg" : ""}${c.len ? " " + c.len + " cm" : ""} 🎣`;
+    const text = `${c.species || "Fångst"}${c.kg ? " " + c.kg + " kg" : ""}${c.len ? " " + c.len + " cm" : ""} 🎣\nLoggad med Kummel: ${SITE}`;
     if (navigator.canShare && navigator.canShare({ files: [f] })) { try { await navigator.share({ files: [f], text }); } catch (e) {} }
     else { saveImg(f, name); toast("Bilden är sparad. Dela den från bilderna i telefonen.", 3500); }
   };
@@ -2102,11 +2105,19 @@ function openData() {
     catch (err) { toast("Filen kunde inte läsas. Välj en säkerhetskopia från Kummel."); }
   };
 }
+function shareApp() {
+  const d = { title: "Kummel", text: "Kummel – sjökort, sjöväder och fiske för Ålands skärgård. Gratis i webbläsaren:", url: SITE_URL };
+  if (navigator.share) navigator.share(d).catch(() => {});
+  else { try { navigator.clipboard.writeText(SITE_URL); toast("Adressen är kopierad: " + SITE, 2500); } catch (e) { toast(SITE, 3000); } }
+}
 function openAbout() {
   openSheet("Om Kummel", `
     <div><b>Kummel v0.2</b>: vektorsjökort, väder och båtliv i webbläsaren. Fungerar på mobil, iPad och dator. Lägg till på hemskärmen för att använda som app.</div>
+    <div class="card"><h3>${SITE}</h3><div class="muted">Här finns Kummel alltid. Tipsa gärna båt- och fiskevänner.</div>
+      <div class="row"><button class="btn pri" id="ab-share">Dela Kummel</button></div></div>
     <div class="card"><h3>Tips</h3><div class="muted">Håll fingret på kartan för att spara en plats. Vrid kartan med två fingrar. Tryck på positionsknappen två gånger för kurs upp. Ställ in båtens djupgående under Meny → Båtar, så markeras grunt vatten för just din båt.</div></div>
     <div class="disclaimer">Kummel är inte ett certifierat navigationshjälpmedel. Ruttförslag och varningar är hjälpmedel: föraren ansvarar alltid för navigeringen. Sjökortsdata: Traficom, CC BY 4.0, ej för navigering. Bakgrund: OpenStreetMap. Väder: Open-Meteo.</div>`, "about");
+  $("#ab-share").onclick = shareApp;
 }
 
 /* ---------- ankarlarm ----------
@@ -2386,7 +2397,7 @@ function openWelcome() {
       ${row("#b-menu", "<b>Meny.</b> Ställ in din båts djupgående, så markeras grunt vatten för just din båt.")}
       ${row("#b-night", "<b>Nattläge.</b> Mörk karta eller rött ljus för kvällen.")}
     </div>
-    <div class="muted">Håll fingret på kartan för att spara en plats. Lägg till Kummel på hemskärmen (Dela → Lägg till på hemskärmen) så öppnas den som en app.</div>
+    <div class="muted">Håll fingret på kartan för att spara en plats. Kummel finns alltid på <b>${SITE}</b>. Lägg till den på hemskärmen (Dela → Lägg till på hemskärmen) så öppnas den som en app.</div>
     ${must ? `<div class="muted"><b>Genom att trycka på en knapp nedan bekräftar du att du har läst och förstått texten ovan.</b></div>` : ""}
     <div class="row"><button class="btn pri" id="wl-go">${must ? "Jag förstår – visa min position" : "Visa min position"}</button><button class="btn" id="wl-skip">${must ? "Jag förstår – bara kartan" : "Stäng"}</button></div>`, "welcome");
   setSheetState($("#sheet"), 2);
