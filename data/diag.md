@@ -1,14 +1,14 @@
-# Diagnostik Fri Nov  6 09:09:13 UTC 2026
+# Diagnostik Fri Nov  6 09:21:50 UTC 2026
 ## DNS
 ### kummel.app
-185.199.110.153
-185.199.111.153
 185.199.108.153
+185.199.111.153
+185.199.110.153
 185.199.109.153
-2606:50c0:8001::153
-2606:50c0:8000::153
-2606:50c0:8003::153
 2606:50c0:8002::153
+2606:50c0:8000::153
+2606:50c0:8001::153
+2606:50c0:8003::153
 ### www.kummel.app
 tommykalmer.github.io.
 185.199.108.153
@@ -17,8 +17,8 @@ tommykalmer.github.io.
 185.199.111.153
 tommykalmer.github.io.
 2606:50c0:8001::153
-2606:50c0:8000::153
 2606:50c0:8003::153
+2606:50c0:8000::153
 2606:50c0:8002::153
 tommykalmer.github.io.
 ## Pages
@@ -36,6 +36,15 @@ tommykalmer.github.io.
   "public": true,
   "protected_domain_state": null,
   "pending_domain_unverified_at": null,
+  "https_certificate": {
+    "state": "approved",
+    "description": "The certificate has been approved.",
+    "domains": [
+      "www.kummel.app",
+      "kummel.app"
+    ],
+    "expires_at": "2027-02-04"
+  },
   "https_enforced": false
 }
 
@@ -47,18 +56,6 @@ tommykalmer.github.io.
 ### http://www.kummel.app/
 200 ->  ssl=0
 ### https://www.kummel.app/
-curl: (60) SSL: no alternative certificate subject name matches target host name 'www.kummel.app'
-More details here: https://curl.se/docs/sslcerts.html
-
-curl failed to verify the legitimacy of the server and therefore could not
-establish a secure connection to it. To learn more about this situation and
-how to fix it, please visit the web page mentioned above.
-000 ->  ssl=1
+200 ->  ssl=0
 ### https://kummel.app/
-curl: (60) SSL: no alternative certificate subject name matches target host name 'kummel.app'
-More details here: https://curl.se/docs/sslcerts.html
-
-curl failed to verify the legitimacy of the server and therefore could not
-establish a secure connection to it. To learn more about this situation and
-how to fix it, please visit the web page mentioned above.
-000 ->  ssl=1
+301 -> https://www.kummel.app/ ssl=0
