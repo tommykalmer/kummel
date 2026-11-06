@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths: ["scripts/diag.sh"]
 permissions:
+  pages: read
   contents: write
 jobs:
   diag:
@@ -12,6 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: bash scripts/diag.sh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: |
           git config user.name "kummel-bot"; git config user.email "kummel-bot@users.noreply.github.com"
           git add data/diag.md; if [ -d data/diag ]; then git add data/diag; fi; git commit -m "Diagnostik" || exit 0
