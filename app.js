@@ -2116,7 +2116,7 @@ function shareApp() {
 }
 function openAbout() {
   openSheet("Om Kummel", `
-    <div class="home-line">${ALAND_FLAG}<div><b>Kummel</b> är sjökortet för Ålands skärgård: djup, sjömärken, grynnor, sjöväder, rutter med ankomsttid och fiske. Byggt av båtfolk för de egna vattnen, från fjärdarna runt Mariehamn till skären ute vid Kökar.</div></div>
+    <div class="home-line">${ALAND_FLAG}<div><b>Kummel</b> är sjökortet för Ålands skärgård: djup, sjömärken, grynnor, sjöväder, rutter med ankomsttid och fiske. Byggt av båtfolk för de egna vattnen: hela Åland, från Ålands hav i väster till Brändö, Kökar och skärgården mot Åboland i öster.</div></div>
     <div class="card"><h3>${SITE}</h3><div class="muted">Här finns Kummel alltid. Tipsa gärna båt- och fiskevänner.</div>
       <div class="row"><button class="btn pri" id="ab-share">Dela Kummel</button></div></div>
     <div class="card"><h3>Officiella källor</h3><div class="muted">Djup och sjökort: Traficom. Farleder, sjömärken, fyrar och vattentrafikmärken: Väylävirasto. Stenar, grund och flygbild: Lantmäteriverket. Vattenstånd och vattentemperatur: Meteorologiska institutet. Fartyg (AIS): Digitraffic. Väderprognos: Open-Meteo. Bakgrundskarta: OpenStreetMap. Sjökortet uppdateras varje vecka.</div></div>
@@ -2394,7 +2394,7 @@ function openWelcome() {
   const row = (id, txt) => `<div class="wl-row">${ic(id)}<div>${txt}</div></div>`;
   openSheet("Välkommen till Kummel", `
     <div class="warnbox"><b>Kummel är inte ett sjökort för navigering.</b> Appen är ett hjälpmedel för planering och överblick, inte certifierad för navigering. Djup, sjömärken, ruttförslag, ankomsttider och väder kan vara felaktiga, ofullständiga eller inaktuella. Använd alltid officiella, uppdaterade sjökort och gott sjömanskap. Du som förare ansvarar själv för navigeringen och för båtens säkerhet. Kummel tillhandahålls av AsterIQ Ab gratis och i befintligt skick, utan garantier.</div>
-    <div class="home-line">${ALAND_FLAG}<div>Sjökort, sjöväder och rutter för Ålands skärgård, från Eckerö till Kökar och från Geta till Föglö. Välj <b>Båttur</b> eller <b>Fiske</b> uppe till vänster.</div></div>
+    <div class="home-line">${ALAND_FLAG}<div>Sjökort, sjöväder och rutter för hela Åland och skärgården mot Åboland, från Eckerö i väster till Brändö och Kökar i öster. Välj <b>Båttur</b> eller <b>Fiske</b> uppe till vänster.</div></div>
     <div class="wl">
       ${row("#b-locate", "<b>Min position.</b> Ett tryck: kartan följer båten. Två tryck: kurs upp.")}
       ${row("#b-route", "<b>Planera rutt.</b> Välj start och mål, så föreslås en väg längs farlederna med ankomsttid.")}
