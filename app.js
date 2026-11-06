@@ -1146,7 +1146,7 @@ function renderRoute() {
       <div id="rt-arrout" class="muted"></div>
       <button class="btn pri" id="rt-go">Starta navigering</button></div>` : ""}
     ${wps.length > 1 ? `<label class="f">Namn på rutten<input id="rt-name" value="${esc(routeName)}" placeholder="t.ex. Hem – Kökar"></label>` : ""}
-    <div class="row"><button class="btn" id="rt-undo">Ångra</button><button class="btn" id="rt-rev">Vänd</button><button class="btn pri" id="rt-save">Spara rutt</button><button class="btn warn" id="rt-clear">Rensa</button></div>
+    <div class="row"><button class="btn" id="rt-undo">Ångra</button><button class="btn" id="rt-rev">Vänd</button><button class="btn pri" id="rt-save">Spara rutt</button><button class="btn" id="rt-share">Dela</button><button class="btn warn" id="rt-clear">Rensa</button></div>
     <div class="muted">Kontrollera alltid djup och faror mot sjökortet längs hela rutten.</div>`, "route");
   const arr = $("#rt-arr");
   if (arr) {
@@ -1170,6 +1170,11 @@ function renderRoute() {
     if (old) { old.name = name; old.pts = pts; old.updated = Date.now(); }
     else { routeId = uid(); S.routes.unshift({ id: routeId, name, pts, created: Date.now() }); }
     routeName = name; save(); toast(`Rutten "${name}" är sparad`); renderRoute();
+  };
+  $("#rt-share").onclick = () => {
+    if (wps.length < 2) { toast("Lägg till minst två punkter."); return; }
+    const pts = wps.map(p => [+p.lat.toFixed(6), +p.lng.toFixed(6)]);
+    shareRoute({ id: routeId || uid(), name: (routeName || "").trim() || `Rutt (${st.nm.toFixed(1)} nm)`, pts });
   };
 }
 /* ---------- ruttförslag längs farleder ----------
@@ -2074,13 +2079,14 @@ function openPlaces() {
 }
 const boundsOf = pts => pts.reduce((b, p) => b.extend([p[1], p[0]]), new maplibregl.LngLatBounds([pts[0][1], pts[0][0]], [pts[0][1], pts[0][0]]));
 function openRoutes() {
-  openSheet("Sparade rutter", `<div class="list">${S.routes.map(r => `<div class="card"><h3>${esc(r.name)}</h3><div class="muted">${routeStats(r.pts.map(p => ({ lat: p[0], lng: p[1] }))).nm.toFixed(1)} nm · ${r.pts.length} punkter</div><div class="row"><button class="btn pri" data-nav="${r.id}">Navigera</button><button class="btn" data-open="${r.id}">Öppna</button><button class="btn warn" data-del="${r.id}">Ta bort</button></div></div>`).join("") || `<div class="muted">Inga sparade rutter.</div>`}</div>`, "routes");
+  openSheet("Sparade rutter", `<div class="list">${S.routes.map(r => `<div class="card"><h3>${esc(r.name)}</h3><div class="muted">${routeStats(r.pts.map(p => ({ lat: p[0], lng: p[1] }))).nm.toFixed(1)} nm · ${r.pts.length} punkter</div><div class="row"><button class="btn pri" data-nav="${r.id}">Navigera</button><button class="btn" data-open="${r.id}">Öppna</button><button class="btn" data-share="${r.id}">Dela</button><button class="btn warn" data-del="${r.id}">Ta bort</button></div></div>`).join("") || `<div class="muted">Inga sparade rutter.</div>`}</div>`, "routes");
   document.querySelectorAll("[data-open]").forEach(x => x.onclick = () => {
     const r = S.routes.find(q => q.id === x.dataset.open);
     map.fitBounds(boundsOf(r.pts), { padding: 60, duration: 0 });
     startPlanning(r.pts.map(p => ({ lat: p[0], lng: p[1] }))); routeId = r.id; routeName = r.name; renderRoute();
   });
   document.querySelectorAll("[data-del]").forEach(x => x.onclick = () => { S.routes = S.routes.filter(q => q.id !== x.dataset.del); save(); openRoutes(); });
+  document.querySelectorAll("[data-share]").forEach(x => x.onclick = () => shareRoute(S.routes.find(q => q.id === x.dataset.share)));
   document.querySelectorAll("[data-nav]").forEach(x => x.onclick = () => { const r = S.routes.find(q => q.id === x.dataset.nav); startNav(r.pts.map(p => ({ lat: p[0], lng: p[1] }))); });
 }
 function openLog() {
@@ -2420,6 +2426,50 @@ if (S.offline && navigator.onLine) fetch(abs(OFF_BIG[0]), { method: "HEAD", cach
   const et = r.headers.get("ETag"); if (et && S.offline.etag && et !== S.offline.etag) toast("Nytt sjökort finns. Uppdatera offlinekartan under Meny → Offlinekarta.", 5000);
 }).catch(() => {});
 
+/* ---------- dela rutt som länk ----------
+   Rutten ryms i själva länken (efter #), så inget laddas upp någonstans.
+   Punkterna packas som skillnader i 1/100 000 grad (ca 1 m) och kodas som base64url. */
+function packRoute(r) {
+  const out = []; let pl = 0, pg = 0;
+  r.pts.forEach(([la, lo]) => { const a = Math.round(la * 1e5), b = Math.round(lo * 1e5); out.push(a - pl, b - pg); pl = a; pg = b; });
+  const s = JSON.stringify({ i: r.id, n: r.name, p: out });
+  return btoa(unescape(encodeURIComponent(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function unpackRoute(code) {
+  const s = decodeURIComponent(escape(atob(code.replace(/-/g, "+").replace(/_/g, "/"))));
+  const o = JSON.parse(s), pts = []; let la = 0, lo = 0;
+  for (let k = 0; k + 1 < o.p.length; k += 2) { la += o.p[k]; lo += o.p[k + 1]; pts.push([+(la / 1e5).toFixed(5), +(lo / 1e5).toFixed(5)]); }
+  if (pts.length < 2) throw new Error("för få punkter");
+  return { id: o.i || uid(), name: String(o.n || "Delad rutt").slice(0, 80), pts };
+}
+async function shareRoute(r) {
+  const url = SITE_URL + "#rutt=" + packRoute(r), nm = routeStats(r.pts.map(p => ({ lat: p[0], lng: p[1] }))).nm.toFixed(1);
+  const text = `Rutt i Kummel: ${r.name} (${nm} nm). Öppna länken så ser du den på sjökortet:`;
+  track("route_shared", { points: r.pts.length });
+  if (navigator.share) { try { await navigator.share({ title: r.name, text, url }); } catch (e) {} }
+  else { try { await navigator.clipboard.writeText(text + " " + url); toast("Länken är kopierad. Klistra in den i ett meddelande.", 3500); } catch (e) { prompt("Kopiera länken:", url); } }
+}
+/* öppnas appen med #rutt=… visas rutten, och man kan spara den */
+function openSharedRoute() {
+  const m = /#rutt=([A-Za-z0-9_-]+)/.exec(location.hash); if (!m) return false;
+  history.replaceState(null, "", location.pathname + location.search);   // länken ska inte ligga kvar i adressfältet
+  let r; try { r = unpackRoute(m[1]); } catch (e) { toast("Länken till rutten verkar vara trasig."); return false; }
+  const have = S.routes.find(q => q.id === r.id), ll2 = r.pts.map(p => ({ lat: p[0], lng: p[1] })), nm = routeStats(ll2).nm.toFixed(1);
+  const show = () => { setData("shown", lineFC(r.pts.map(p => [p[1], p[0]]))); const h = map.getContainer().clientHeight; map.fitBounds(boundsOf(r.pts), { padding: { top: 90, left: 40, right: 80, bottom: Math.round(h * .45) }, duration: 0 }); };
+  if (mapReady) show(); else map.once("style.load", show);
+  track("route_received");
+  openSheet("Delad rutt", `
+    <div class="card"><h3>${esc(r.name)}</h3><div class="muted">${nm} nm · ${r.pts.length} punkter</div></div>
+    ${have ? `<div class="muted">Du har redan den här rutten sparad.</div>` : `<div class="muted">Någon har delat en rutt med dig. Spara den så finns den under Meny → Sparade rutter.</div>`}
+    <div class="row">${have ? "" : `<button class="btn pri" id="sr-save">Spara rutten</button>`}<button class="btn" id="sr-open">Öppna i ruttplaneringen</button><button class="btn" id="sr-close">Stäng</button></div>
+    <div class="muted">Kontrollera alltid rutten mot sjökortet och dagens förhållanden innan du kör den.</div>`, "sharedroute");
+  const sv = $("#sr-save"); if (sv) sv.onclick = () => { S.routes.unshift({ ...r, created: Date.now(), from: "delad" }); save(); toast(`Rutten "${r.name}" är sparad`); closeSheet(); setData("shown", EMPTY); };
+  $("#sr-open").onclick = () => { setData("shown", EMPTY); closeSheet(); startPlanning(ll2); if (S.routes.find(q => q.id === r.id)) routeId = r.id; routeName = r.name; renderRoute(); };
+  $("#sr-close").onclick = () => { setData("shown", EMPTY); closeSheet(); };
+  return true;
+}
+window.addEventListener("hashchange", () => { if (/#rutt=/.test(location.hash) && termsOk()) openSharedRoute(); });
+
 /* ---------- teckenförklaring ---------- */
 function openLegend() {
   const P = KummelChart.dayColors(), ic = id => `<span class="lg-ic"><img src="${KummelChart.iconURL(id)}" alt=""></span>`;
@@ -2533,7 +2583,7 @@ function openWelcome() {
     <div class="row"><button class="btn pri" id="wl-go">${must ? "Jag förstår – visa min position" : "Visa min position"}</button><button class="btn" id="wl-skip">${must ? "Jag förstår – bara kartan" : "Stäng"}</button></div>`, "welcome");
   setSheetState($("#sheet"), 2);
   $("#sheet").classList.toggle("locked", must); document.body.classList.toggle("terms", must);
-  const ok = () => { const first = !termsOk(); S.termsOk = TERMS_V; S.welcomed = 1; save(); if (first) setTimeout(askStats, 1500); $("#sheet").classList.remove("locked"); document.body.classList.remove("terms"); };
+  const ok = () => { const first = !termsOk(); S.termsOk = TERMS_V; S.welcomed = 1; save(); if (first) setTimeout(askStats, 1500); setTimeout(openSharedRoute, 400); $("#sheet").classList.remove("locked"); document.body.classList.remove("terms"); };
   $("#wl-go").onclick = () => { ok(); closeSheet(); $("#b-locate").click(); };
   $("#wl-skip").onclick = () => { ok(); closeSheet(); };
 }
@@ -2567,8 +2617,8 @@ if (S.layers.ais) setAis(true);
 if (S.anchor) { anchorBar(); startGps(); keepAwake(); toast("Ankarlarmet är på", 2000); }
 statsOn(); setTimeout(askStats, 4000);
 if (!termsOk()) openWelcome();
-/* har man redan gett platsåtkomst öppnas kartan där båten ligger (ingen ny fråga) */
-else if (navigator.geolocation && navigator.permissions && navigator.permissions.query)
+else if (!openSharedRoute() && navigator.geolocation && navigator.permissions && navigator.permissions.query)
+  /* har man redan gett platsåtkomst öppnas kartan där båten ligger (ingen ny fråga). En delad rutt går före. */
   navigator.permissions.query({ name: "geolocation" }).then(p => { if (p.state === "granted") { startGps(); setFollow(true, true); } }).catch(() => {});
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(r => r.update()).catch(() => {});
 window.addEventListener("beforeunload", e => { if (recording) { e.preventDefault(); e.returnValue = ""; } });
