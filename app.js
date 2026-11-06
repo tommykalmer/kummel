@@ -314,6 +314,7 @@ map.on("mouseleave", "catches", () => map.getCanvas().style.cursor = "");
 /* ---------- modes ---------- */
 const MODES = { tur: "Båttur", fiske: "Fiske" };
 function setMode(m) {
+  if (S.mode && S.mode !== m) track("mode_change", { mode: m });
   if (!MODES[m]) m = "tur";   // äldre sparade lägen (segling, paddling) blir Båttur
   S.mode = m; save(); applyLayers();
   document.querySelectorAll(".modes button").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === m));
@@ -673,7 +674,7 @@ $("#b-fish").onclick = async () => {
 };
 const findCatch = id => S.catches.find(x => x.id === id) || (draftCatch && draftCatch.id === id ? draftCatch : null);
 function discardDraft() { if (!draftCatch) return; const c = draftCatch; draftCatch = null; if (c.photo) photoDel(c.id); }
-function commitDraft(c) { if (draftCatch !== c) return; draftCatch = null; S.catches.unshift(c); save(); refreshCatches(); }
+function commitDraft(c) { if (draftCatch !== c) return; track("catch_saved", { species: c.species || "okand", photo: c.photo ? 1 : 0, released: c.released ? 1 : 0 }); draftCatch = null; S.catches.unshift(c); save(); refreshCatches(); }
 function catchForm(c) { c.species = $("#cf-sp").value; c.kg = $("#cf-kg").value; c.len = $("#cf-len").value; c.released = $("#cf-rel").checked; c.lure = $("#cf-lure").value; c.note = $("#cf-note").value; }
 /* väder vid en given tidpunkt: prognos med senaste dagarna, eller arkivet för äldre fångster */
 async function wxAt(pos, t) {
@@ -722,7 +723,7 @@ function newPastCatch() {
     if (!isFinite(t) || t > Date.now() + 60000) { toast("Ange en tidpunkt som har varit."); return; }
     const pos = ll(map.getCenter());
     const c = { id: uid(), t, ...pos, depth: depthAt(pos), species: $("#pc-sp").value, kg: $("#pc-kg").value, len: $("#pc-len").value, released: $("#pc-rel").checked, lure: $("#pc-lure").value, note: $("#pc-note").value, wx: null, past: true };
-    S.catches.push(c); S.catches.sort((x, y) => y.t - x.t); save(); refreshCatches();
+    S.catches.push(c); S.catches.sort((x, y) => y.t - x.t); save(); refreshCatches(); track("catch_saved", { species: c.species || "okand", past: 1 });
     toast("Fångsten är sparad"); openCatch(c.id);
     try { c.wx = await wxAt(pos, t); save(); if (sheetView === "catch:" + c.id) openCatch(c.id); } catch (e) { toast("Vädret för den tiden kunde inte hämtas."); }
   };
@@ -863,6 +864,7 @@ async function openShare(id, justSaved) {
   const blob = () => new Promise(r => cv.toBlob(r, "image/jpeg", .9));
   const name = `kummel-${(c.species || "fangst").toLowerCase()}-${new Date(c.t).toISOString().slice(0, 10)}.jpg`;
   $("#sh-go").onclick = async () => {
+    track("catch_shared", { where: $("#sh-where").value });
     const f = new File([await blob()], name, { type: "image/jpeg" });
     const text = `${c.species || "Fångst"}${c.kg ? " " + c.kg + " kg" : ""}${c.len ? " " + c.len + " cm" : ""} 🎣\nLoggad med Kummel: ${SITE}`;
     if (navigator.canShare && navigator.canShare({ files: [f] })) { try { await navigator.share({ files: [f], text }); } catch (e) {} }
@@ -1144,6 +1146,7 @@ function renderRoute() {
   $("#rt-save").textContent = routeId ? "Spara ändringar" : "Spara rutt";
   $("#rt-save").onclick = () => {
     if (wps.length < 2) { toast("Lägg till minst två punkter."); return; }
+    track("route_saved", { points: wps.length, auto: autoInfo ? 1 : 0 });
     const name = (routeName || "").trim() || `Rutt ${new Date().getDate()}.${new Date().getMonth() + 1} (${st.nm.toFixed(1)} nm)`;
     const pts = wps.map(p => [+p.lat.toFixed(6), +p.lng.toFixed(6)]), old = routeId && S.routes.find(r => r.id === routeId);
     if (old) { old.name = name; old.pts = pts; old.updated = Date.now(); }
@@ -1487,6 +1490,7 @@ async function autoRoute(from, to) {
   const r = await computeAutoRoute(from, to);
   if (r.err) { toast(r.err, 4500); return; }
   wps = r.pts; wpsOff = r.off; autoInfo = r.info;
+  track("route_suggested", { nm: Math.round((r.info && r.info.nm) || 0) });
   if (!planning) startPlanning(wps); else renderRoute();
   if (r.info.offNm > 3) toast("Långt till närmaste farled. Rita den biten själv.", 4000);
 }
@@ -1517,6 +1521,7 @@ function arrivalPlan(nm, h) {
 /* ---------- aktiv navigering längs rutt ---------- */
 let nav = null;
 function startNav(pts) {
+  track("navigation_start");
   if (pts.length < 2) return;
   nav = { pts, i: 1, sog: null, started: Date.now() };
   // börja vid närmaste punkt framför båten om man redan är ute
@@ -1841,6 +1846,7 @@ async function loadWxObs() {
   try { wxWater = await waterObs([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]); renderWxLayer(); } catch (e) { wxWater = []; }
 }
 function setWx(on) {
+  if (on) track("weather_layer");
   wxOn = on;
   $("#b-wx").setAttribute("aria-pressed", on);
   $("#wxbar").classList.toggle("hidden", !on);
@@ -1930,6 +1936,7 @@ function openShip(mmsi, refresh) {
 map.on("mouseenter", "ais", () => map.getCanvas().style.cursor = "pointer");
 map.on("mouseleave", "ais", () => map.getCanvas().style.cursor = "");
 function setAis(on) {
+  if (on) track("ais_on");
   S.layers.ais = on; save(); clearInterval(aisT);
   if (on) { loadAis(); aisT = setInterval(loadAis, 20000); } else renderAis();
 }
@@ -2012,7 +2019,7 @@ function openLayers() {
   };
   on("#ly-dz", "onchange", e => { S.layers.detailZoom = +e.target.value; save(); applyLayers(); });
   document.querySelectorAll("[data-grp]").forEach(x => x.onchange = () => { S.layers.groups = { ...(S.layers.groups || {}), [x.dataset.grp]: x.checked }; save(); applyLayers(); });
-  document.querySelectorAll("input[name=base]").forEach(x => x.onchange = () => { S.layers.base = x.value; save(); applyLayers(); const y = $("#sh-body").scrollTop; openLayers(); $("#sh-body").scrollTop = y; });
+  document.querySelectorAll("input[name=base]").forEach(x => x.onchange = () => { S.layers.base = x.value; save(); applyLayers(); track("base_map", { base: x.value }); const y = $("#sh-body").scrollTop; openLayers(); $("#sh-body").scrollTop = y; });
 }
 $("#b-layers").onclick = openLayers;
 $("#b-detail").onclick = () => {
@@ -2110,6 +2117,7 @@ function openData() {
   };
 }
 function shareApp() {
+  track("share_app");
   const d = { title: "Kummel", text: "Kummel – sjökort, sjöväder och fiske för Ålands skärgård. Gratis i webbläsaren:", url: SITE_URL };
   if (navigator.share) navigator.share(d).catch(() => {});
   else { try { navigator.clipboard.writeText(SITE_URL); toast("Adressen är kopierad: " + SITE, 2500); } catch (e) { toast(SITE, 3000); } }
@@ -2120,10 +2128,13 @@ function openAbout() {
     <div class="card"><h3>${SITE}</h3><div class="muted">Här finns Kummel alltid. Tipsa gärna båt- och fiskevänner.</div>
       <div class="row"><button class="btn pri" id="ab-share">Dela Kummel</button></div></div>
     <div class="card"><h3>Officiella källor</h3><div class="muted">Djup och sjökort: Traficom. Farleder, sjömärken, fyrar och vattentrafikmärken: Väylävirasto. Stenar, grund och flygbild: Lantmäteriverket. Vattenstånd och vattentemperatur: Meteorologiska institutet. Fartyg (AIS): Digitraffic. Väderprognos: Open-Meteo. Bakgrundskarta: OpenStreetMap. Sjökortet uppdateras varje vecka.</div></div>
+    <div class="card"><h3>Integritet</h3><div class="muted">Dina platser, rutter, fångster och foton sparas bara i den här enheten. För att hämta väder, vattenstånd och kartor skickas kartans position till respektive tjänst, men aldrig till oss. ${GA_ID ? "Om du tillåter det räknar Kummel anonymt vilka funktioner som används (Google Analytics), utan positioner eller fångster." : ""}</div>
+      ${GA_ID ? `<label class="row"><input type="checkbox" id="ab-stats" ${S.stats === 1 ? "checked" : ""}> Tillåt anonym statistik</label>` : ""}</div>
     <div class="card"><h3>Tips</h3><div class="muted">Håll fingret på kartan för att spara en plats. Vrid kartan med två fingrar. Tryck på positionsknappen två gånger för kurs upp. Ställ in båtens djupgående under Meny → Båtar, så markeras grunt vatten för just din båt. Lägg till Kummel på hemskärmen så öppnas den som en app.</div></div>
     <div class="disclaimer">Kummel är inte ett certifierat navigationshjälpmedel. Ruttförslag och varningar är hjälpmedel: föraren ansvarar alltid för navigeringen. Sjökortsdata från Traficom (CC BY 4.0) är inte avsedd för navigering.</div>
     <div class="maker" style="flex-direction:column;gap:2px"><div>Kummel är en produkt från <b>${MAKER}</b>, ${MAKER_TOWN}</div><div>FO-nummer ${MAKER_ID} · version 0.2</div></div>`, "about");
   $("#ab-share").onclick = shareApp;
+  const st = $("#ab-stats"); if (st) st.onchange = () => { setStats(st.checked); toast(st.checked ? "Tack! Statistiken är på." : "Statistiken är avstängd.", 2000); };
 }
 
 /* ---------- ankarlarm ----------
@@ -2186,6 +2197,7 @@ setInterval(() => {   // GPS-vakt
   if (age > 60000 && watchId !== null) anchorAlarm(true, "Ingen GPS-position på över en minut. Kontrollera båten.");
 }, 10000);
 function setAnchor(at) {
+  track("anchor_set");
   unlockAudio(); startGps(); keepAwake();
   S.anchor = { lat: at.lat, lng: at.lng, r: +($("#an-r") ? $("#an-r").value : 40), t: Date.now() }; save();
   anchorOut = 0; anchorMax = 0; anchorDist = gps ? distNm(S.anchor, gps) * NM : null;
@@ -2298,6 +2310,7 @@ async function downloadOffline(withChart) {
     S.offline = { date: Date.now(), bytes, etag, areas }; save();
     if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage("offline-changed");
     toast("Offlinekartan är sparad", 2000);
+    track("offline_saved", { mb: Math.round(bytes / 1048576), chart: withChart ? 1 : 0 });
   } catch (e) {
     toast("Nedladdningen misslyckades: " + (e.message || e), 4000);
   } finally { offBusy = false; if (sheetView === "offline") openOffline(); }
@@ -2385,6 +2398,43 @@ function openLegend() {
     </div>`, "legend");
 }
 
+/* ---------- statistik (Google Analytics 4) ----------
+   Laddas bara om ett mät-ID finns i config.js OCH användaren har sagt ja (S.stats === 1).
+   Inga positioner, namn eller fångstdetaljer skickas, bara vilka funktioner som används. */
+const GA_ID = (window.KUMMEL_CONFIG && KUMMEL_CONFIG.gaId) || "";
+let gaOn = false;
+function statsOn() {
+  if (gaOn || !GA_ID || S.stats !== 1) return;
+  gaOn = true;
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () { dataLayer.push(arguments); };
+  gtag("js", new Date());
+  gtag("config", GA_ID, {
+    allow_google_signals: false, allow_ad_personalization_signals: false,
+    app_mode: S.mode, display_mode: matchMedia("(display-mode: standalone)").matches || navigator.standalone ? "hemskarm" : "webblasare",
+    theme: S.theme || "day"
+  });
+  const s = document.createElement("script"); s.async = true; s.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(GA_ID);
+  document.head.appendChild(s);
+}
+function setStats(on) {
+  S.stats = on ? 1 : 0; save();
+  if (on) statsOn();
+  else if (gaOn) { try { gtag("consent", "update", { analytics_storage: "denied" }); } catch (e) {} document.cookie.split(";").forEach(k => { const n = k.split("=")[0].trim(); if (/^_ga/.test(n)) document.cookie = n + "=; Max-Age=0; path=/; domain=." + location.hostname.replace(/^www\./, ""); }); }
+}
+/* track("namn", {…}): en händelse i statistiken. Gör ingenting utan samtycke. */
+function track(name, params) { if (gaOn && window.gtag) { try { gtag("event", name, params || {}); } catch (e) {} } }
+/* fråga en gång (när statistik finns och villkoren är godkända) */
+function askStats() {
+  if (!GA_ID || S.stats === 0 || S.stats === 1 || !termsOk() || $("#statsask")) return;
+  const d = document.createElement("div"); d.id = "statsask";
+  d.innerHTML = `<div><b>Får Kummel räkna besök?</b><div class="muted">Anonym statistik över vilka funktioner som används hjälper oss att göra Kummel bättre. Inga positioner eller fångster skickas. Du kan ändra dig under Om Kummel.</div></div>
+    <div class="row"><button class="btn pri" id="sa-yes">Ja, gärna</button><button class="btn" id="sa-no">Nej tack</button></div>`;
+  document.body.appendChild(d);
+  $("#sa-yes").onclick = () => { setStats(true); d.remove(); };
+  $("#sa-no").onclick = () => { setStats(false); d.remove(); };
+}
+
 /* ---------- välkomstruta första gången ---------- */
 const TERMS_V = 1;   // höj när villkoren ändras, så måste alla godkänna på nytt
 function termsOk() { return S.termsOk >= TERMS_V; }
@@ -2408,7 +2458,7 @@ function openWelcome() {
     <div class="row"><button class="btn pri" id="wl-go">${must ? "Jag förstår – visa min position" : "Visa min position"}</button><button class="btn" id="wl-skip">${must ? "Jag förstår – bara kartan" : "Stäng"}</button></div>`, "welcome");
   setSheetState($("#sheet"), 2);
   $("#sheet").classList.toggle("locked", must); document.body.classList.toggle("terms", must);
-  const ok = () => { S.termsOk = TERMS_V; S.welcomed = 1; save(); $("#sheet").classList.remove("locked"); document.body.classList.remove("terms"); };
+  const ok = () => { const first = !termsOk(); S.termsOk = TERMS_V; S.welcomed = 1; save(); if (first) setTimeout(askStats, 1500); $("#sheet").classList.remove("locked"); document.body.classList.remove("terms"); };
   $("#wl-go").onclick = () => { ok(); closeSheet(); $("#b-locate").click(); };
   $("#wl-skip").onclick = () => { ok(); closeSheet(); };
 }
@@ -2440,6 +2490,7 @@ applyTheme(false);
 setMode(S.mode);
 if (S.layers.ais) setAis(true);
 if (S.anchor) { anchorBar(); startGps(); keepAwake(); toast("Ankarlarmet är på", 2000); }
+statsOn(); setTimeout(askStats, 4000);
 if (!termsOk()) openWelcome();
 /* har man redan gett platsåtkomst öppnas kartan där båten ligger (ingen ny fråga) */
 else if (navigator.geolocation && navigator.permissions && navigator.permissions.query)
