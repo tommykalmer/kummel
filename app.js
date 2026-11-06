@@ -20,6 +20,9 @@ const DEFAULT_STATE = {
   boatId: "b1",
   places: [], routes: [], tracks: [], catches: [], v2: 1, v3: 1
 };
+/* Ålands flagga, liten, för Om Kummel och välkomstrutan */
+const ALAND_FLAG = `<svg class="flag" viewBox="0 0 26 17" aria-label="Ålands flagga"><rect width="26" height="17" fill="#0053a5"/><rect x="7" width="5" height="17" fill="#ffce00"/><rect y="6" width="26" height="5" fill="#ffce00"/><rect x="8.5" width="2" height="17" fill="#d21034"/><rect y="7.5" width="26" height="2" fill="#d21034"/></svg>`;
+const MAKER = "AsterIQ Ab";
 const SITE = "www.kummel.app", SITE_URL = "https://www.kummel.app/";   // appens adress, visas på delade bilder m.m.
 let draftCatch = null;   // fångst som inte är sparad än (Fisk! utan att trycka Spara)
 let S = load();
@@ -2034,7 +2037,8 @@ function openMenu() {
       <button class="btn" id="m-legend">Teckenförklaring</button>
       <button class="btn" id="m-welcome">Så fungerar Kummel</button>
       <button class="btn" id="m-about">Om Kummel</button>
-    </div>`, "menu");
+    </div>
+    <div class="maker">${ALAND_FLAG} Kummel · en produkt från ${MAKER}</div>`, "menu");
   $("#m-boats").onclick = openBoats; $("#m-places").onclick = openPlaces; $("#m-routes").onclick = openRoutes;
   $("#m-log").onclick = openLog; $("#m-catch").onclick = openCatches; $("#m-data").onclick = openData; $("#m-about").onclick = openAbout; $("#m-welcome").onclick = openWelcome; $("#m-legend").onclick = openLegend; $("#m-anchor").onclick = openAnchor; $("#m-offline").onclick = openOffline;
 }
@@ -2112,11 +2116,13 @@ function shareApp() {
 }
 function openAbout() {
   openSheet("Om Kummel", `
-    <div><b>Kummel v0.2</b>: vektorsjökort, väder och båtliv i webbläsaren. Fungerar på mobil, iPad och dator. Lägg till på hemskärmen för att använda som app.</div>
+    <div class="home-line">${ALAND_FLAG}<div><b>Kummel</b> är sjökortet för Ålands skärgård: djup, sjömärken, grynnor, sjöväder, rutter med ankomsttid och fiske. Byggt av båtfolk för de egna vattnen, från fjärdarna runt Mariehamn till skären ute vid Kökar.</div></div>
     <div class="card"><h3>${SITE}</h3><div class="muted">Här finns Kummel alltid. Tipsa gärna båt- och fiskevänner.</div>
       <div class="row"><button class="btn pri" id="ab-share">Dela Kummel</button></div></div>
-    <div class="card"><h3>Tips</h3><div class="muted">Håll fingret på kartan för att spara en plats. Vrid kartan med två fingrar. Tryck på positionsknappen två gånger för kurs upp. Ställ in båtens djupgående under Meny → Båtar, så markeras grunt vatten för just din båt.</div></div>
-    <div class="disclaimer">Kummel är inte ett certifierat navigationshjälpmedel. Ruttförslag och varningar är hjälpmedel: föraren ansvarar alltid för navigeringen. Sjökortsdata: Traficom, CC BY 4.0, ej för navigering. Bakgrund: OpenStreetMap. Väder: Open-Meteo.</div>`, "about");
+    <div class="card"><h3>Officiella källor</h3><div class="muted">Djup och sjökort: Traficom. Farleder, sjömärken, fyrar och vattentrafikmärken: Väylävirasto. Stenar, grund och flygbild: Lantmäteriverket. Vattenstånd och vattentemperatur: Meteorologiska institutet. Fartyg (AIS): Digitraffic. Väderprognos: Open-Meteo. Bakgrundskarta: OpenStreetMap. Sjökortet uppdateras varje vecka.</div></div>
+    <div class="card"><h3>Tips</h3><div class="muted">Håll fingret på kartan för att spara en plats. Vrid kartan med två fingrar. Tryck på positionsknappen två gånger för kurs upp. Ställ in båtens djupgående under Meny → Båtar, så markeras grunt vatten för just din båt. Lägg till Kummel på hemskärmen så öppnas den som en app.</div></div>
+    <div class="disclaimer">Kummel är inte ett certifierat navigationshjälpmedel. Ruttförslag och varningar är hjälpmedel: föraren ansvarar alltid för navigeringen. Sjökortsdata från Traficom (CC BY 4.0) är inte avsedd för navigering.</div>
+    <div class="maker">Kummel är en produkt från <b>${MAKER}</b> · version 0.2</div>`, "about");
   $("#ab-share").onclick = shareApp;
 }
 
@@ -2387,8 +2393,8 @@ function openWelcome() {
   const ic = id => `<span class="wl-ic">${$(id).innerHTML}</span>`;
   const row = (id, txt) => `<div class="wl-row">${ic(id)}<div>${txt}</div></div>`;
   openSheet("Välkommen till Kummel", `
-    <div class="warnbox"><b>Kummel är inte ett sjökort för navigering.</b> Appen är ett hjälpmedel för planering och överblick, inte certifierad för navigering. Djup, sjömärken, ruttförslag, ankomsttider och väder kan vara felaktiga, ofullständiga eller inaktuella. Använd alltid officiella, uppdaterade sjökort och gott sjömanskap. Du som förare ansvarar själv för navigeringen och för båtens säkerhet. Kummel tillhandahålls gratis och i befintligt skick, utan garantier.</div>
-    <div>Sjökort, sjöväder och rutter för skärgården, direkt i webbläsaren. Välj <b>Båttur</b> eller <b>Fiske</b> uppe till vänster.</div>
+    <div class="warnbox"><b>Kummel är inte ett sjökort för navigering.</b> Appen är ett hjälpmedel för planering och överblick, inte certifierad för navigering. Djup, sjömärken, ruttförslag, ankomsttider och väder kan vara felaktiga, ofullständiga eller inaktuella. Använd alltid officiella, uppdaterade sjökort och gott sjömanskap. Du som förare ansvarar själv för navigeringen och för båtens säkerhet. Kummel tillhandahålls av AsterIQ Ab gratis och i befintligt skick, utan garantier.</div>
+    <div class="home-line">${ALAND_FLAG}<div>Sjökort, sjöväder och rutter för Ålands skärgård, från Eckerö till Kökar och från Geta till Föglö. Välj <b>Båttur</b> eller <b>Fiske</b> uppe till vänster.</div></div>
     <div class="wl">
       ${row("#b-locate", "<b>Min position.</b> Ett tryck: kartan följer båten. Två tryck: kurs upp.")}
       ${row("#b-route", "<b>Planera rutt.</b> Välj start och mål, så föreslås en väg längs farlederna med ankomsttid.")}
