@@ -710,6 +710,18 @@ async function wxAt(pos, t) {
     sst: sstI >= 0 ? m.hourly.sea_surface_temperature[sstI] : null, moon: moonPhase(d)
   };
 }
+/* fångster som sparades utan nät får sitt väder i efterhand, när nätet är tillbaka */
+let wxFilling = false;
+async function fillMissingWx() {
+  if (wxFilling || !navigator.onLine) return; wxFilling = true;
+  try {
+    for (const c of S.catches.filter(c => !c.wx).slice(0, 10)) {
+      try { c.wx = await wxAt(c, c.t); save(); if (sheetView === "catch:" + c.id && !$("#cf-sp")) openCatch(c.id); } catch (e) {}
+    }
+  } finally { wxFilling = false; }
+}
+window.addEventListener("online", () => setTimeout(fillMissingWx, 3000));
+setTimeout(fillMissingWx, 8000);
 /* registrera en fångst i efterhand: tid och plats väljs, vädret hämtas för just då */
 function newPastCatch() {
   const now = new Date(Date.now() - 60 * 60000), pad2 = n => String(n).padStart(2, "0");
