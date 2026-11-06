@@ -1,4 +1,4 @@
-# Diagnostik Fri Nov  6 08:20:40 UTC 2026
+# Diagnostik Fri Nov  6 08:25:04 UTC 2026
 ## DNS
 ### kummel.app
 185.199.110.153
@@ -11,9 +11,9 @@
 2606:50c0:8002::153
 ### www.kummel.app
 tommykalmer.github.io.
+185.199.108.153
 185.199.109.153
 185.199.110.153
-185.199.108.153
 185.199.111.153
 tommykalmer.github.io.
 2606:50c0:8000::153
