@@ -2056,7 +2056,7 @@ function openMenu() {
       <button class="btn" id="m-routes">Sparade rutter (${S.routes.length})</button>
       <button class="btn" id="m-log">Loggbok (${S.tracks.length} turer)</button>
       <button class="btn" id="m-catch">Fångstlogg (${S.catches.length})</button>
-      <button class="btn" id="m-data">Säkerhetskopia</button>
+      <button class="btn" id="m-data">Flytta och säkerhetskopiera</button>
       <button class="btn" id="m-anchor">Ankarlarm${S.anchor ? " (på)" : ""}</button>
       <button class="btn" id="m-offline">Offlinekarta${S.offline ? " (nedladdad)" : ""}</button>
       <button class="btn" id="m-legend">Teckenförklaring</button>
@@ -2124,14 +2124,71 @@ function openCatches() {
   document.querySelectorAll("[data-c]").forEach(x => x.onclick = () => { const c = S.catches.find(q => q.id === x.dataset.c); if (S.mode !== "fiske") setMode("fiske"); map.easeTo({ center: lnglat(c), zoom: 14 }); openCatch(c.id); });
   document.querySelectorAll("[data-share]").forEach(x => x.onclick = () => openShare(x.dataset.share));
 }
+/* ---------- säkerhetskopia: spara, skicka och slå ihop ----------
+   Filen innehåller platser, rutter, turer, fångster (med foton) och båtar.
+   Inläsning SLÅR IHOP: nya saker läggs till, det som redan finns (samma id) lämnas orört. */
+const LISTS = [["catches", "fångst", "fångster"], ["routes", "rutt", "rutter"], ["places", "plats", "platser"], ["tracks", "tur", "turer"], ["boats", "båt", "båtar"]];
+const blobToData = b => new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.onerror = () => r(null); f.readAsDataURL(b); });
+async function makeBackup() {
+  const data = {}; LISTS.forEach(([k]) => data[k] = S[k] || []);
+  data.boatId = S.boatId; data.fishDepth = S.fishDepth;
+  const photos = {};
+  for (const c of S.catches) if (c.photo) { const b = await photoGet(c.id); if (b) { const d = await blobToData(b); if (d) photos[c.id] = d; } }
+  return { kummel: 2, exported: new Date().toISOString(), data, photos };
+}
+const backupName = () => { const d = new Date(), p = n => String(n).padStart(2, "0"); return `kummel-${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.json`; };
+function backupSummary() {
+  const n = LISTS.filter(([k]) => k !== "boats").map(([k, one, many]) => { const c = (S[k] || []).length; return c ? `${c} ${c === 1 ? one : many}` : ""; }).filter(Boolean);
+  const ph = S.catches.filter(c => c.photo).length;
+  return (n.length ? n.join(", ") : "inget sparat än") + (ph ? ` · ${ph} foto${ph === 1 ? "" : "n"}` : "");
+}
+async function mergeBackup(o) {
+  const src = o && o.kummel ? o.data : o;   // äldre kopior var hela tillståndet
+  if (!src || typeof src !== "object" || !LISTS.some(([k]) => Array.isArray(src[k]))) throw new Error("fel format");
+  const added = {}; let same = 0, ph = 0;
+  for (const [k] of LISTS) {
+    const mine = S[k] || (S[k] = []), have = new Set(mine.map(x => x.id));
+    for (const it of src[k] || []) {
+      if (!it || !it.id) continue;
+      if (have.has(it.id)) { if (k !== "boats") same++; continue; }
+      if (k === "boats" && mine.length === 1 && mine[0].id === "b1" && mine[0].name === "Min båt") { mine.length = 0; S.boatId = it.id; }   // ersätt standardbåten
+      mine.push(it); have.add(it.id); added[k] = (added[k] || 0) + 1;
+      if (k === "catches" && it.photo && o.photos && o.photos[it.id]) { try { await photoPut(it.id, await (await fetch(o.photos[it.id])).blob()); ph++; } catch (e) { it.photo = 0; } }
+      else if (k === "catches" && it.photo) it.photo = 0;
+    }
+  }
+  S.catches.sort((x, y) => y.t - x.t); S.tracks.sort((x, y) => (y.start || 0) - (x.start || 0)); S.routes.sort((x, y) => (y.created || 0) - (x.created || 0));
+  if (!S.boats.some(b => b.id === S.boatId) && S.boats[0]) S.boatId = S.boats[0].id;
+  save(); drawPlaces(); refreshCatches(); boatChanged();
+  const txt = LISTS.filter(([k]) => added[k]).map(([k, one, many]) => `${added[k]} ${added[k] === 1 ? one : many}`);
+  track("backup_import", { added: Object.values(added).reduce((s, v) => s + v, 0) });
+  return (txt.length ? "La till " + txt.join(", ") : "Inget nytt att lägga till") + (ph ? ` (${ph} foto${ph === 1 ? "" : "n"})` : "") + (same ? `. ${same} fanns redan.` : ".");
+}
+async function backupFile() { const j = JSON.stringify(await makeBackup()); return new File([j], backupName(), { type: "application/json" }); }
 function openData() {
-  openSheet("Säkerhetskopia", `
-    <div class="muted">All data sparas lokalt i webbläsaren på den här enheten. Spara en kopia för att flytta den till en annan enhet.</div>
-    <div class="row"><button class="btn pri" id="d-exp">Spara kopia</button><label class="btn">Läs in kopia<input type="file" id="d-imp" accept=".json,application/json" hidden></label></div>`, "data");
-  $("#d-exp").onclick = () => downloadBlob(`kummel-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(S), "application/json");
+  openSheet("Flytta data", `
+    <div class="muted">Allt du sparar finns bara på den här enheten. Så här flyttar du det, till exempel från datorn till telefonen inför turen, eller fångsterna från telefonen till datorn:</div>
+    <div class="card"><h3>1. På enheten du har sakerna på</h3><div class="muted">Just nu: ${backupSummary()}</div>
+      <div class="row"><button class="btn pri" id="d-send">Skicka till annan enhet</button><button class="btn" id="d-exp">Spara som fil</button></div>
+      <div class="muted">"Skicka" öppnar telefonens delningsmeny: AirDrop, mejl, meddelande eller Filer.</div></div>
+    <div class="card"><h3>2. På enheten som ska ta emot</h3>
+      <label class="btn pri" style="text-align:center">Läs in kopia<input type="file" id="d-imp" accept=".json,.txt,application/json,text/plain" hidden></label>
+      <div class="muted">Det som finns i kopian läggs till. Inget du redan har här tas bort eller skrivs över.</div></div>
+    <div class="muted" id="d-msg"></div>`, "data");
+  const msg = t => { const el = $("#d-msg"); if (el) el.textContent = t; };
+  $("#d-exp").onclick = async () => { msg("Skapar kopia …"); const f = await backupFile(); downloadBlob(f.name, await f.text(), "application/json"); msg(""); track("backup_export", { how: "file" }); };
+  $("#d-send").onclick = async () => {
+    msg("Skapar kopia …"); let f = await backupFile(); msg("");
+    if (navigator.canShare && !navigator.canShare({ files: [f] })) f = new File([await f.text()], f.name, { type: "text/plain" });   // vissa webbläsare delar bara "text"-filer
+    if (navigator.canShare && navigator.canShare({ files: [f] })) {
+      try { await navigator.share({ files: [f], title: "Kummel-kopia", text: "Öppna Kummel på den andra enheten: Meny → Flytta och säkerhetskopiera → Läs in kopia." }); track("backup_export", { how: "share" }); } catch (e) {}
+    } else { downloadBlob(f.name, await f.text(), "application/json"); toast("Filen är sparad. Flytta den till den andra enheten och läs in den där.", 4000); track("backup_export", { how: "file" }); }
+  };
   $("#d-imp").onchange = async e => {
-    try { const o = JSON.parse(await e.target.files[0].text()); S = Object.assign(structuredClone(DEFAULT_STATE), o); save(); drawPlaces(); refreshCatches(); boatChanged(); toast("Kopian är inläst"); closeSheet(); }
-    catch (err) { toast("Filen kunde inte läsas. Välj en säkerhetskopia från Kummel."); }
+    const file = e.target.files[0]; if (!file) return;
+    try { msg("Läser in …"); const r = await mergeBackup(JSON.parse(await file.text())); msg(r); toast(r, 4000); }
+    catch (err) { msg(""); toast("Filen kunde inte läsas. Välj en kopia som är gjord i Kummel."); }
+    e.target.value = "";
   };
 }
 function shareApp() {
