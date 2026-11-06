@@ -282,13 +282,28 @@ function refreshCatches() {
   setData("catches", { type: "FeatureCollection", features: S.mode === "fiske" ? S.catches.map(c => ({ type: "Feature", properties: { id: c.id }, geometry: { type: "Point", coordinates: [c.lng, c.lat] } })) : [] });
 }
 map.on("click", "catches", e => { const id = e.features[0].properties.id; e.preventDefault(); openCatch(id); });
-map.on("click", "steep", e => {
-  if (planning || e.defaultPrevented) return;
-  const p = e.features[0].properties, v = +p.v, dv = +p.dv, s = +p.s;
+/* brant: linjen är smal, så ett tryck i närheten räcker (ca en fingertopp åt varje håll).
+   Ett tryck till när rutan är öppen stänger den, liksom att flytta kartan eller vänta. */
+let steepPop = null;
+const FINGER = 22;   // px runt trycket som räknas som träff
+map.on("click", e => {
+  if (planning || e.defaultPrevented || !map.getLayer("steep") || map.getLayoutProperty("steep", "visibility") === "none") return;
+  if (steepPop) { steepPop.remove(); steepPop = null; e.preventDefault(); return; }
+  const { x, y } = e.point;
+  const hits = map.queryRenderedFeatures([[x - FINGER, y - FINGER], [x + FINGER, y + FINGER]], { layers: ["steep"] });
+  if (!hits.length) return;
+  // närmaste brant (om flera ligger nära)
+  let best = hits[0], bd = Infinity;
+  hits.forEach(f => { const g = f.geometry, cs = g.type === "LineString" ? g.coordinates : g.type === "MultiLineString" ? g.coordinates.flat() : [];
+    cs.forEach(c => { const q = map.project(c), d = (q.x - x) ** 2 + (q.y - y) ** 2; if (d < bd) { bd = d; best = f; } }); });
+  const p = best.properties, v = +p.v, dv = +p.dv, s = +p.s;
   e.preventDefault();
-  new maplibregl.Popup({ closeButton: false, maxWidth: "240px" }).setLngLat(e.lngLat)
+  steepPop = new maplibregl.Popup({ closeButton: false, maxWidth: "240px" }).setLngLat(e.lngLat)
     .setHTML(`<div style="font:600 13px var(--f-ui);color:#14232e"><b>Brant</b><br>Djupet ökar från ${v} m till ${v + dv} m på ungefär ${Math.max(1, Math.round(dv / s))} m.<div style="font-weight:400;color:#5d6b73;margin-top:4px">Branter och kanter är ofta bra ställen för gädda, abborre och gös.</div></div>`).addTo(map);
+  const pop = steepPop; pop.getElement().addEventListener("click", ev => { ev.stopPropagation(); pop.remove(); if (steepPop === pop) steepPop = null; });
+  setTimeout(() => { pop.remove(); if (steepPop === pop) steepPop = null; }, 9000);
 });
+map.on("movestart", e => { if (e.originalEvent && steepPop) { steepPop.remove(); steepPop = null; } });
 /* vattentrafikmärke: liten ruta med vad märket gäller. Stängs av sig själv, vid tryck någon annanstans eller när kartan flyttas */
 let signPop = null;
 map.on("click", "signs", e => {
