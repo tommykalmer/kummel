@@ -836,7 +836,10 @@ async function catchCard(c, where) {
   // fot: logga och adress, avskild med en tunn linje
   const fyB = H - 64;
   g.fillStyle = "rgba(255,255,255,.14)"; g.fillRect(L, H - 140, W - 2 * L, 2);
-  g.save(); g.translate(L, fyB - 44); g.scale(2.2, 2.2); g.fillStyle = "#f2c14e"; g.fill(new Path2D("M12 2 20 21H4Z")); g.strokeStyle = "#0f2a3d"; g.lineWidth = 2; g.beginPath(); g.moveTo(7.5, 16); g.lineTo(16.5, 16); g.stroke(); g.restore();
+  // appikonen: gul ruta, blå kummel, röd linje
+  g.save(); g.translate(L, fyB - 46); g.scale(.54, .54); rrect(g, 0, 0, 100, 100, 22); g.fillStyle = "#ffce00"; g.fill();
+  g.translate(50, 52); g.scale(.86, .86); g.translate(-50, -52);
+  g.fillStyle = "#0053a5"; g.fill(new Path2D("M50 18 L73 66 L27 66 Z")); g.fill(new Path2D("M24 75 L76 75 L80 84 L20 84 Z")); g.fillStyle = "#d21034"; g.fillRect(22, 69, 56, 4); g.restore();
   g.fillStyle = "#fff"; g.font = `800 44px ${F}`; g.fillText("Kummel", L + 66, fyB - 10);
   g.fillStyle = "#93a5ae"; g.font = `500 26px ${F}`; g.fillText("sjökort och fiske i skärgården", L + 66, fyB + 26);
   g.fillStyle = "#f2c14e"; g.font = `800 42px ${F}`; g.fillText(SITE, W - L - g.measureText(SITE).width, fyB + 8);   // adressen syns för den som blir nyfiken

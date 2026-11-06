@@ -1,9 +1,9 @@
 /* Kummel service worker – app shell offline + cache of chart tiles you have viewed */
-const SHELL = "kummel-shell-v59";
+const SHELL = "kummel-shell-v60";
 const TILES = "kummel-tiles-v1";
 const OFFLINE = "kummel-offline-v1";   // nedladdad offlinekarta, rensas aldrig automatiskt
 const MAX_TILES = 6000;
-const SHELL_FILES = ["./", "./index.html", "./app.js", "./chartstyle.js", "./config.js", "./data/marks.geojson", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png",
+const SHELL_FILES = ["./", "./index.html", "./app.js", "./chartstyle.js", "./config.js", "./data/marks.geojson", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-180.png",
   "https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js",
   "https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.css",
   "https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"];

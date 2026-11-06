@@ -19,8 +19,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f2a3d'/%3E%3Cpath d='M32 10 46 50H18Z' fill='%23f2c14e'/%3E%3Cpath d='M22 40h20' stroke='%230f2a3d' stroke-width='4'/%3E%3C/svg%3E">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23ffce00'/%3E%3Cg transform='translate(50 52) scale(.86) translate(-50 -52)'%3E%3Cpath d='M50 18 L73 66 L27 66 Z' fill='%230053a5'/%3E%3Crect x='22' y='69' width='56' height='4' fill='%23d21034'/%3E%3Cpath d='M24 75 L76 75 L80 84 L20 84 Z' fill='%230053a5'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="icon-180.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;500;600&display=swap">
@@ -73,7 +73,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 #top > *{pointer-events:auto}
 .brand{display:flex;align-items:center;gap:8px;background:var(--ink);color:#fff;border-radius:var(--r);padding:8px 12px;box-shadow:var(--shadow);
   font:700 18px/1 var(--f-num);letter-spacing:.06em;text-transform:uppercase}
-.brand svg{width:20px;height:20px}
+.brand svg{width:24px;height:24px}
 .modes{display:flex;gap:4px;background:var(--panel);border-radius:var(--r);padding:4px;box-shadow:var(--shadow);overflow-x:auto;scrollbar-width:none;min-width:0}
 .modes::-webkit-scrollbar{display:none}
 .modes button{border:0;background:transparent;border-radius:10px;padding:6px 10px;font-weight:600;color:var(--muted);white-space:nowrap;cursor:pointer}
@@ -306,7 +306,7 @@ label.row{flex-wrap:nowrap;align-items:center}
 <div id="anchoralarm" class="hidden" role="alert"><div class="aa-in"><div class="aa-big">⚓ ANKARLARM</div><div id="aa-why"></div><div class="row"><button class="btn" id="aa-mute">Tysta 1 min</button><button class="btn" id="aa-off">Jag har koll</button></div></div></div>
 <button id="nonav" type="button">Ej för navigering · Läs mer</button>
 <div id="top">
-  <div class="brand"><svg viewBox="0 0 24 24"><path d="M12 2 20 21H4Z" fill="#f2c14e"/><path d="M7.5 16h9" stroke="#0f2a3d" stroke-width="2"/></svg><span class="bt">Kummel</span></div>
+  <div class="brand"><svg viewBox="0 0 100 100" class="brand-ic"><rect width="100" height="100" rx="24" fill="#ffce00"/><g transform="translate(50 52) scale(.86) translate(-50 -52)"><path d="M50 18 L73 66 L27 66 Z" fill="#0053a5"/><rect x="22" y="69" width="56" height="4" fill="#d21034"/><path d="M24 75 L76 75 L80 84 L20 84 Z" fill="#0053a5"/></g></svg><span class="bt">Kummel</span></div>
   <div class="modes" role="group" aria-label="Läge">
     <button data-mode="tur" aria-pressed="true">Båttur</button>
     <button data-mode="fiske" aria-pressed="false">Fiske</button>
@@ -363,8 +363,8 @@ label.row{flex-wrap:nowrap;align-items:center}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script src="config.js?v=202611060748"></script>
-<script src="chartstyle.js?v=202611060748"></script>
-<script src="app.js?v=202611060748"></script>
+<script src="config.js?v=202611060804"></script>
+<script src="chartstyle.js?v=202611060804"></script>
+<script src="app.js?v=202611060804"></script>
 </body>
 </html>
