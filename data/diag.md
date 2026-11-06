@@ -1,4 +1,4 @@
-# Diagnostik Fri Nov  6 08:16:09 UTC 2026
+# Diagnostik Fri Nov  6 08:20:40 UTC 2026
 ## DNS
 ### kummel.app
 185.199.110.153
@@ -11,20 +11,20 @@
 2606:50c0:8002::153
 ### www.kummel.app
 tommykalmer.github.io.
-185.199.108.153
 185.199.109.153
 185.199.110.153
+185.199.108.153
 185.199.111.153
 tommykalmer.github.io.
-2606:50c0:8003::153
 2606:50c0:8000::153
-2606:50c0:8002::153
 2606:50c0:8001::153
+2606:50c0:8002::153
+2606:50c0:8003::153
 tommykalmer.github.io.
 ## Pages
 {
   "url": "https://api.github.com/repos/tommykalmer/kummel/pages",
-  "status": "building",
+  "status": "built",
   "cname": "www.kummel.app",
   "custom_404": false,
   "html_url": "http://www.kummel.app/",
