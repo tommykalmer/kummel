@@ -345,7 +345,7 @@ document.querySelectorAll(".modes button").forEach(b => b.onclick = () => { setM
 let sheetView = null;
 function openSheet(title, html, view) {
   if (sheetView === "welcome" && view !== "welcome" && !termsOk()) return;
-  if (draftCatch && (view || title) !== "catch:" + draftCatch.id) discardDraft();   // osparad fångst försvinner om man byter panel
+  if (draftCatch && (view || title) !== "catch:" + draftCatch.id && view !== "movecatch") discardDraft();   // osparad fångst försvinner om man byter panel
   $("#sh-title").textContent = title;
   $("#sh-body").innerHTML = html;
   if (sheetView !== (view || title)) $("#sh-body").scrollTop = 0;   // en ny panel börjar alltid högst upp
@@ -361,7 +361,8 @@ function closeSheet() {
   if (sheetView === "welcome" && !termsOk()) return;   // villkoren måste godkännas först
   $("#sheet").classList.remove("open", "full", "peek"); document.body.classList.remove("sheet-open");
   if (sheetView === "route") stopPlanning(false);
-  if (draftCatch && sheetView === "catch:" + draftCatch.id) discardDraft();
+  if (draftCatch && (sheetView === "catch:" + draftCatch.id || sheetView === "movecatch")) discardDraft();
+  if (sheetView === "movecatch") document.body.classList.remove("plan");
   sheetView = null; sheetPref = null; syncRail();
 }
 /* vilken knapp hör panelen till? Knappen lyser medan panelen är öppen, och ett nytt tryck stänger den */
@@ -769,7 +770,7 @@ function newPastCatch() {
       <label class="f">Art<select id="pc-sp"><option value="">Välj</option>${SPECIES.map(s => `<option>${s}</option>`).join("")}</select></label>
       <label class="f">Vikt (kg)<input id="pc-kg" inputmode="decimal"></label>
       <label class="f">Längd (cm)<input id="pc-len" inputmode="decimal"></label>
-      <label class="row f-chk"><input type="checkbox" id="pc-rel"> Fångad och släppt</label>
+      <label class="row f-chk"><input type="checkbox" id="pc-rel"> Catch &amp; release</label>
     </div>
     <label class="f">Bete / metod<input id="pc-lure" placeholder="t.ex. jigg 10 cm"></label>
     <label class="f">Anteckning<textarea id="pc-note" rows="2"></textarea></label>
@@ -794,14 +795,14 @@ function openCatch(id) {
   const draft = c === draftCatch;
   const d = new Date(c.t), w = c.wx;
   openSheet("Fångst", `
-    <div class="muted">${DAYS[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1} kl ${hm(d)} · ${fmtPosTxt(c)}${c.depth ? ` · djup ${c.depth}` : ""}</div>
+    <div class="pos-line"><div class="muted">${DAYS[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1} kl ${hm(d)} · ${fmtPosTxt(c)}${c.depth ? ` · djup ${c.depth}` : ""}</div><button class="btn sm" id="cf-move">Flytta</button></div>
     <div class="ph-box" id="cf-ph"><span class="muted">Inget foto</span></div>
     <label class="btn ph-btn">${c.photo ? "Byt foto" : "📷 Lägg till foto"}<input type="file" id="cf-file" accept="image/*" hidden></label>
     <div class="grid2">
       <label class="f">Art<select id="cf-sp"><option value="">Välj</option>${SPECIES.map(s => `<option ${s === c.species ? "selected" : ""}>${s}</option>`).join("")}</select></label>
       <label class="f">Vikt (kg)<input id="cf-kg" inputmode="decimal" value="${esc(c.kg)}"></label>
       <label class="f">Längd (cm)<input id="cf-len" inputmode="decimal" value="${esc(c.len || "")}"></label>
-      <label class="row f-chk"><input type="checkbox" id="cf-rel" ${c.released ? "checked" : ""}> Fångad och släppt</label>
+      <label class="row f-chk"><input type="checkbox" id="cf-rel" ${c.released ? "checked" : ""}> Catch &amp; release</label>
     </div>
     <label class="f">Bete / metod<input id="cf-lure" value="${esc(c.lure)}" placeholder="t.ex. jigg 10 cm, trolling 2,5 kn"></label>
     <label class="f">Anteckning<textarea id="cf-note" rows="2">${esc(c.note)}</textarea></label>
@@ -827,10 +828,31 @@ function openCatch(id) {
   };
   $("#cf-save").onclick = () => { read(); commitDraft(c); save(); refreshCatches(); closeSheet(); toast("Fångsten är sparad"); };
   $("#cf-share").onclick = () => { read(); const was = draft; commitDraft(c); openShare(c.id, was); };
+  $("#cf-move").onclick = () => { read(); moveCatch(c); };
   $("#cf-del").onclick = () => {
     if (draft) { closeSheet(); toast("Fångsten sparades inte", 1500); return; }
     S.catches = S.catches.filter(x => x.id !== c.id); photoDel(c.id); save(); refreshCatches(); closeSheet();
   };
+}
+
+/* flytta en fångst: kartan centreras på den, man drar kartan så att korset står rätt och sparar */
+function moveCatch(c) {
+  const from = { lat: c.lat, lng: c.lng };
+  map.easeTo({ center: lnglat(c), zoom: Math.max(map.getZoom(), 15), duration: 400 });
+  openSheet("Flytta fångsten", `
+    <div class="callout">Dra kartan så att <b>korset</b> står exakt där du fick fisken.</div>
+    <div class="muted" id="mv-pos">${fmtPosTxt(c)}</div>
+    <div class="row"><button class="btn pri" id="mv-ok">Spara platsen</button><button class="btn" id="mv-cancel">Avbryt</button></div>`, "movecatch");
+  setSheetState($("#sheet"), 1);
+  document.body.classList.add("plan");   // visar korset tydligt
+  const upd = () => { const el = $("#mv-pos"); if (el && sheetView === "movecatch") el.textContent = fmtPosTxt(ll(map.getCenter())) + " · " + Math.round(distNm(from, ll(map.getCenter())) * NM) + " m från förut"; };
+  map.on("move", upd);
+  const done = () => { map.off("move", upd); document.body.classList.remove("plan"); };
+  $("#mv-ok").onclick = () => {
+    const p = ll(map.getCenter()); c.lat = +p.lat.toFixed(6); c.lng = +p.lng.toFixed(6); c.depth = depthAt(p);
+    done(); save(); refreshCatches(); track("catch_moved"); toast("Fångsten är flyttad", 1500); openCatch(c.id);
+  };
+  $("#mv-cancel").onclick = () => { done(); openCatch(c.id); };
 }
 
 /* ---------- foton (IndexedDB, för stora för localStorage) ---------- */
@@ -891,7 +913,7 @@ async function catchCard(c, where) {
   y += 150;
   if (size) { g.fillStyle = "#f2c14e"; g.font = `800 64px ${F}`; g.fillText(size, L, y); }
   if (c.released) {
-    g.font = `700 34px ${F}`; const t = "Fångad och släppt", tw = g.measureText(t).width;
+    g.font = `700 34px ${F}`; const t = "Catch & release", tw = g.measureText(t).width;
     const bx = W - L - tw - 48, by = (size ? y : y - 30) - 52; rrect(g, bx, by, tw + 48, 64, 32); g.fillStyle = "#2f8f5b"; g.fill();
     g.fillStyle = "#fff"; g.fillText(t, bx + 24, by + 44);
   }
@@ -2164,11 +2186,11 @@ function openCatches() {
   const st = catchStats(), recs = Object.entries(st.rec).filter(([, r]) => r.kg || r.len).sort((x, y) => y[1].n - x[1].n);
   const seasonN = Object.values(st.season).reduce((s, v) => s + v, 0), released = S.catches.filter(c => c.released).length;
   openSheet("Fångstlogg", `
-    ${S.catches.length ? `<div class="card"><h3>Säsongen ${st.yr}</h3><div class="muted">${seasonN} fångster${released ? ` · ${released} släppta totalt` : ""}</div>
+    ${S.catches.length ? `<div class="card"><h3>Säsongen ${st.yr}</h3><div class="muted">${seasonN} fångster${released ? ` · ${released} catch &amp; release` : ""}</div>
       <div class="row">${Object.entries(st.season).map(([k, v]) => `<span class="pill">${esc(k)} ${v}</span>`).join("") || `<span class="muted">Inga fångster i år ännu.</span>`}</div></div>` : ""}
     ${recs.length ? `<div class="card"><h3>Dina rekord</h3>${recs.map(([sp, r]) => `<div class="rec-row"><b>${esc(sp)}</b><span>${r.kg ? `${fmt1(r.kg)} kg` : ""}${r.kg && r.len ? " · " : ""}${r.len ? `${fmt1(r.len)} cm` : ""}</span><button class="btn sm" data-c="${(r.kgC || r.lenC).id}">Visa</button></div>`).join("")}</div>` : ""}
     ${S.catches.length >= 3 ? `<label class="row"><input type="checkbox" id="ct-heat" ${S.heat ? "checked" : ""}> Visa var du fått mest fisk (värmekarta)</label>` : ""}
-    <div class="list">${S.catches.map(c => { const d = new Date(c.t); return `<div class="card"><h3>${c.photo ? "📷 " : ""}${esc(c.species || "Fångst")} ${c.kg ? `· ${esc(c.kg)} kg` : ""}${c.len ? ` · ${esc(c.len)} cm` : ""}${c.released ? ` <span class="pill">släppt</span>` : ""}</h3>
+    <div class="list">${S.catches.map(c => { const d = new Date(c.t); return `<div class="card"><h3>${c.photo ? "📷 " : ""}${esc(c.species || "Fångst")} ${c.kg ? `· ${esc(c.kg)} kg` : ""}${c.len ? ` · ${esc(c.len)} cm` : ""}${c.released ? ` <span class="pill">C&amp;R</span>` : ""}</h3>
       <div class="muted">${DAYS[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1} kl ${hm(d)}${c.depth ? ` · ${esc(c.depth)}` : ""}${c.wx ? ` · ${c.wx.wind.toFixed(0)} m/s ${compass(c.wx.dir)} · ${Math.round(c.wx.p)} hPa · ${c.wx.moon.icon}` : ""}${c.lure ? " · " + esc(c.lure) : ""}</div>
       <div class="row"><button class="btn" data-c="${c.id}">Visa</button><button class="btn" data-share="${c.id}">Dela</button></div></div>`; }).join("") || `<div class="muted">Inga fångster ännu. Välj läget Fiske och tryck på Fisk! när det nappar.</div>`}</div>
     <button class="btn pri" id="ct-past">Lägg till fångst i efterhand</button>
