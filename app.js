@@ -509,16 +509,50 @@ async function keepAwake() {
 }
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && watchId !== null) keepAwake(); });
 
+/* ---------- båtpilens riktning ----------
+   GPS:ens egen kurs hoppar när det går långsamt (driver, trollar, glider in mot brygga).
+   Därför: kursen räknas mellan nu och en position en bit bakåt (minst ~25 m), jämnas ut,
+   och står still när farten är under ca 1 knop. Valfritt: telefonens kompass vid låg fart. */
+const trail = [];   // senaste positionerna
+let smoothCog = null, compassHdg = null;
+const angDiff = (a, b) => ((b - a + 540) % 360) - 180;
+function smoothCourse(pos, t, sog, gpsHdg, acc) {
+  trail.push({ ...pos, t }); while (trail.length && t - trail[0].t > 90000) trail.shift();
+  const slow = sog < 1.0;
+  if (slow && S.compassSlow && compassHdg != null) return smoothCog = compassHdg;
+  if (slow) return smoothCog;   // står still: behåll senaste riktning
+  const base = Math.max(25, Math.min(80, (acc || 10) * 2.5));   // meter bakåt, längre när GPS:en är osäker
+  let ref = null;
+  for (let i = trail.length - 2; i >= 0; i--) if (distNm(trail[i], pos) * NM >= base) { ref = trail[i]; break; }
+  let c = ref ? bearing(ref, pos) : null;
+  const h = gpsHdg != null && !isNaN(gpsHdg) && gpsHdg >= 0 ? gpsHdg : null;
+  if (h != null && sog > 3) c = c == null ? h : (c + angDiff(c, h) * .5 + 360) % 360;   // i fart är GPS:ens kurs bra, väg ihop
+  if (c == null) return smoothCog;
+  if (smoothCog == null) return smoothCog = c;
+  const k = sog > 4 ? .6 : sog > 2 ? .4 : .25;   // mer utjämning när det går sakta
+  return smoothCog = (smoothCog + angDiff(smoothCog, c) * k + 360) % 360;
+}
+function onCompass(e) {
+  let h = e.webkitCompassHeading != null ? e.webkitCompassHeading : (e.absolute && e.alpha != null ? 360 - e.alpha : null);
+  if (h == null) return;
+  h = (h + (screen.orientation ? screen.orientation.angle : (window.orientation || 0)) + 360) % 360;
+  compassHdg = compassHdg == null ? h : (compassHdg + angDiff(compassHdg, h) * .2 + 360) % 360;
+  if (S.compassSlow && gps && gps.sog < 1.0) { gps.cog = smoothCog = compassHdg; boatMarker.setRotation(compassHdg); }
+}
+async function setCompass(on) {
+  if (on && window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function") {
+    try { if (await DeviceOrientationEvent.requestPermission() !== "granted") { toast("Kompassen fick inte användas. Tillåt rörelse och orientering för sidan.", 4000); return false; } } catch (e) { return false; }
+  }
+  window.removeEventListener("deviceorientationabsolute", onCompass); window.removeEventListener("deviceorientation", onCompass);
+  if (on) window.addEventListener("ondeviceorientationabsolute" in window ? "deviceorientationabsolute" : "deviceorientation", onCompass);
+  else compassHdg = null;
+  return true;
+}
 function onFix(p) {
   const pos = { lat: p.coords.latitude, lng: p.coords.longitude }, t = p.timestamp;
   let sog = p.coords.speed != null ? p.coords.speed * KN : null;
-  let cog = p.coords.heading != null && !isNaN(p.coords.heading) ? p.coords.heading : null;
-  if (lastFix) {
-    const dt = (t - lastFix.t) / 3600000, d = distNm(lastFix, pos);
-    if (sog == null && dt > 0) sog = d / dt;
-    if (cog == null && d > 0.005) cog = bearing(lastFix, pos);
-  }
-  if (cog == null && gps) cog = gps.cog;
+  if (lastFix && sog == null) { const dt = (t - lastFix.t) / 3600000; if (dt > 0) sog = distNm(lastFix, pos) / dt; }
+  const cog = smoothCourse(pos, t, sog ?? 0, p.coords.heading, p.coords.accuracy);
   const first = !gps;
   gps = { ...pos, sog: sog ?? 0, cog, acc: p.coords.accuracy, t };
   lastFix = { ...pos, t };
@@ -2024,6 +2058,9 @@ function openLayers() {
   const r = (k, v) => `<label class="row"><input type="radio" name="base" value="${k}" ${S.layers.base === k ? "checked" : ""}> ${v}</label>`;
   openSheet("Kartlager", `
     <div class="card"><h3>Karta</h3>${r("chart", "Sjökort")}${r("sat", "Flygfoto med farleder och sjömärken")}${r("osm", "Gatukarta")}</div>
+    <div class="card"><h3>Båtpilen</h3>
+      <label class="row"><input type="checkbox" id="ly-compass" ${S.compassSlow ? "checked" : ""}> Använd telefonens kompass när båten går långsamt</label>
+      <div class="muted">Annars pekar pilen åt det håll båten senast rörde sig. Kompassen fungerar bäst om telefonen ligger fast i båten med överkanten mot fören.</div></div>
     <div class="card"><h3>Fastighetsgränser</h3>
       <label class="row"><input type="checkbox" id="ly-prop" ${S.layers.props ? "checked" : ""} ${mmlKey() ? "" : "disabled"}> Visa fastighetsgränser</label>
       <div class="muted">Flygbild och fastighetsgränser kommer från Lantmäteriverket i Finland.</div>
@@ -2043,6 +2080,7 @@ function openLayers() {
   const on = (id, ev, f) => { const el = $(id); if (el) el[ev] = f; };
   on("#ly-snd", "onchange", e => { S.layers.soundings = e.target.checked; save(); applyLayers(); });
   $("#ly-ais").onchange = e => setAis(e.target.checked);
+  $("#ly-compass").onchange = async e => { const ok = await setCompass(e.target.checked); S.compassSlow = e.target.checked && ok ? 1 : 0; e.target.checked = !!S.compassSlow; save(); };
   on("#ly-det", "onchange", e => { S.layers.detail = e.target.checked; save(); applyLayers(); });
   $("#ly-prop").onchange = e => { S.layers.props = e.target.checked; save(); applyLayers(); if (e.target.checked && map.getZoom() < 12) toast("Fastighetsgränser visas när du zoomar in närmare", 2200); };
   on("#ly-dz", "onchange", e => { S.layers.detailZoom = +e.target.value; save(); applyLayers(); });
@@ -2621,6 +2659,7 @@ setMode(S.mode);
 if (S.layers.ais) setAis(true);
 if (S.anchor) { anchorBar(); startGps(); keepAwake(); toast("Ankarlarmet är på", 2000); }
 statsOn(); setTimeout(askStats, 4000);
+if (S.compassSlow) { if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function") document.addEventListener("click", () => setCompass(true), { once: true }); else setCompass(true); }
 if (!termsOk()) openWelcome();
 else if (!openSharedRoute() && navigator.geolocation && navigator.permissions && navigator.permissions.query)
   /* har man redan gett platsåtkomst öppnas kartan där båten ligger (ingen ny fråga). En delad rutt går före. */
