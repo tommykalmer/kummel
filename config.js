@@ -1,6 +1,5 @@
 /* Kummel – inställningar som gäller för alla användare.
    mmlKey: API-nyckel för Maanmittauslaitos öppna karttjänst (flygbild, fastighetsgränser).
-   En användare kan ersätta den med en egen nyckel under Kartlager.
    gaId: Google Analytics 4 (mät-ID, börjar med G-). Tomt = ingen statistik.
    Statistiken laddas bara för användare som har sagt ja till den. */
 window.KUMMEL_CONFIG = {

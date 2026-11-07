@@ -92,7 +92,7 @@ const CHART_URL = "pmtiles://" + new URL("data/chart-aland.pmtiles", location.hr
 
 const EMPTY = { type: "FeatureCollection", features: [] };
 /* Lantmäteriverket i Finland (Maanmittauslaitos): flygbild och fastighetsgränser, kräver egen gratis API-nyckel */
-const mmlKey = () => S.mmlKey || (window.KUMMEL_CONFIG && window.KUMMEL_CONFIG.mmlKey) || "";
+const mmlKey = () => (window.KUMMEL_CONFIG && window.KUMMEL_CONFIG.mmlKey) || "";   // appens egen nyckel för alla användare
 const MML = (layer, fmt) => `https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts/1.0.0/${layer}/default/WGS84_Pseudo-Mercator/{z}/{y}/{x}.${fmt}?api-key=${encodeURIComponent(mmlKey())}`;
 function mmlSources() {
   if (!mmlKey()) return {};
@@ -2024,11 +2024,9 @@ function openLayers() {
   const r = (k, v) => `<label class="row"><input type="radio" name="base" value="${k}" ${S.layers.base === k ? "checked" : ""}> ${v}</label>`;
   openSheet("Kartlager", `
     <div class="card"><h3>Karta</h3>${r("chart", "Sjökort")}${r("sat", "Flygfoto med farleder och sjömärken")}${r("osm", "Gatukarta")}</div>
-    <div class="card"><h3>Flygbild och fastighetsgränser</h3>
-      <label class="row"><input type="checkbox" id="ly-prop" ${S.layers.props ? "checked" : ""} ${mmlKey() ? "" : "disabled"}> Fastighetsgränser</label>
-      <label class="f">${window.KUMMEL_CONFIG?.mmlKey ? "Egen API-nyckel (valfritt, appen har en inbyggd)" : "API-nyckel från Maanmittauslaitos"}<input id="ly-mml" value="${esc(S.mmlKey || "")}" placeholder="Klistra in nyckeln här" autocomplete="off" spellcheck="false"></label>
-      <div class="muted">${mmlKey() ? "Flygfotot använder Lantmäteriverkets bilder i Finland och på Åland." : "Med en gratis nyckel från Lantmäteriverket i Finland blir flygfotot skarpare och fastighetsgränser kan visas. Skapa den på omatili.maanmittauslaitos.fi. Nyckeln sparas bara på den här enheten."}</div>
-      <button class="btn" id="ly-mml-save">Spara nyckel</button>
+    <div class="card"><h3>Fastighetsgränser</h3>
+      <label class="row"><input type="checkbox" id="ly-prop" ${S.layers.props ? "checked" : ""} ${mmlKey() ? "" : "disabled"}> Visa fastighetsgränser</label>
+      <div class="muted">Flygbild och fastighetsgränser kommer från Lantmäteriverket i Finland.</div>
     </div>
     ${applies("detail") ? `<div class="card"><h3>Detaljkort</h3>
       <label class="row"><input type="checkbox" id="ly-det" ${S.layers.detail ? "checked" : ""}> Visa detaljkortet när jag zoomar in</label>
@@ -2046,12 +2044,7 @@ function openLayers() {
   on("#ly-snd", "onchange", e => { S.layers.soundings = e.target.checked; save(); applyLayers(); });
   $("#ly-ais").onchange = e => setAis(e.target.checked);
   on("#ly-det", "onchange", e => { S.layers.detail = e.target.checked; save(); applyLayers(); });
-  $("#ly-prop").onchange = e => { S.layers.props = e.target.checked; save(); applyLayers(); if (e.target.checked && map.getZoom() < 15) toast("Fastighetsgränser visas när du zoomar in närmare", 2200); };
-  $("#ly-mml-save").onclick = () => {
-    S.mmlKey = $("#ly-mml").value.trim(); save();
-    map.setStyle(baseStyle(), { diff: false });
-    toast(S.mmlKey ? "Nyckeln är sparad" : "Nyckeln är borttagen", 1600); setTimeout(openLayers, 300);
-  };
+  $("#ly-prop").onchange = e => { S.layers.props = e.target.checked; save(); applyLayers(); if (e.target.checked && map.getZoom() < 12) toast("Fastighetsgränser visas när du zoomar in närmare", 2200); };
   on("#ly-dz", "onchange", e => { S.layers.detailZoom = +e.target.value; save(); applyLayers(); });
   document.querySelectorAll("[data-grp]").forEach(x => x.onchange = () => { S.layers.groups = { ...(S.layers.groups || {}), [x.dataset.grp]: x.checked }; save(); applyLayers(); });
   document.querySelectorAll("input[name=base]").forEach(x => x.onchange = () => { S.layers.base = x.value; save(); applyLayers(); track("base_map", { base: x.value }); const y = $("#sh-body").scrollTop; openLayers(); $("#sh-body").scrollTop = y; });
