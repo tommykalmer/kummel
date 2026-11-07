@@ -856,9 +856,19 @@ async function shrinkPhoto(file, max = 1600) {
 const FISH_PATH = "M2 12c3-4 7-6 11-6 4 0 7 3 8 6-1 3-4 6-8 6-4 0-8-2-11-6zm15-1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM2 12 0 8v8z";
 function rrect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
 async function catchCard(c, where) {
-  const W = 1080, H = 1350, PH = 800, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const W = 1080, H = 1350, cv = document.createElement("canvas"); cv.width = W; cv.height = H;
   const g = cv.getContext("2d"), F = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
   g.fillStyle = "#0f2a3d"; g.fillRect(0, 0, W, H);
+  // räkna ut textens höjd först, så att fotot lämnar plats och inget krockar med foten
+  const L = 72, d = new Date(c.t), w = c.wx;
+  const size = [c.kg && `${String(c.kg).replace(".", ",")} kg`, c.len && `${String(c.len).replace(".", ",")} cm`].filter(Boolean).join("  ·  ");
+  const facts = [`${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()} kl ${hm(d)}`];
+  if (w) { facts.push(`Vind ${w.wind.toFixed(0)} m/s ${compass(w.dir)}`); if (w.sst != null) facts.push(`Vatten ${w.sst.toFixed(1).replace(".", ",")}°`); if (w.pTrend != null) facts.push(w.pTrend < -0.5 ? "Fallande tryck" : w.pTrend > 0.5 ? "Stigande tryck" : "Stabilt tryck"); facts.push(`${w.moon.icon} ${w.moon.name}`); }
+  if (c.lure) facts.push(c.lure);
+  g.font = `500 36px ${F}`;
+  let lines = 1, lx = L; facts.forEach((t, i) => { const tw = g.measureText((i ? "  ·  " : "") + t).width; if (lx + tw > W - L && lx > L) { lines++; lx = L + g.measureText(t).width; } else lx += tw; });
+  const textH = 20 + 150 + (size ? 76 : 30) + (lines - 1) * 52 + (where ? 60 : 0) + 34;   // rubrik, mått, fakta, plats
+  const PH = Math.max(520, Math.min(800, H - 150 - textH));
   const blob = c.photo ? await photoGet(c.id) : null;
   if (blob) {
     const im = new Image(), u = URL.createObjectURL(blob);
@@ -875,10 +885,9 @@ async function catchCard(c, where) {
   }
   const sh = g.createLinearGradient(0, PH - 260, 0, PH); sh.addColorStop(0, "rgba(15,42,61,0)"); sh.addColorStop(1, "rgba(15,42,61,1)");
   g.fillStyle = sh; g.fillRect(0, PH - 260, W, 260);
-  const L = 72; let y = PH + 20;
+  let y = PH + 20;
   g.fillStyle = "#fff"; g.font = `800 96px ${F}`; g.textBaseline = "alphabetic";
   g.fillText(c.species || "Fångst", L, y + 70);
-  const size = [c.kg && `${String(c.kg).replace(".", ",")} kg`, c.len && `${String(c.len).replace(".", ",")} cm`].filter(Boolean).join("  ·  ");
   y += 150;
   if (size) { g.fillStyle = "#f2c14e"; g.font = `800 64px ${F}`; g.fillText(size, L, y); }
   if (c.released) {
@@ -886,10 +895,6 @@ async function catchCard(c, where) {
     const bx = W - L - tw - 48, by = (size ? y : y - 30) - 52; rrect(g, bx, by, tw + 48, 64, 32); g.fillStyle = "#2f8f5b"; g.fill();
     g.fillStyle = "#fff"; g.fillText(t, bx + 24, by + 44);
   }
-  const d = new Date(c.t), w = c.wx;
-  const facts = [`${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()} kl ${hm(d)}`];
-  if (w) { facts.push(`Vind ${w.wind.toFixed(0)} m/s ${compass(w.dir)}`); if (w.sst != null) facts.push(`Vatten ${w.sst.toFixed(1).replace(".", ",")}°`); if (w.pTrend != null) facts.push(w.pTrend < -0.5 ? "Fallande tryck" : w.pTrend > 0.5 ? "Stigande tryck" : "Stabilt tryck"); facts.push(`${w.moon.icon} ${w.moon.name}`); }
-  if (c.lure) facts.push(c.lure);
   g.font = `500 36px ${F}`; g.fillStyle = "#c8d6de";
   let fx = L, fy = y + (size ? 76 : 30);
   facts.forEach((t, i) => { const s = (i ? "  ·  " : "") + t, tw = g.measureText(s).width; if (fx + tw > W - L && fx > L) { fx = L; fy += 52; g.fillText(t, fx, fy); fx += g.measureText(t).width; } else { g.fillText(s, fx, fy); fx += tw; } });
