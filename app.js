@@ -973,10 +973,12 @@ async function openShare(id, justSaved) {
 }
 function saveImg(b, name) { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); }
 
+const MOON_FIX = { "Tilltagande": "Tilltagande måne", "Avtagande": "Avtagande måne", "Första kvarteret": "Halvmåne, tilltagande", "Sista kvarteret": "Halvmåne, avtagande" };
+S.catches.forEach(c => { if (c.wx && c.wx.moon && MOON_FIX[c.wx.moon.name]) c.wx.moon.name = MOON_FIX[c.wx.moon.name]; });   // äldre fångster
 function moonPhase(d) {
   const syn = 29.530588853, ref = Date.UTC(2000, 0, 6, 18, 14);
   const age = (((d - ref) / 86400000) % syn + syn) % syn, f = age / syn;
-  const names = [["🌑", "Nymåne"], ["🌒", "Tilltagande"], ["🌓", "Första kvarteret"], ["🌔", "Tilltagande"], ["🌕", "Fullmåne"], ["🌖", "Avtagande"], ["🌗", "Sista kvarteret"], ["🌘", "Avtagande"]];
+  const names = [["🌑", "Nymåne"], ["🌒", "Tilltagande måne"], ["🌓", "Halvmåne, tilltagande"], ["🌔", "Tilltagande måne"], ["🌕", "Fullmåne"], ["🌖", "Avtagande måne"], ["🌗", "Halvmåne, avtagande"], ["🌘", "Avtagande måne"]];
   const [icon, name] = names[Math.round(f * 8) % 8];
   return { icon, name, age: +age.toFixed(1) };
 }
