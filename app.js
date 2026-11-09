@@ -46,8 +46,6 @@ const boat = () => S.boats.find(b => b.id === S.boatId) || S.boats[0];
 /* funktioner som användaren kan slå av och på (Meny → Funktioner) */
 const FEATS = [
   ["wlevel", "Vattenstånd", "Visar aktuellt vattenstånd och räknar med det i grundvarningar och djuprutan."],
-  ["windflow", "Strömmande vind", "Vinden som rörliga linjer över kartan när sjövädret är på."],
-  ["sstfill", "Vattentemperatur i färg", "Färgar vattnet efter temperatur när du visar vattentemperatur i sjövädret."],
   ["routewx", "Väder längs rutten", "Vind och våg där du är vid varje tidpunkt längs en planerad rutt."],
   ["hotspots", "Lovande fiskeplatser", "Föreslår platser efter fiskart, vind, djup och temperatur (läget Fiske)."],
   ["drift", "Driftplanering", "Visar hur båten driver med vinden från en vald plats (läget Fiske)."]
@@ -2206,6 +2204,11 @@ function openLayers() {
       <label class="f">Visa detaljkortet från<select id="ly-dz">${[[11, "Översikt (ca 2 nm över skärmen)"], [12, "Mellan (ca 1 nm)"], [13, "Nära (ca 0,5 nm), rekommenderas"], [14, "Mycket nära (ca 0,25 nm)"]].map(([z, t]) => `<option value="${z}" ${dz() === z ? "selected" : ""}>${t}</option>`).join("")}</select></label>
       <div class="muted">Traficoms inskannade sjökort ovanpå vektorkortet. Längre ut blir det svårläst eftersom kortet förminskas.</div>
     </div>` : ""}
+    <div class="card"><h3>Sjöväder</h3>
+      <label class="row"><input type="checkbox" data-wxl="windflow" ${feat("windflow") ? "checked" : ""}> Strömmande vind</label>
+      <label class="row"><input type="checkbox" data-wxl="sstfill" ${feat("sstfill") ? "checked" : ""}> Vattentemperatur i färg</label>
+      <div class="muted">Syns när du visar sjöväder med vindknappen. Strömmande vind visas med vindpilarna, färgerna med vattentemperaturen.</div>
+    </div>
     <div class="card"><h3>Visa på kartan</h3>
       ${[["fairways", "Farleder, ledlinjer och farledsdjup"], ["marks", "Sjömärken och fyrar"], ["rocks", "Stenar och grund"], ["sectors", "Ljussektorer"], ["contours", "Djupkurvor"], ["satdepth", "Djupfärg på flygfotot"], ["limits", "Fartbegränsningar och förbudsområden"], ["land", "Ortnamn, vägar och hus"], ["steep", "Branter (syns i läget Fiske)"]].filter(([g]) => applies(g)).map(([g, t]) => `<label class="row"><input type="checkbox" data-grp="${g}" ${(S.layers.groups || {})[g] !== false ? "checked" : ""}> ${t}</label>`).join("")}
       ${applies("soundings") ? `<label class="row"><input type="checkbox" id="ly-snd" ${S.layers.soundings ? "checked" : ""}> Djupsiffror${S.layers.base === "sat" ? " (bara grundare än din båt)" : ""}</label>` : ""}
@@ -2220,6 +2223,7 @@ function openLayers() {
   on("#ly-det", "onchange", e => { S.layers.detail = e.target.checked; save(); applyLayers(); });
   $("#ly-prop").onchange = e => { S.layers.props = e.target.checked; save(); applyLayers(); if (e.target.checked && map.getZoom() < 12) toast("Fastighetsgränser visas när du zoomar in närmare", 2200); };
   on("#ly-dz", "onchange", e => { S.layers.detailZoom = +e.target.value; save(); applyLayers(); });
+  document.querySelectorAll("[data-wxl]").forEach(x => x.onchange = () => { const k = x.dataset.wxl; S.feat = { ...(S.feat || {}), [k]: x.checked }; save(); track("layer_toggle", { l: k, on: x.checked ? 1 : 0 }); if (k === "windflow") { if (wxOn) flowStart(); else flowStop(); } else sstPaint(); });
   document.querySelectorAll("[data-grp]").forEach(x => x.onchange = () => { S.layers.groups = { ...(S.layers.groups || {}), [x.dataset.grp]: x.checked }; save(); applyLayers(); });
   document.querySelectorAll("input[name=base]").forEach(x => x.onchange = () => { S.layers.base = x.value; save(); applyLayers(); track("base_map", { base: x.value }); const y = $("#sh-body").scrollTop; openLayers(); $("#sh-body").scrollTop = y; });
 }
