@@ -125,6 +125,7 @@ body.plan #cross{opacity:1}
 .wxb-top{display:flex;align-items:center;gap:8px}.wxb-top b{font:700 17px var(--f-num)}.wxb-top .x{margin-left:auto;width:30px;height:30px}
 #wxb-range{width:100%;accent-color:var(--accent)}
 .wxb-modes{display:flex;gap:3px;background:var(--paper);border-radius:9px;padding:2px}.wxb-modes button{border:0;background:transparent;border-radius:7px;padding:4px 10px;font-weight:600;color:var(--muted);cursor:pointer}.wxb-modes button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.wx-where{align-self:flex-start;margin-bottom:4px}.wx-where button{padding:7px 12px;font-size:14px}
 .sst-scale{display:inline-block;width:70px;height:10px;border-radius:5px;background:linear-gradient(90deg,#3b4cc0,#5b8ff9,#3fb6c7,#4cc38a,#e8c547,#f08a3c,#d63e3e)}
 .wxb-legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--muted)}.wxb-legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px}
 #navbar{position:fixed;z-index:515;top:calc(64px + var(--sat));left:calc(10px + var(--sal));right:calc(70px + var(--sar));max-width:520px;background:var(--ink);color:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:8px 12px;display:flex;flex-direction:column;gap:2px}
@@ -261,7 +262,7 @@ body:has(#wlbar:not(.hidden)) #anchorbar{top:calc(124px + var(--sat))}
 .wl-big{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.wl-big b{font:800 34px var(--f-num)}.wl-big span{color:var(--muted)}
 .wl-chart{width:100%;height:auto;color:var(--fg);flex:none}
 .feat-row{display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-bottom:1px dashed var(--line)}.feat-row input{margin-top:4px;flex:none;width:20px;height:20px}
-#flowcv,#sstcv{position:absolute;inset:0;pointer-events:none;display:none}#sstcv{z-index:1}#flowcv{z-index:2}
+#flowcv{position:absolute;inset:0;pointer-events:none;display:none;z-index:2}
 .rwx-strip{display:flex;gap:6px;overflow-x:auto;padding:4px 0 6px;scrollbar-width:thin}
 .rwx-col{flex:none;min-width:58px;display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--paper);border-radius:10px;padding:6px 4px;font-variant-numeric:tabular-nums}
 .rwx-col svg{width:22px;height:22px}.rwx-col b{font:700 15px var(--f-num)}.rwx-col small{font-weight:500;font-size:11px;color:var(--muted)}.rwx-col .muted{font-size:11px}
@@ -365,7 +366,7 @@ label.row{flex-wrap:nowrap;align-items:center}
   <div id="nav-rest" class="muted"></div><div id="nav-adv"></div><div id="nav-xte"></div>
   <div id="nav-reroute" class="hidden"><span id="nav-reroute-txt"></span> <button class="btn" id="nav-rr-yes">Räkna om</button><button class="btn" id="nav-rr-no">Nej</button></div>
 </div>
-<div id="wxbar" class="hidden"><div class="wxb-top"><b id="wxb-time">Nu</b><span class="wxb-modes"><button data-wxm="wind" aria-pressed="true">Vind</button><button data-wxm="water" aria-pressed="false">Vatten°</button></span><button class="x" id="wxb-close" aria-label="Stäng väderlagret">×</button></div><input type="range" id="wxb-range" min="0" max="47" step="1" value="0" aria-label="Tid för prognosen"><div id="wxb-sub" class="muted" style="font-size:12px"></div><div class="wxb-legend" id="wxb-legend-wind"><span><i style="background:var(--stbd)"></i>under din gräns</span><span><i style="background:var(--signal)"></i>nära</span><span><i style="background:var(--port)"></i>över</span><span><b>Stor pil</b> = uppmätt nu</span></div><div class="wxb-legend hidden" id="wxb-legend-water"><span class="sst-scale"></span><span>0°</span><span>8°</span><span>16°</span><span>24°</span><span><b>Mörk ring</b> = uppmätt</span></div></div>
+<div id="wxbar" class="hidden"><div class="wxb-top"><b id="wxb-time">Nu</b><span class="wxb-modes"><button data-wxm="wind" aria-pressed="true">Vind</button><button data-wxm="flow" aria-pressed="false">Strömmande</button><button data-wxm="water" aria-pressed="false">Vatten°</button></span><button class="x" id="wxb-close" aria-label="Stäng väderlagret">×</button></div><input type="range" id="wxb-range" min="0" max="47" step="1" value="0" aria-label="Tid för prognosen"><div id="wxb-sub" class="muted" style="font-size:12px"></div><div class="wxb-legend" id="wxb-legend-wind"><span><i style="background:var(--stbd)"></i>under din gräns</span><span><i style="background:var(--signal)"></i>nära</span><span><i style="background:var(--port)"></i>över</span><span><b>Stor pil</b> = uppmätt nu</span></div><div class="wxb-legend hidden" id="wxb-legend-water"><span><b id="sst-lo">–</b></span><span class="sst-scale"></span><span><b id="sst-hi">–</b></span><span>kallast–varmast i bild</span><span><b>Mörk ring</b> = uppmätt</span></div></div>
 <div id="satlegend" hidden></div>
 <div id="fab">
   <button class="fab mob hidden" id="b-mob" title="Man överbord">MOB</button>
@@ -382,8 +383,8 @@ label.row{flex-wrap:nowrap;align-items:center}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script src="config.js?v=202611091140"></script>
-<script src="chartstyle.js?v=202611091140"></script>
-<script src="app.js?v=202611091140"></script>
+<script src="config.js?v=202611091310"></script>
+<script src="chartstyle.js?v=202611091310"></script>
+<script src="app.js?v=202611091310"></script>
 </body>
 </html>

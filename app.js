@@ -194,7 +194,7 @@ function addOverlays() {
   const wxColor = ["case", [">", ["get", "g"], ["get", "lim"]], "#d64545", [">", ["get", "g"], ["*", .75, ["get", "lim"]]], "#e2a90c", "#2f8f5b"];
   add({ id: "wx-grid", type: "symbol", source: "wxgrid", layout: { "icon-image": "wind", "icon-size": ["interpolate", ["linear"], ["get", "w"], 0, .8, 15, 1.5], "icon-rotate": ["get", "rot"], "icon-rotation-alignment": "map", "icon-allow-overlap": true, "text-field": ["get", "lbl"], "text-font": ["Noto Sans Medium"], "text-size": 11, "text-offset": [0, 1.7], "text-allow-overlap": true }, paint: { "icon-color": wxColor, "icon-halo-color": "rgba(255,255,255,.85)", "icon-halo-width": 1.2, "text-color": "#14232e", "text-halo-color": "rgba(255,255,255,.9)", "text-halo-width": 1.6 } });
   add({ id: "wx-obs", type: "symbol", source: "wxobs", layout: { "icon-image": "wind", "icon-size": 1.6, "icon-rotate": ["get", "rot"], "icon-rotation-alignment": "map", "icon-allow-overlap": true, "text-field": ["get", "lbl"], "text-font": ["Noto Sans Medium"], "text-size": 13, "text-offset": [0, 1.9], "text-allow-overlap": true }, paint: { "icon-color": wxColor, "icon-halo-color": "#0f2a3d", "icon-halo-width": 2, "text-color": "#0f2a3d", "text-halo-color": "#fff", "text-halo-width": 2 } });
-  const sstColor = ["interpolate", ["linear"], ["get", "v"], 0, "#3b4cc0", 4, "#5b8ff9", 8, "#3fb6c7", 12, "#4cc38a", 16, "#e8c547", 20, "#f08a3c", 24, "#d63e3e"];
+  const sstColor = ["interpolate", ["linear"], ["get", "c"], 0, "#3b4cc0", .2, "#5b8ff9", .4, "#3fb6c7", .55, "#4cc38a", .7, "#e8c547", .85, "#f08a3c", 1, "#d63e3e"];   // c = relativ placering mellan kallast och varmast i bild
   add({ id: "wx-sst", type: "circle", source: "wxsst", paint: { "circle-radius": ["case", ["==", ["get", "obs"], 1], 17, 14], "circle-color": sstColor, "circle-opacity": .9, "circle-stroke-color": ["case", ["==", ["get", "obs"], 1], "#0f2a3d", "#ffffff"], "circle-stroke-width": ["case", ["==", ["get", "obs"], 1], 2.5, 1.5] } });
   add({ id: "wx-sst-lbl", type: "symbol", source: "wxsst", layout: { "text-field": ["get", "lbl"], "text-font": ["case", ["==", ["get", "obs"], 1], ["literal", ["Noto Sans Medium"]], ["literal", ["Noto Sans Regular"]]], "text-size": ["case", ["==", ["get", "obs"], 1], 12, 10.5], "text-allow-overlap": true }, paint: { "text-color": "#ffffff", "text-halo-color": "rgba(0,0,0,.45)", "text-halo-width": 1 } });
   add({ id: "acc-fill", type: "fill", source: "acc", paint: { "fill-color": "#1d6fa3", "fill-opacity": .08 } });
@@ -596,6 +596,7 @@ function onFix(p) {
   if (gps.sog > 0.5) depthAlarm(pos);
   anchorCheck(pos);
   if (feat("drift")) learnDrift(pos, gps.sog, gps.cog);
+  if (S.wxSrc !== "map" && (first || wxPos().key !== wxKey)) loadWx();
 }
 $("#b-locate").onclick = () => {
   if (watchId !== null && gpsStale()) restartGps(); else startGps();
@@ -1841,9 +1842,11 @@ async function fetchWx(lat, lng) {
 }
 const hourIndex = w => { const now = Date.now(); const i = w.hourly.time.findIndex(t => new Date(t).getTime() > now); return Math.max(0, i - 1); };
 function scheduleWx() { clearTimeout(wxT); wxT = setTimeout(loadWx, 700); }
+/* var vädret gäller: "me" = där jag är (GPS, annars kartans mitt), "map" = vid korset mitt på kartan */
+const wxAtMap = () => S.wxSrc === "map" || !gps;
+function wxPos() { const c = wxAtMap() ? ll(map.getCenter()) : gps; return { c, key: S.wxSrc === "map" ? `${c.lat.toFixed(2)},${c.lng.toFixed(2)}` : `${c.lat.toFixed(1)},${c.lng.toFixed(1)}` }; }
 async function loadWx(force) {
-  const c = gps && follow ? gps : ll(map.getCenter());
-  const key = `${c.lat.toFixed(1)},${c.lng.toFixed(1)}`;
+  const { c, key } = wxPos();
   if (!force && key === wxKey && wx && Date.now() - wx.at < 15 * 60000) return;
   try {
     wx = await fetchWx(c.lat, c.lng); wxKey = key;
@@ -1858,7 +1861,7 @@ function renderChip() {
   const c = wx.current;
   $("#wxtxt").textContent = `${c.wind_speed_10m.toFixed(0)} (${c.wind_gusts_10m.toFixed(0)}) m/s`;
   const s = sstInfo();
-  $("#wxsub").textContent = S.mode === "fiske" && s ? `${compass(c.wind_direction_10m)} · vatten ${s.v.toFixed(1)}°` : `${compass(c.wind_direction_10m)} · ${c.temperature_2m.toFixed(0)}°`;
+  $("#wxsub").textContent = (S.wxSrc === "map" ? "vid korset · " : "") + (S.mode === "fiske" && s ? `${compass(c.wind_direction_10m)} · vatten ${s.v.toFixed(1)}°` : `${compass(c.wind_direction_10m)} · ${c.temperature_2m.toFixed(0)}°`);
   $("#wxchip .arrow").style.transform = `rotate(${(c.wind_direction_10m + 180) % 360}deg)`;
   $("#wxchip").style.color = c.wind_gusts_10m > (boat().maxWind || 10) ? "var(--port)" : "";
 }
@@ -1950,7 +1953,10 @@ function openWx() {
   const sr = sunInfo.sunrise.find(d => d.toDateString() === today), ss = sunInfo.sunset.find(d => d.toDateString() === today);
   const i0 = hourIndex(wx), pTrend = i0 >= 3 ? wx.hourly.pressure_msl[i0] - wx.hourly.pressure_msl[i0 - 3] : 0;
   const moon = moonPhase(new Date()), age = Math.round((Date.now() - wx.at) / 60000), sst = sstInfo();
+  const where = S.wxSrc === "map" ? "map" : "me";
   openSheet("Väder", `
+    <div class="wxb-modes wx-where" role="group" aria-label="Var vädret gäller"><button data-wsrc="me" aria-pressed="${where === "me"}">Där jag är</button><button data-wsrc="map" aria-pressed="${where === "map"}">Vid korset på kartan</button></div>
+    ${where === "map" ? `<div class="muted">Flytta kartan så att korset står där du vill se vädret. Vindrutan uppe till höger visar samma plats.</div>` : !gps ? `<div class="muted">Din position är inte känd än, så vädret gäller kartans mitt tills GPS:en hittar dig.</div>` : ""}
     <div class="wx-now">
       <svg viewBox="0 0 24 24" width="56" height="56" style="transform:rotate(${(c.wind_direction_10m + 180) % 360}deg)"><path d="M12 2 19 21 12 16.5 5 21Z" fill="var(--accent)"/></svg>
       <div><div class="big">${c.wind_speed_10m.toFixed(1)} <small style="font-size:16px">m/s</small></div>
@@ -1970,13 +1976,20 @@ function openWx() {
     <div class="muted">Prognos för ${fmtPosTxt({ lat: wx.lat, lng: wx.lng })} · uppdaterad för ${age} min sedan. Källa: Open-Meteo.</div>
     <button class="btn" id="wx-ref">Uppdatera</button>`, "wx");
   $("#wx-ref").onclick = () => loadWx(true);
+  document.querySelectorAll("[data-wsrc]").forEach(b => b.onclick = () => {
+    if ((S.wxSrc === "map" ? "map" : "me") === b.dataset.wsrc) return;
+    S.wxSrc = b.dataset.wsrc; save(); track("weather_where", { w: S.wxSrc });
+    if (S.wxSrc === "map") setSheetState($("#sheet"), 1, true);
+    loadWx(true).then(() => { if (sheetView === "wx") openWx(); });
+    if (wx) renderChip();
+  });
 }
 $("#wxchip").onclick = () => sheetView === "wx" ? closeSheet() : openWx();
 scheduleWx();
 setInterval(() => loadWx(true), 15 * 60000);
 
 /* ---------- sjöväder på kartan ---------- */
-let wxOn = false, wxGrid = null, wxObs = [], wxWater = [], wxStep = 0, wxGridT = null, wxGridKey = "", wxMode = S.wxMode || "wind";
+let wxOn = false, wxGrid = null, wxObs = [], wxWater = [], wxStep = 0, wxGridT = null, wxGridKey = "", wxMode = ["wind", "flow", "water"].includes(S.wxMode) ? S.wxMode : "wind";
 function wxPoints() {
   const b = map.getBounds(), c = map.getContainer();
   const cols = c.clientWidth > 700 ? 7 : 4, rows = Math.round(cols * c.clientHeight / c.clientWidth);
@@ -2014,16 +2027,24 @@ function renderWxLayer() {
     return { type: "Feature", properties: { w, g, lim, rot: (d + 180) % 360, lbl: `${Math.round(w)} (${Math.round(g)})${wave != null ? "\n" + wave.toFixed(1) + " m" : ""}` }, geometry: { type: "Point", coordinates: [p.lng, p.lat] } };
   }).filter(Boolean) });
   setData("wxobs", !water && wxStep === 0 ? { type: "FeatureCollection", features: wxObs.map(o => ({ type: "Feature", properties: { w: o.w, g: o.g ?? o.w, lim, rot: (o.d + 180) % 360, lbl: `${Math.round(o.w)}${o.g != null ? ` (${Math.round(o.g)})` : ""}` }, geometry: { type: "Point", coordinates: [o.lng, o.lat] } })) } : EMPTY);
-  setData("wxsst", water ? { type: "FeatureCollection", features: [
-    ...wxGrid.pts.map((p, k) => { const v = wxGrid.M[k]?.hourly?.sea_surface_temperature?.[i]; return v == null ? null : { type: "Feature", properties: { v, obs: 0, lbl: v.toFixed(1) + "°" }, geometry: { type: "Point", coordinates: [p.lng, p.lat] } }; }).filter(Boolean),
-    ...(wxStep === 0 ? wxWater.map(o => ({ type: "Feature", properties: { v: o.v, obs: 1, lbl: o.v.toFixed(1) + "°" }, geometry: { type: "Point", coordinates: [o.lng, o.lat] } })) : [])
-  ] } : EMPTY);
+  if (water) {
+    const fs = [
+      ...wxGrid.pts.map((p, k) => { const v = wxGrid.M[k]?.hourly?.sea_surface_temperature?.[i]; return v == null ? null : { type: "Feature", properties: { v, obs: 0, lbl: v.toFixed(1) + "°" }, geometry: { type: "Point", coordinates: [p.lng, p.lat] } }; }).filter(Boolean),
+      ...(wxStep === 0 ? wxWater.map(o => ({ type: "Feature", properties: { v: o.v, obs: 1, lbl: o.v.toFixed(1) + "°" }, geometry: { type: "Point", coordinates: [o.lng, o.lat] } })) : [])
+    ];
+    // färgskalan sträcks ut mellan kallaste och varmaste värdet i bild (minst 2°), så att skillnader syns även när allt är kallt
+    const bb = map.getBounds(), vis = fs.filter(f => bb.contains(f.geometry.coordinates)).map(f => f.properties.v), vs = vis.length ? vis : fs.map(f => f.properties.v);
+    let lo = Math.min(...vs), hi = Math.max(...vs); if (hi - lo < 2) { const m = (hi + lo) / 2; lo = m - 1; hi = m + 1; }
+    fs.forEach(f => f.properties.c = Math.max(0, Math.min(1, (f.properties.v - lo) / (hi - lo))));
+    setData("wxsst", { type: "FeatureCollection", features: fs });
+    if (fs.length) { $("#sst-lo").textContent = lo.toFixed(1) + "°"; $("#sst-hi").textContent = hi.toFixed(1) + "°"; }
+  } else setData("wxsst", EMPTY);
   const t = new Date(H.time[i]);
   $("#wxb-time").textContent = wxStep === 0 ? "Nu" : `${t.toDateString() === new Date().toDateString() ? "Idag" : DAYS[t.getDay()]} ${pad(t.getHours())}:00`;
   $("#wxb-sub").textContent = water ? `Vattentemperatur vid ytan${wxStep === 0 ? "" : " · prognos"}` : `Vind m/s (byar) och våghöjd · ${wxObs.length && wxStep === 0 ? "kuststationer uppmätta" : "prognos"}`;
   document.querySelectorAll("[data-wxm]").forEach(b => b.setAttribute("aria-pressed", b.dataset.wxm === wxMode));
   $("#wxb-legend-wind").classList.toggle("hidden", water); $("#wxb-legend-water").classList.toggle("hidden", !water);
-  flowStart(); sstPaint();
+  flowStart();
 }
 /* uppmätt vind från Meteorologiska institutets kuststationer (öppen data) */
 async function loadWxObs() {
@@ -2054,11 +2075,11 @@ function setWx(on) {
   $("#b-wx").setAttribute("aria-pressed", on);
   $("#wxbar").classList.toggle("hidden", !on);
   if (on) { wxStep = 0; $("#wxb-range").value = 0; loadWxGrid(); loadWxObs(); }
-  else { setData("wxgrid", EMPTY); setData("wxobs", EMPTY); setData("wxsst", EMPTY); flowStop(); sstPaint(); }
+  else { setData("wxgrid", EMPTY); setData("wxobs", EMPTY); setData("wxsst", EMPTY); flowStop(); }
 }
 $("#b-wx").onclick = () => setWx(!wxOn);
 $("#wxb-close").onclick = () => setWx(false);
-document.querySelectorAll("[data-wxm]").forEach(b => b.onclick = () => { wxMode = S.wxMode = b.dataset.wxm; save(); renderWxLayer(); });
+document.querySelectorAll("[data-wxm]").forEach(b => b.onclick = () => { wxMode = S.wxMode = b.dataset.wxm; save(); track("weather_mode", { m: wxMode }); renderWxLayer(); });
 $("#wxb-range").oninput = e => { wxStep = +e.target.value; renderWxLayer(); };
 map.on("moveend", () => { if (!wxOn) return; clearTimeout(wxGridT); wxGridT = setTimeout(() => { loadWxGrid(); if (wxStep === 0) loadWxObs(); }, 600); });
 setInterval(() => { if (wxOn) { wxGrid = null; loadWxGrid(); loadWxObs(); } }, 10 * 60000);
@@ -2204,11 +2225,6 @@ function openLayers() {
       <label class="f">Visa detaljkortet från<select id="ly-dz">${[[11, "Översikt (ca 2 nm över skärmen)"], [12, "Mellan (ca 1 nm)"], [13, "Nära (ca 0,5 nm), rekommenderas"], [14, "Mycket nära (ca 0,25 nm)"]].map(([z, t]) => `<option value="${z}" ${dz() === z ? "selected" : ""}>${t}</option>`).join("")}</select></label>
       <div class="muted">Traficoms inskannade sjökort ovanpå vektorkortet. Längre ut blir det svårläst eftersom kortet förminskas.</div>
     </div>` : ""}
-    <div class="card"><h3>Sjöväder</h3>
-      <label class="row"><input type="checkbox" data-wxl="windflow" ${feat("windflow") ? "checked" : ""}> Strömmande vind</label>
-      <label class="row"><input type="checkbox" data-wxl="sstfill" ${feat("sstfill") ? "checked" : ""}> Vattentemperatur i färg</label>
-      <div class="muted">Syns när du visar sjöväder med vindknappen. Strömmande vind visas med vindpilarna, färgerna med vattentemperaturen.</div>
-    </div>
     <div class="card"><h3>Visa på kartan</h3>
       ${[["fairways", "Farleder, ledlinjer och farledsdjup"], ["marks", "Sjömärken och fyrar"], ["rocks", "Stenar och grund"], ["sectors", "Ljussektorer"], ["contours", "Djupkurvor"], ["satdepth", "Djupfärg på flygfotot"], ["limits", "Fartbegränsningar och förbudsområden"], ["land", "Ortnamn, vägar och hus"], ["steep", "Branter (syns i läget Fiske)"]].filter(([g]) => applies(g)).map(([g, t]) => `<label class="row"><input type="checkbox" data-grp="${g}" ${(S.layers.groups || {})[g] !== false ? "checked" : ""}> ${t}</label>`).join("")}
       ${applies("soundings") ? `<label class="row"><input type="checkbox" id="ly-snd" ${S.layers.soundings ? "checked" : ""}> Djupsiffror${S.layers.base === "sat" ? " (bara grundare än din båt)" : ""}</label>` : ""}
@@ -2223,7 +2239,6 @@ function openLayers() {
   on("#ly-det", "onchange", e => { S.layers.detail = e.target.checked; save(); applyLayers(); });
   $("#ly-prop").onchange = e => { S.layers.props = e.target.checked; save(); applyLayers(); if (e.target.checked && map.getZoom() < 12) toast("Fastighetsgränser visas när du zoomar in närmare", 2200); };
   on("#ly-dz", "onchange", e => { S.layers.detailZoom = +e.target.value; save(); applyLayers(); });
-  document.querySelectorAll("[data-wxl]").forEach(x => x.onchange = () => { const k = x.dataset.wxl; S.feat = { ...(S.feat || {}), [k]: x.checked }; save(); track("layer_toggle", { l: k, on: x.checked ? 1 : 0 }); if (k === "windflow") { if (wxOn) flowStart(); else flowStop(); } else sstPaint(); });
   document.querySelectorAll("[data-grp]").forEach(x => x.onchange = () => { S.layers.groups = { ...(S.layers.groups || {}), [x.dataset.grp]: x.checked }; save(); applyLayers(); });
   document.querySelectorAll("input[name=base]").forEach(x => x.onchange = () => { S.layers.base = x.value; save(); applyLayers(); track("base_map", { base: x.value }); const y = $("#sh-body").scrollTop; openLayers(); $("#sh-body").scrollTop = y; });
 }
@@ -2761,7 +2776,7 @@ function windField() {   // vind per skärmruta (px/bildruta), interpolerad mell
 function flowColor(w) { const lim = boat().maxWind || 10; return w > lim ? "255,110,110" : w > lim * .75 ? "255,214,102" : "255,255,255"; }
 function flowStart() {
   flowStop();
-  if (!wxOn || wxMode === "water" || !feat("windflow") || document.hidden) return;
+  if (!wxOn || wxMode !== "flow" || document.hidden) return;
   flowField = windField(); if (!flowField) return;
   if (!flowCv) { flowCv = document.createElement("canvas"); flowCv.id = "flowcv"; map.getContainer().appendChild(flowCv); }
   const dpr = Math.min(2, window.devicePixelRatio || 1), F = flowField;
@@ -2786,43 +2801,10 @@ function flowStart() {
 }
 function flowStop() { if (flowRAF) cancelAnimationFrame(flowRAF); flowRAF = null; if (flowCv) { flowCv.getContext("2d").clearRect(0, 0, flowCv.width, flowCv.height); flowCv.style.display = "none"; } }
 map.on("movestart", flowStop);
-map.on("moveend", () => { if (wxOn) { flowStart(); sstPaint(); } });
+map.on("moveend", () => { if (wxOn) { flowStart(); if (wxMode === "water") renderWxLayer(); } });
 document.addEventListener("visibilitychange", () => { if (document.hidden) flowStop(); else if (wxOn) flowStart(); });
-window.addEventListener("resize", () => { if (wxOn) { flowStart(); sstPaint(); } });
+window.addEventListener("resize", () => { if (wxOn) flowStart(); });
 
-/* ---------- vattentemperatur som färg över vattnet ----------
-   Mjuk färgyta interpolerad mellan prognospunkterna och mätstationerna, ritad bara där det är vatten
-   (djupområdena på sjökortet används som mask). Siffrorna visas ovanpå som tidigare. */
-let sstCv = null;
-const SST_STOPS = [[0, [59, 76, 192]], [4, [91, 143, 249]], [8, [63, 182, 199]], [12, [76, 195, 138]], [16, [232, 197, 71]], [20, [240, 138, 60]], [24, [214, 62, 62]]];
-function sstRGB(v) { for (let i = 1; i < SST_STOPS.length; i++) if (v <= SST_STOPS[i][0] || i === SST_STOPS.length - 1) { const [a, ca] = SST_STOPS[i - 1], [b, cb] = SST_STOPS[i], f = Math.max(0, Math.min(1, (v - a) / (b - a))); return ca.map((x, j) => Math.round(x + (cb[j] - x) * f)); } }
-function sstPaint() {
-  if (sstCv) { sstCv.getContext("2d").clearRect(0, 0, sstCv.width, sstCv.height); sstCv.style.display = "none"; }
-  if (!wxOn || wxMode !== "water" || !feat("sstfill") || !wxGrid) return;
-  const i = wxGrid.t0 + wxStep, P = [];
-  wxGrid.pts.forEach((p, k) => { const v = wxGrid.M[k]?.hourly?.sea_surface_temperature?.[i]; if (v != null) { const s = map.project([p.lng, p.lat]); P.push({ x: s.x, y: s.y, v, w: 1 }); } });
-  if (wxStep === 0) wxWater.forEach(o => { const s = map.project([o.lng, o.lat]); P.push({ x: s.x, y: s.y, v: o.v, w: 3 }); });   // mätvärden väger tyngre
-  if (!P.length) return;
-  const maskLayer = ["depare", "depare-sat"].find(l => map.getLayer(l) && map.getLayoutProperty(l, "visibility") !== "none");
-  if (!maskLayer) return;
-  const c = map.getContainer(), W = c.clientWidth, H = c.clientHeight, dpr = Math.min(2, window.devicePixelRatio || 1);
-  if (!sstCv) { sstCv = document.createElement("canvas"); sstCv.id = "sstcv"; map.getContainer().appendChild(sstCv); }
-  sstCv.width = W * dpr; sstCv.height = H * dpr; sstCv.style.width = W + "px"; sstCv.style.height = H + "px"; sstCv.style.display = "block";
-  const g = sstCv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
-  // mask: vattenytor i bild
-  const feats = map.queryRenderedFeatures({ layers: [maskLayer] }); if (!feats.length) return;
-  g.beginPath();
-  for (const f of feats) { const gm = f.geometry, polys = gm.type === "Polygon" ? [gm.coordinates] : gm.type === "MultiPolygon" ? gm.coordinates : [];
-    for (const poly of polys) for (const ring of poly) ring.forEach((pt, j) => { const s = map.project(pt); j ? g.lineTo(s.x, s.y) : g.moveTo(s.x, s.y); }); }
-  g.save(); g.clip("nonzero");   // nonzero: tilarnas överlapp tar inte ut varandra
-  const G = 10; g.globalAlpha = .5;
-  for (let y = 0; y < H; y += G) for (let x = 0; x < W; x += G) {
-    let s = 0, sw = 0; for (const p of P) { const k = p.w / ((p.x - x) ** 2 + (p.y - y) ** 2 + 900); s += p.v * k; sw += k; }
-    const [r, gg, b] = sstRGB(s / sw); g.fillStyle = `rgb(${r},${gg},${b})`; g.fillRect(x, y, G, G);
-  }
-  g.restore();
-}
-map.on("movestart", () => { if (sstCv) sstCv.style.display = "none"; });
 
 /* ---------- lovande fiskeplatser (per art) ----------
    Kartan i bild provas i ett rutnät. För varje punkt läses djupet, om det finns brant, stenar och land
@@ -2973,8 +2955,6 @@ function openFeatures() {
   document.querySelectorAll("[data-feat]").forEach(x => x.onchange = () => {
     S.feat = { ...(S.feat || {}), [x.dataset.feat]: x.checked }; save(); track("feature_toggle", { f: x.dataset.feat, on: x.checked ? 1 : 0 });
     if (x.dataset.feat === "wlevel") { loadWaterLevel(true); boatChanged(); }
-    if (x.dataset.feat === "windflow") { if (wxOn) flowStart(); }
-    if (x.dataset.feat === "sstfill") sstPaint();
     if (x.dataset.feat === "routewx" && planning) renderRoute();
     if (typeof featChanged === "function") featChanged(x.dataset.feat);
   });
