@@ -1,76 +1,32 @@
-# Diagnostik Mon Nov  9 08:46:57 UTC 2026
-## obs WATLEV
-  60.56277 27.17920 2026-11-09T08:00:00Z -4.0
-  61.59438 21.46343 2026-11-09T03:00:00Z -66.0
-  61.59438 21.46343 2026-11-09T04:00:00Z -68.0
-  61.59438 21.46343 2026-11-09T05:00:00Z -72.0
-  61.59438 21.46343 2026-11-09T06:00:00Z -82.0
-  61.59438 21.46343 2026-11-09T07:00:00Z -74.0
-  61.59438 21.46343 2026-11-09T08:00:00Z -68.0
+# Diagnostik Mon Nov  9 08:47:48 UTC 2026
+## stationer (namn, fmisid, pos)
+- Kemi Ajos 100539
+- Raahe Lapaluoto 100540
+- Porvoo Emäsalo Vaarlahti 100669
+- Helsinki Kaivopuisto 132310
+- Vaasa Vaskiluoto 134223
+- Rauma Petäjäs 134224
+- Turku Ruissalo Saaronniemi 134225
+- Oulu Toppila 134248
+- Pietarsaari Leppäluoto 134250
+- Kaskinen Ådskär 134251
+- Föglö Degerby 134252
+- Hanko Pikku Kolalahti 134253
+- Hamina Pitäjänsaari 134254
+- Pori Mäntyluoto Kallo 134266
+## Degerby? fmisid 134252 WATLEV + N2000
+ExceptionText>Unrecognized parameter &apos;WLEVN2K&apos; ExceptionText> ExceptionText>URI: /wfs?fmisid=134252&amp;parameters=WATLEV%2CWLEVN2K&amp;request=getFeature&amp;service=WFS&amp;starttime=2026-11-09T05%3A00%3A00Z&amp;storedquery_id=fmi%3A%3Aobservations%3A%3Amareograph%3A%3Asimple&amp;version=2.0.0 ExceptionText>
 
-## obs WLEVN2K_PT1S_AVG
-<ExceptionReport xmlns="http://www.opengis.net/ows/1.1"
-		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.opengis.net/ows/1.1 http://schemas.opengis.net/ows/1.1.0/owsExceptionReport.xsd"
-  version="2.0.0" xml:lang="eng">
+## Degerby? fmisid 134253 WATLEV + N2000
+ExceptionText>Unrecognized parameter &apos;WLEVN2K&apos; ExceptionText> ExceptionText>URI: /wfs?fmisid=134253&amp;parameters=WATLEV%2CWLEVN2K&amp;request=getFeature&amp;service=WFS&amp;starttime=2026-11-09T05%3A00%3A00Z&amp;storedquery_id=fmi%3A%3Aobservations%3A%3Amareograph%3A%3Asimple&amp;version=2.0.0 ExceptionText>
 
+## Degerby? fmisid 100669 WATLEV + N2000
+ExceptionText>Unrecognized parameter &apos;WLEVN2K&apos; ExceptionText> ExceptionText>URI: /wfs?fmisid=100669&amp;parameters=WATLEV%2CWLEVN2K&amp;request=getFeature&amp;service=WFS&amp;starttime=2026-11-09T05%3A00%3A00Z&amp;storedquery_id=fmi%3A%3Aobservations%3A%3Amareograph%3A%3Asimple&amp;version=2.0.0 ExceptionText>
 
-  <Exception exceptionCode="OperationProcessingFailed">
-    <ExceptionText>Unrecognized parameter 
-## obs WATLEV_PT1H_AVG
-<ExceptionReport xmlns="http://www.opengis.net/ows/1.1"
-		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.opengis.net/ows/1.1 http://schemas.opengis.net/ows/1.1.0/owsExceptionReport.xsd"
-  version="2.0.0" xml:lang="eng">
-
-
-  <Exception exceptionCode="OperationProcessingFailed">
-    <ExceptionText>Unrecognized parameter 
-## stationer
-100539
-100540
-100669
-132310
-134223
-134224
-134225
-134248
-134250
-134251
-134252
-134253
-134254
-134266
-Föglö Degerby
-Hamina Pitäjänsaari
-Hanko Pikku Kolalahti
-Helsinki Kaivopuisto
-Kaskinen Ådskär
-Kemi Ajos
-Oulu Toppila
-Pietarsaari Leppäluoto
-Pori Mäntyluoto Kallo
-Porvoo Emäsalo Vaarlahti
-Raahe Lapaluoto
-Rauma Petäjäs
-Turku Ruissalo Saaronniemi
-Vaasa Vaskiluoto
-## prognos
-### fmi::forecast::sealevel::point::simple SeaLevel
-<BsWfs:Time>2026-11-09T09:00:00Z</BsWfs:Time>
-<BsWfs:ParameterValue>-11.9
-<BsWfs:Time>2026-11-09T09:00:00Z</BsWfs:Time>
-<BsWfs:ParameterValue>-1.1
-<BsWfs:Time>2026-11-09T10:00:00Z</BsWfs:Time>
-<BsWfs:ParameterValue>-11.9
-<BsWfs:Time>2026-11-09T10:00:00Z</BsWfs:Time>
-<BsWfs:ParameterValue>-1.1
-### fmi::forecast::sealevel::point::simple SeaLevelN2000
-<BsWfs:Time>2026-11-09T09:00:00Z</BsWfs:Time>
-<BsWfs:ParameterValue>-11.9
-<BsWfs:Time>2026-11-09T09:00:00Z</BsWfs:Time>
-<BsWfs:ParameterValue>-1.1
-<BsWfs:Time>2026-11-09T10:00:00Z</BsWfs:Time>
-<BsWfs:ParameterValue>-11.9
-<BsWfs:Time>2026-11-09T10:00:00Z</BsWfs:Time>
-<BsWfs:ParameterValue>-1.1
+## prognos Degerby (namn per parameter)
+2026-11-09T09:00:00Z SeaLevel -11.9 2026-11-09T09:00:00Z SeaLevelN2000 -1.1 2026-11-09T10:00:00Z SeaLevel -11.9 2026-11-09T10:00:00Z SeaLevelN2000 -1.1 2026-11-09T11:00:00Z SeaLevel -12.9 2026-11-09T11:00:00Z SeaLevelN2000 -2.1 2026-11-09T12:00:00Z SeaLevel -12.9 2026-11-09T12:00:00Z SeaLevelN2000 -2.1 2026-11-09T13:00:00Z SeaLevel -12.9 2026-11-09T13:00:00Z SeaLevelN2000 -2.1 2026-11-09T14:00:00Z SeaLevel -12.9 2026-11-09T14:00:00Z SeaLevelN2000 -2.1 2026-11-09T15:00:00Z SeaLevel -12.9 2026-11-09T15:00:00Z SeaLevelN2000 -2.1 2026-11-09T16:00:00Z SeaLevel -13.9 2026-11-09T16:00:00Z SeaLevelN2000 -3.1 2026-11-09T17:00:00Z SeaLevel -13.9 2026-11-09T17:00:00Z SeaLevelN2000 -3.1 2026-11-09T18:00:00Z SeaLevel -12.9 2026-11-09T18:00:00Z SeaLevelN2000 -2.1 2026-11-09T19:00:00Z SeaLevel -11.9 2026-11-09T19:00:00Z SeaLevelN2000 -1.1 2026-11-09T20:00:00Z SeaLevel -11.9 2026-11-09T20:00:00Z SeaLeve
+<Abstract>
+<Abstract>
+<Abstract>
+<Abstract>
+<Abstract>
