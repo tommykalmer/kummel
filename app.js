@@ -3060,7 +3060,7 @@ const TERMS_V = 1;   // höj när villkoren ändras, så måste alla godkänna p
 function termsOk() { return S.termsOk >= TERMS_V; }
 function openWelcome() {
   const must = !termsOk();
-  const ic = id => `<span class="wl-ic">${$(id).innerHTML}</span>`;
+  const ic = id => `<span class="wl-ic${id === "#b-fish" ? " fish" : ""}">${$(id).querySelector("svg").outerHTML}</span>`, b = boat();
   const row = (id, txt) => `<div class="wl-row">${ic(id)}<div>${txt}</div></div>`;
   openSheet("Välkommen till Kummel", `
     <div class="warnbox"><b>Kummel är inte ett sjökort för navigering.</b> Appen är ett hjälpmedel för planering och överblick, inte certifierad för navigering. Djup, sjömärken, ruttförslag, ankomsttider och väder kan vara felaktiga, ofullständiga eller inaktuella. Använd alltid officiella, uppdaterade sjökort och gott sjömanskap. Du som förare ansvarar själv för navigeringen och för båtens säkerhet. Kummel tillhandahålls av AsterIQ Ab (Mariehamn, FO-nummer 3553529-1) gratis och i befintligt skick, utan garantier.</div>
@@ -3070,8 +3070,20 @@ function openWelcome() {
       ${row("#b-route", "<b>Planera rutt.</b> Välj start och mål, så föreslås en väg längs farlederna med ankomsttid.")}
       ${row("#b-wx", "<b>Sjöväder.</b> Vind, vågor och vattentemperatur, nu och framåt.")}
       ${row("#b-layers", "<b>Kartlager.</b> Sjökort, flygbild, AIS-fartyg med mera.")}
-      ${row("#b-menu", "<b>Meny.</b> Ställ in din båts djupgående, så markeras grunt vatten för just din båt.")}
+      ${row("#b-menu", "<b>Meny.</b> Båtar, sparade platser och rutter, loggbok, offlinekarta och vilka funktioner du vill använda.")}
       ${row("#b-night", "<b>Nattläge.</b> Mörk karta eller rött ljus för kvällen.")}
+    </div>
+    <div class="card"><h3>Fiske</h3><div class="wl">
+      ${row("#b-fish", "<b>Fisk!</b> Ett tryck när du får napp sparar plats, tid, väder och vattentemperatur. Lägg till art, storlek och foto när du har tid, och dela fångsten som bild.")}
+      ${row("#b-spots", "<b>Lovande platser och drift.</b> Välj art så föreslås platser efter djup, branter, stenar och vind. Se också hur båten driver från en plats.")}
+    </div><div class="muted" style="margin-top:6px">Finns i läget <b>Fiske</b>. Där ser du också branta kanter och ett fiskeläge efter väder, tryck och måne.</div></div>
+    <div class="card"><h3>Din båt</h3>
+      <div class="muted">Med båtens djupgående markeras vatten som är för grunt för just din båt, och appen varnar när du närmar dig grund.</div>
+      <div class="row" style="gap:10px;flex-wrap:wrap;margin-top:6px">
+        <label class="f" style="flex:1;min-width:130px">Båttyp<select id="wl-btype">${Object.entries(BTYPES).map(([k, v]) => `<option value="${k}" ${b.type === k ? "selected" : ""}>${v}</option>`).join("")}</select></label>
+        <label class="f" style="flex:1;min-width:130px">Djupgående (m)<input id="wl-draft" type="number" inputmode="decimal" min="0" max="5" step="0.1" value="${b.draft}"></label>
+      </div>
+      <div class="muted" style="margin-top:4px">Fler inställningar, som marginal under kölen och vindgräns, finns under Meny → Båtar.</div>
     </div>
     <div class="muted">Håll fingret på kartan för att spara en plats. Kummel finns alltid på <b>${SITE}</b>. Lägg till den på hemskärmen (Dela → Lägg till på hemskärmen) så öppnas den som en app.</div>
     ${must ? `<div class="muted"><b>Genom att trycka på en knapp nedan bekräftar du att du har läst och förstått texten ovan.</b></div>` : ""}
@@ -3079,6 +3091,8 @@ function openWelcome() {
   setSheetState($("#sheet"), 2);
   $("#sheet").classList.toggle("locked", must); document.body.classList.toggle("terms", must);
   const ok = () => { const first = !termsOk(); S.termsOk = TERMS_V; S.welcomed = 1; save(); if (first) setTimeout(askStats, 1500); setTimeout(openSharedRoute, 400); $("#sheet").classList.remove("locked"); document.body.classList.remove("terms"); };
+  $("#wl-btype").onchange = e => { boat().type = e.target.value; save(); };
+  $("#wl-draft").onchange = e => { const v = parseFloat(String(e.target.value).replace(",", ".")); if (v >= 0 && v <= 5) { boat().draft = v; save(); boatChanged(); } };
   $("#wl-go").onclick = () => { ok(); closeSheet(); $("#b-locate").click(); };
   $("#wl-skip").onclick = () => { ok(); closeSheet(); };
 }
