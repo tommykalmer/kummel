@@ -265,6 +265,9 @@ body:has(#wlbar:not(.hidden)) #anchorbar{top:calc(124px + var(--sat))}
 .rwx-strip{display:flex;gap:6px;overflow-x:auto;padding:4px 0 6px;scrollbar-width:thin}
 .rwx-col{flex:none;min-width:58px;display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--paper);border-radius:10px;padding:6px 4px;font-variant-numeric:tabular-nums}
 .rwx-col svg{width:22px;height:22px}.rwx-col b{font:700 15px var(--f-num)}.rwx-col small{font-weight:500;font-size:11px;color:var(--muted)}.rwx-col .muted{font-size:11px}
+.spot-pin{width:30px;height:30px;border-radius:50%;background:#7a4fb0;color:#fff;font:800 15px/30px var(--f-ui);text-align:center;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);cursor:pointer}
+.spot-n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#7a4fb0;color:#fff;font-size:13px;margin-right:4px}
+.drift-prof{display:flex;gap:6px}.drift-prof div{flex:1;background:var(--paper);border-radius:10px;padding:6px;text-align:center;display:flex;flex-direction:column;gap:2px}.drift-prof b{font:700 14px var(--f-num)}.drift-prof .muted{font-size:11px}
 .disclaimer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
 .hidden{display:none!important}
 label.row{flex-wrap:nowrap;align-items:center}
@@ -336,6 +339,7 @@ label.row{flex-wrap:nowrap;align-items:center}
   <button class="rb sm hidden" id="b-north" title="Norr upp"><svg id="north" viewBox="0 0 24 24"><path d="M12 2 17 13H7Z" fill="#d64545"/><path d="M12 22 7 13h10Z" fill="currentColor" opacity=".45"/></svg></button>
   <button class="rb sm" id="b-detail" title="Grynnor och stenar (detaljkort)" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5v14"/><path d="M7 7l10 10M17 7 7 17" stroke-width="1.4"/></svg></button>
   <button class="rb sm hidden" id="b-idx" title="Fiskeläge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 18a8 8 0 1 1 16 0"/><path d="m12 18 4-6"/></svg><span class="badge" hidden></span></button>
+  <button class="rb sm hidden" id="b-spots" title="Lovande platser och drift" aria-label="Lovande platser"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".8" fill="currentColor"/></svg></button>
   <button class="rb sm hidden" id="b-depth" title="Djupintervall"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6c3 0 3 2 6 2s3-2 6-2 3 2 6 2"/><path d="M6 12h12M8 17h8"/></svg></button>
 </div>
 <div id="rail">
@@ -378,8 +382,8 @@ label.row{flex-wrap:nowrap;align-items:center}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script src="config.js?v=202611091053"></script>
-<script src="chartstyle.js?v=202611091053"></script>
-<script src="app.js?v=202611091053"></script>
+<script src="config.js?v=202611091055"></script>
+<script src="chartstyle.js?v=202611091055"></script>
+<script src="app.js?v=202611091055"></script>
 </body>
 </html>

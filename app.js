@@ -188,7 +188,7 @@ map.touchZoomRotate.enableRotation();
 let mapReady = false;
 
 /* overlay sources (route, track, boat …) */
-const SRC = ["route", "track", "live", "shown", "heading", "acc", "catches", "fishzone", "mob", "wxgrid", "wxobs", "wxsst", "navto", "ais", "aisvec", "anchor", "routewx"];
+const SRC = ["route", "track", "live", "shown", "heading", "acc", "catches", "fishzone", "mob", "wxgrid", "wxobs", "wxsst", "navto", "ais", "aisvec", "anchor", "routewx", "drift", "driftpts"];
 function addOverlays() {
   SRC.forEach(id => { if (!map.getSource(id)) map.addSource(id, { type: "geojson", data: EMPTY }); });
   const add = l => { if (!map.getLayer(l.id)) map.addLayer(l); };
@@ -209,6 +209,9 @@ function addOverlays() {
   add({ id: "ais-vec", type: "line", source: "aisvec", paint: { "line-color": "#14232e", "line-width": 1.4, "line-dasharray": [2, 1.5], "line-opacity": .7 } });
   add({ id: "ais-bg", type: "circle", source: "ais", paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 7, 9, 12, 15, 16, 20], "circle-color": "#ffffff", "circle-opacity": .82, "circle-stroke-color": "#0b1620", "circle-stroke-width": 1, "circle-stroke-opacity": .5 } });
   add({ id: "ais", type: "symbol", source: "ais", layout: { "icon-image": ["case", ["==", ["get", "moving"], 1], "ship", "ship-still"], "icon-size": ["interpolate", ["linear"], ["zoom"], 7, .75, 12, 1.15, 16, 1.5], "icon-rotate": ["get", "rot"], "icon-rotation-alignment": "map", "icon-allow-overlap": true, "text-field": ["step", ["zoom"], "", 11.5, ["get", "name"]], "text-font": ["Noto Sans Medium"], "text-size": 11, "text-offset": [0, 1.7], "text-anchor": "top", "text-optional": true }, paint: { "icon-color": aisColor, "icon-halo-color": "#0b1620", "icon-halo-width": 1.6, "text-color": "#14232e", "text-halo-color": "#ffffff", "text-halo-width": 1.8 } });
+  add({ id: "drift-line", type: "line", source: "drift", layout: { "line-cap": "round" }, paint: { "line-color": "#7a4fb0", "line-width": 4, "line-dasharray": [1.2, 1.2] } });
+  add({ id: "drift-pts", type: "circle", source: "driftpts", paint: { "circle-radius": 5, "circle-color": "#ffffff", "circle-stroke-color": "#7a4fb0", "circle-stroke-width": 3 } });
+  add({ id: "drift-lbl", type: "symbol", source: "driftpts", layout: { "text-field": ["get", "lbl"], "text-font": ["Noto Sans Medium"], "text-size": 12, "text-offset": [0, 1.3], "text-anchor": "top", "text-allow-overlap": true }, paint: { "text-color": "#4b2a7a", "text-halo-color": "#ffffff", "text-halo-width": 2 } });
   add({ id: "routewx", type: "symbol", source: "routewx", layout: { "icon-image": "wind", "icon-size": 1.15, "icon-rotate": ["get", "rot"], "icon-rotation-alignment": "map", "icon-allow-overlap": true, "text-field": ["get", "lbl"], "text-font": ["Noto Sans Medium"], "text-size": 11, "text-offset": [0, 1.9], "text-allow-overlap": false, "text-optional": true },
     paint: { "icon-color": ["case", [">", ["get", "g"], ["get", "lim"]], "#d64545", [">", ["get", "g"], ["*", .75, ["get", "lim"]]], "#e2a90c", "#2f8f5b"], "icon-halo-color": "#ffffff", "icon-halo-width": 1.5, "text-color": "#14232e", "text-halo-color": "#ffffff", "text-halo-width": 2 } });
   add({ id: "navto", type: "line", source: "navto", paint: { "line-color": "#2f8f5b", "line-width": 3, "line-dasharray": [1, 1.2] } });
@@ -352,6 +355,7 @@ function setMode(m) {
   $("#b-fish").classList.toggle("hidden", m !== "fiske");
   $("#b-depth").classList.toggle("hidden", m !== "fiske");
   $("#b-idx").classList.toggle("hidden", m !== "fiske"); idxBadge();
+  $("#b-spots").classList.toggle("hidden", m !== "fiske" || !feat("hotspots")); if (m !== "fiske") clearSpots();
   refreshCatches(); updateFishZone();
   if (wx) renderChip();
 }
@@ -365,6 +369,8 @@ function openSheet(title, html, view) {
   $("#sh-title").textContent = title;
   $("#sh-body").innerHTML = html;
   if (sheetView !== (view || title)) $("#sh-body").scrollTop = 0;   // en ny panel börjar alltid högst upp
+  if (sheetView === "drift" && view !== "drift") driftOff();
+  if (sheetView === "spots" && view !== "spots" && view !== "drift") clearSpots();
   $("#sheet").classList.add("open");
   /* alla paneler öppnas i mellanläget; samma panel behåller sitt läge när innehållet uppdateras */
   // ruttplaneringen visas hel från början (höjden följer innehållet), övriga i mellanläget
@@ -379,6 +385,8 @@ function closeSheet() {
   if (sheetView === "route") stopPlanning(false);
   if (draftCatch && (sheetView === "catch:" + draftCatch.id || sheetView === "movecatch")) discardDraft();
   if (sheetView === "movecatch") document.body.classList.remove("plan");
+  if (sheetView === "drift") driftOff();
+  if (sheetView === "spots") clearSpots();
   sheetView = null; sheetPref = null; syncRail();
 }
 /* vilken knapp hör panelen till? Knappen lyser medan panelen är öppen, och ett nytt tryck stänger den */
@@ -386,11 +394,11 @@ let sheetPref = null;
 const MENU_VIEWS = ["features", "legend", "menu", "places", "routes", "log", "catches", "data", "about", "anchor", "offline", "boats", "boatedit", "welcome", "share", "pastcatch"];
 function railOwner(v) {
   if (!v) return null;
-  if (v === "layers") return "#b-layers"; if (v === "place") return "#b-place"; if (v === "fishidx") return "#b-idx"; if (v === "depth") return "#b-depth";
+  if (v === "layers") return "#b-layers"; if (v === "place") return "#b-place"; if (v === "fishidx") return "#b-idx"; if (v === "spots" || v === "drift") return "#b-spots"; if (v === "depth") return "#b-depth";
   if (MENU_VIEWS.includes(v) || v.startsWith("track")) return "#b-menu";
   return null;
 }
-function syncRail() { ["#b-layers", "#b-menu", "#b-place", "#b-idx", "#b-depth"].forEach(id => { const el = $(id); if (el) el.setAttribute("aria-pressed", railOwner(sheetView) === id); }); }
+function syncRail() { ["#b-layers", "#b-menu", "#b-place", "#b-idx", "#b-depth", "#b-spots"].forEach(id => { const el = $(id); if (el) el.setAttribute("aria-pressed", railOwner(sheetView) === id); }); }
 $("#sh-close").onclick = closeSheet;
 /* dra i panelens överkant. Samma för alla paneler:
    upp = större (liten -> mellan -> helskärm), ner = mindre (helskärm -> mellan -> liten), drar man ända ner stängs den.
@@ -588,6 +596,7 @@ function onFix(p) {
   if (mob && sheetView === "mob") updateMob();
   if (gps.sog > 0.5) depthAlarm(pos);
   anchorCheck(pos);
+  if (feat("drift")) learnDrift(pos, gps.sog, gps.cog);
 }
 $("#b-locate").onclick = () => {
   if (watchId !== null && gpsStale()) restartGps(); else startGps();
@@ -1066,6 +1075,7 @@ function idxBadge() {
   b.hidden = !ix; if (ix) { b.textContent = ix[0].s; b.style.background = idxColor(ix[0].s); }
 }
 $("#b-idx").onclick = openFishIndex;
+$("#b-spots").onclick = openSpots;
 async function openFishIndex() {
   if (!wx) { openSheet("Fiskeläge", `<div class="muted">Hämtar väder …</div>`, "fishidx"); await loadWx(true); }
   const ix = fishIndex(wx);
@@ -2809,6 +2819,147 @@ function sstPaint() {
 }
 map.on("movestart", () => { if (sstCv) sstCv.style.display = "none"; });
 
+/* ---------- lovande fiskeplatser (per art) ----------
+   Kartan i bild provas i ett rutnät. För varje punkt läses djupet, om det finns brant, stenar och land
+   i närheten, och om vinden blåser in mot land där. Varje art har sin profil; de bästa punkterna
+   (med avstånd emellan) visas med en förklaring. Ingen garanti: tumregler, inte facit. */
+const SPOT_SP = {
+  "Havsöring": { d: [0.5, 5], best: [1, 4], rocks: 14, shore: 10, onshore: 16, steep: 4, shelter: 0, temp: [3, 13], months: [10, 11, 12, 1, 2, 3, 4, 5], why: "grunda steniga stränder och uddar där vinden blåser in" },
+  "Abborre":   { d: [2, 10], best: [3, 8], rocks: 5, shore: 4, onshore: 0, steep: 16, shelter: 6, temp: [8, 22], months: [5, 6, 7, 8, 9, 10], why: "kanter och branter på 3–8 m, gärna lite i lä" },
+  "Gädda":     { d: [0.5, 4], best: [1, 3], rocks: 0, shore: 6, onshore: -6, steep: 4, shelter: 14, temp: [6, 18], months: [4, 5, 6, 9, 10, 11], why: "grunda skyddade vikar och flador" },
+  "Gös":       { d: [6, 20], best: [8, 15], rocks: 2, shore: 0, onshore: 0, steep: 18, shelter: 0, temp: [12, 22], months: [6, 7, 8, 9], why: "djupare kanter och branter, gärna i skymningen" }
+};
+let spotMarkers = [];
+function clearSpots() { spotMarkers.forEach(m => m.remove()); spotMarkers = []; }
+function depthLayer() { return ["depare", "depare-sat"].find(l => map.getLayer(l) && map.getLayoutProperty(l, "visibility") !== "none"); }
+function sampleDepth(pt, L) { const h = map.queryRenderedFeatures(pt, { layers: [L] }); if (!h.length) return null; const p = h[0].properties; return { d1: +p.d1, d2: p.d2 != null ? +p.d2 : null }; }
+function findSpots(sp) {
+  const P = SPOT_SP[sp], L = depthLayer(); if (!L) return { err: "Byt till sjökort eller flygfoto för att hitta platser." };
+  if (map.getZoom() < 11) return { err: "Zooma in lite, så att ett område på några kilometer syns." };
+  const c = map.getContainer(), W = c.clientWidth, H = c.clientHeight, step = Math.max(26, Math.round(Math.min(W, H) / 22));
+  const mPerPx = 40075016 * Math.cos(map.getCenter().lat * Math.PI / 180) / (512 * 2 ** map.getZoom());
+  const near = Math.max(6, Math.round(60 / mPerPx));   // ca 60 m runt punkten
+  const windFrom = wx ? wx.current.wind_direction_10m : null, windV = wx ? wx.current.wind_speed_10m : 0;
+  const sst = sstInfo(), month = new Date().getMonth() + 1;
+  const steepOn = map.getLayer("steep") && map.getLayoutProperty("steep", "visibility") !== "none";
+  const rockOn = map.getLayer("rocks") && map.getLayoutProperty("rocks", "visibility") !== "none";
+  const mine = S.catches.filter(x => x.species === sp);
+  const cands = [];
+  for (let y = 140; y < H - 160; y += step) for (let x = 20; x < W - 70; x += step) {
+    const dp = sampleDepth([x, y], L); if (!dp || dp.d1 < 0) continue;
+    const mid = dp.d2 != null ? (dp.d1 + dp.d2) / 2 : dp.d1 + 2;
+    if (mid < P.d[0] - .5 || dp.d1 > P.d[1]) continue;
+    let s = 0; const why = [];
+    const inBest = mid >= P.best[0] && mid <= P.best[1]; s += inBest ? 30 : 15;
+    why.push(`${dp.d1}${dp.d2 != null ? "–" + dp.d2 : "+"} m djup`);
+    // land runt om: 8 riktningar
+    const land = []; for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4, q = sampleDepth([x + Math.sin(a) * near * 2, y - Math.cos(a) * near * 2], L); if (!q || q.d1 < 0) land.push(k * 45); }
+    if (land.length && P.shore) { s += P.shore; }
+    if (land.length >= 4 && P.shelter) { s += P.shelter; why.push("skyddat läge"); }
+    if (windFrom != null && land.length && land.length < 6 && windV >= 3) {
+      const to = (windFrom + 180) % 360, onshore = land.some(b => Math.abs(angDiff(b, to)) < 50);
+      if (onshore && P.onshore > 0) { s += P.onshore * Math.min(1, windV / 8); why.push("vinden blåser in mot land här"); }
+      if (onshore && P.onshore < 0) s += P.onshore;
+      if (!onshore && P.shelter && land.some(b => Math.abs(angDiff(b, windFrom)) < 60)) { s += P.shelter / 2; why.push("i lä för vinden"); }
+    }
+    if (steepOn && P.steep) { const st = map.queryRenderedFeatures([[x - near, y - near], [x + near, y + near]], { layers: ["steep"] }); if (st.length) { s += P.steep; why.push("brant kant"); } }
+    if (rockOn && P.rocks) { const rk = map.queryRenderedFeatures([[x - near, y - near], [x + near, y + near]], { layers: ["rocks"] }).length; if (rk >= 2) { s += Math.min(P.rocks, rk * 3); why.push("stenig botten"); } }
+    if (mine.some(m => distNm(m, map.unproject([x, y])) * NM < 400)) { s += 12; why.push(`du har fått ${sp.toLowerCase()} här förut`); }
+    cands.push({ x, y, s, why });
+  }
+  if (!cands.length) return { err: `Inget vatten med rätt djup för ${sp.toLowerCase()} här. Flytta kartan eller zooma ut lite.` };
+  cands.sort((p, q) => q.s - p.s);
+  const pick = [], minD = Math.min(W, H) / 4.5;
+  for (const p of cands) { if (pick.every(q => Math.hypot(q.x - p.x, q.y - p.y) > minD)) pick.push(p); if (pick.length >= 5) break; }
+  const notes = [];
+  if (!P.months.includes(month)) notes.push(`Det är inte högsäsong för ${sp.toLowerCase()} just nu.`);
+  if (sst && sst.v != null && (sst.v < P.temp[0] || sst.v > P.temp[1])) notes.push(`Vattnet (${sst.v.toFixed(1).replace(".", ",")}°) är ${sst.v < P.temp[0] ? "kallare" : "varmare"} än ${sp.toLowerCase()} brukar föredra.`);
+  return { spots: pick.map(p => ({ ...map.unproject([p.x, p.y]), s: p.s, why: p.why })), notes };
+}
+function openSpots() {
+  const sp = S.spotSp || "Havsöring";
+  openSheet("Lovande platser", `
+    <div class="row">${Object.keys(SPOT_SP).map(k => `<button class="btn ${k === sp ? "pri" : ""}" data-sp="${k}">${k}</button>`).join("")}</div>
+    <div class="muted">${esc(SPOT_SP[sp].why[0].toUpperCase() + SPOT_SP[sp].why.slice(1))}. Söker i området du ser på kartan.</div>
+    <div id="sp-out" class="list"><div class="muted">Letar …</div></div>
+    ${feat("drift") ? `<button class="btn" id="sp-drift">Planera drift</button>` : ""}
+    <div class="disclaimer">Förslagen bygger på tumregler, djupdata och dagens väder, inte på var det faktiskt finns fisk. Respektera fredningsområden och regler.</div>`, "spots");
+  document.querySelectorAll("[data-sp]").forEach(b => b.onclick = () => { S.spotSp = b.dataset.sp; save(); openSpots(); });
+  const dr = $("#sp-drift"); if (dr) dr.onclick = () => openDrift();
+  setTimeout(() => {
+    clearSpots(); const r = findSpots(sp), out = $("#sp-out"); if (!out) return;
+    if (r.err) { out.innerHTML = `<div class="muted">${r.err}</div>`; return; }
+    track("spots", { sp });
+    out.innerHTML = (r.notes.length ? `<div class="callout">${r.notes.join(" ")}</div>` : "") + r.spots.map((p, i) => `<div class="card spot"><h3><span class="spot-n">${i + 1}</span> ${p.why.slice(1).join(", ") || "rätt djup"}</h3><div class="muted">${p.why[0]}</div><div class="row"><button class="btn sm" data-go="${i}">Visa</button><button class="btn sm" data-save="${i}">Spara som plats</button></div></div>`).join("");
+    r.spots.forEach((p, i) => { const el = document.createElement("div"); el.className = "spot-pin"; el.textContent = i + 1; el.onclick = ev => { ev.stopPropagation(); map.easeTo({ center: [p.lng, p.lat], zoom: Math.max(map.getZoom(), 14) }); };
+      spotMarkers.push(new maplibregl.Marker({ element: el }).setLngLat([p.lng, p.lat]).addTo(map)); });
+    document.querySelectorAll("[data-go]").forEach(b => b.onclick = () => { const p = r.spots[+b.dataset.go]; map.easeTo({ center: [p.lng, p.lat], zoom: Math.max(map.getZoom(), 14) }); });
+    document.querySelectorAll("[data-save]").forEach(b => b.onclick = () => { const p = r.spots[+b.dataset.save]; S.places.push({ id: uid(), created: Date.now(), lat: +p.lat.toFixed(6), lng: +p.lng.toFixed(6), cat: "fiske", name: `${sp}: ${p.why.slice(1).join(", ") || "förslag"}`.slice(0, 60), note: p.why.join(", ") }); save(); drawPlaces(); toast("Sparad under Mina platser", 1500); });
+  }, 60);
+}
+
+/* ---------- driftplanering ----------
+   Båten driver ungefär åt det håll vinden blåser, med en fart som är en liten andel av vinden.
+   Appen lär sig din båts andel från dina egna drifter (GPS när du ligger och driver). */
+const DRIFT_K0 = .035;   // drivfart = 3,5 % av vindfarten, typiskt för en mindre motorbåt
+const driftK = () => S.driftK || DRIFT_K0;
+let driftFrom = null, driftOn = false;
+function driftCalc(from) {
+  if (!wx) return null;
+  const w = wx.current.wind_speed_10m, dirTo = (wx.current.wind_direction_10m + 180) % 360, kn = w * driftK() * KN;
+  const L = depthLayer(), pts = [];
+  for (const m of [0, 10, 20, 30]) { const p = dest(from, dirTo, kn * m / 60), dp = L ? sampleDepth(map.project([p.lng, p.lat]), L) : null; pts.push({ m, ...p, dp }); }
+  return { w, dirTo, kn, pts };
+}
+function driftDraw() {
+  if (!driftOn) return;
+  const from = driftFrom || ll(map.getCenter()), r = driftCalc(from), out = $("#dr-out");
+  if (!r) { if (out) out.innerHTML = `<div class="muted">Hämtar vind …</div>`; return; }
+  setData("drift", lineFC(r.pts.map(p => [p.lng, p.lat])));
+  setData("driftpts", { type: "FeatureCollection", features: r.pts.slice(1).map(p => ({ type: "Feature", properties: { lbl: `${p.m} min${p.dp ? " · " + p.dp.d1 + (p.dp.d2 != null ? "–" + p.dp.d2 : "+") + " m" : ""}` }, geometry: { type: "Point", coordinates: [p.lng, p.lat] } })) });
+  if (!out) return;
+  const dist = Math.round(r.kn * .5 * NM), sp = S.spotSp, P = sp && SPOT_SP[sp];
+  const inBand = P ? r.pts.filter(p => p.dp && p.dp.d1 <= P.d[1] && (p.dp.d2 ?? p.dp.d1 + 2) >= P.d[0]).length : 0;
+  out.innerHTML = `<div>Med <b>${Math.round(r.w)} m/s</b> från ${compass((r.dirTo + 180) % 360)} driver du ca <b>${r.kn.toFixed(1).replace(".", ",")} kn</b> mot ${compass(r.dirTo)}. Om 30 min är du ungefär ${dist} m bort.</div>
+    <div class="drift-prof">${r.pts.map(p => `<div><span class="muted">${p.m ? p.m + " min" : "start"}</span><b>${p.dp ? (p.dp.d1 < 0 ? "land" : p.dp.d1 + (p.dp.d2 != null ? "–" + p.dp.d2 : "+") + " m") : "?"}</b></div>`).join("")}</div>
+    ${P ? `<div class="muted">${inBand >= 3 ? `Driften håller sig på ${sp.toLowerCase()}djup större delen av tiden.` : `Driften lämnar ${sp.toLowerCase()}djupet (${P.d[0]}–${P.d[1]} m) en bit av vägen.`}</div>` : ""}
+    ${r.pts.some(p => p.dp && p.dp.d1 < 0) ? `<div class="callout bad">Driften når land eller torrfallande inom 30 min.</div>` : ""}
+    <div class="muted" style="font-size:12px">${S.driftN >= 3 ? `Anpassad efter ${S.driftN} av dina egna drifter.` : "Uppskattning för en mindre båt. Appen lär sig din båt när du driver med GPS:en på."}</div>`;
+}
+function openDrift() {
+  driftOn = true; driftFrom = null; clearSpots();
+  openSheet("Drift", `
+    <div class="callout">Flytta kartan så att <b>korset</b> står där du vill börja driva. Linjen visar var du är efter 10, 20 och 30 minuter.</div>
+    <div id="dr-out"></div>
+    <div class="row">${gps ? `<button class="btn" id="dr-gps">Från båten</button>` : ""}<button class="btn" id="dr-close">Klar</button></div>`, "drift");
+  setSheetState($("#sheet"), 1);
+  document.body.classList.add("plan");
+  const g = $("#dr-gps"); if (g) g.onclick = () => { driftFrom = ll(gps); map.easeTo({ center: lnglat(gps) }); driftDraw(); };
+  $("#dr-close").onclick = () => closeSheet();
+  track("drift_plan");
+  if (!wx) loadWx(true).then(driftDraw); else driftDraw();
+}
+function driftOff() { driftOn = false; driftFrom = null; setData("drift", EMPTY); setData("driftpts", EMPTY); document.body.classList.remove("plan"); }
+map.on("move", () => { if (driftOn && !driftFrom) driftDraw(); });
+map.on("moveend", () => { if (driftOn) driftDraw(); });
+/* lär sig båtens drift: låg fart, rörelse ungefär med vinden, i minst 2 minuter */
+let driftObs = null;
+function learnDrift(pos, sog, cog) {
+  if (!wx || sog < .15 || sog > 1.6 || cog == null) { driftObs = null; return; }
+  const w = wx.current.wind_speed_10m, to = (wx.current.wind_direction_10m + 180) % 360;
+  if (w < 3 || Math.abs(angDiff(cog, to)) > 45) { driftObs = null; return; }
+  if (!driftObs) { driftObs = { t: Date.now(), k: [] }; }
+  driftObs.k.push(sog / KN / w);
+  if (Date.now() - driftObs.t > 120000 && driftObs.k.length > 20) {
+    const k = driftObs.k.sort((x, y) => x - y)[driftObs.k.length >> 1];
+    if (k > .005 && k < .12) { S.driftK = S.driftK ? S.driftK * .7 + k * .3 : k; S.driftN = (S.driftN || 0) + 1; save(); }
+    driftObs = null;
+  }
+}
+function featChanged(f) {
+  if (f === "hotspots" || f === "drift") { const on = S.mode === "fiske" && feat("hotspots"); $("#b-spots").classList.toggle("hidden", !on); if (!feat("hotspots")) clearSpots(); }
+}
+
 /* ---------- funktioner (inställningar) ---------- */
 function openFeatures() {
   openSheet("Funktioner", `
@@ -2960,7 +3111,7 @@ $("#b-night").onclick = () => {
 applyTheme(false);
 
 /* ---------- knapparna växlar: tryck igen så stängs panelen ---------- */
-["#b-layers", "#b-menu", "#b-place", "#b-idx", "#b-depth"].forEach(id => {
+["#b-layers", "#b-menu", "#b-place", "#b-idx", "#b-depth", "#b-spots"].forEach(id => {
   const el = $(id), orig = el && el.onclick; if (!el || !orig) return;
   el.onclick = e => { if ($("#sheet").classList.contains("open") && railOwner(sheetView) === id) { closeSheet(); } else orig(e); };
 });
