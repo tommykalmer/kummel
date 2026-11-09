@@ -2768,15 +2768,21 @@ function findSpots(sp) {
     let s = 0; const why = [];
     const inBest = mid >= P.best[0] && mid <= P.best[1]; s += inBest ? 30 : 15;
     why.push(`${dp.d1}${dp.d2 != null ? "–" + dp.d2 : "+"} m djup`);
-    // land runt om: 8 riktningar
-    const land = []; for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4, q = sampleDepth([x + Math.sin(a) * near * 2, y - Math.cos(a) * near * 2], L); if (!q || q.d1 < 0) land.push(k * 45); }
+    // land runt om, mätt i verkliga kompassriktningar (fungerar även när kartan är vriden)
+    const here = map.unproject([x, y]);
+    const landAt = (brg, m) => { const q = map.project(lnglat(dest(here, (brg + 360) % 360, m / NM))); if (q.x < 0 || q.y < 0 || q.x > W || q.y > H) return null; const d = sampleDepth([q.x, q.y], L); return !d || d.d1 < 0; };
+    const landDir = (brg, dists, spread) => [-spread, 0, spread].some(o => dists.some(m => landAt(brg + o, m) === true));
+    const land = []; for (let k = 0; k < 8; k++) if (landAt(k * 45, 120) === true) land.push(k * 45);
     if (land.length && P.shore) { s += P.shore; }
     if (land.length >= 4 && P.shelter) { s += P.shelter; why.push("skyddat läge"); }
     if (windFrom != null && land.length && land.length < 6 && windV >= 3) {
-      const to = (windFrom + 180) % 360, onshore = land.some(b => Math.abs(angDiff(b, to)) < 50);
+      const to = (windFrom + 180) % 360;
+      // pålandsvind: land strax nedströms OCH öppet vatten uppströms (vinden har fått fart över vattnet)
+      const downLand = landDir(to, [60, 120, 200], 25), upLand = landDir(windFrom, [150, 400, 800], 20);
+      const onshore = downLand && !upLand, lee = !downLand && landDir(windFrom, [80, 160, 300], 20);
       if (onshore && P.onshore > 0) { s += P.onshore * Math.min(1, windV / 8); why.push("vinden blåser in mot land här"); }
       if (onshore && P.onshore < 0) s += P.onshore;
-      if (!onshore && P.shelter && land.some(b => Math.abs(angDiff(b, windFrom)) < 60)) { s += P.shelter / 2; why.push("i lä för vinden"); }
+      if (lee && P.shelter) { s += P.shelter / 2; why.push("i lä för vinden"); }
     }
     if (steepOn && P.steep) { const st = map.queryRenderedFeatures([[x - near, y - near], [x + near, y + near]], { layers: [steepL] }); if (st.length) { s += P.steep; why.push("brant kant"); } }
     if (rockOn && P.rocks) { const rk = map.queryRenderedFeatures([[x - near, y - near], [x + near, y + near]], { layers: [rockL] }).length; if (rk >= 2) { s += Math.min(P.rocks, rk * 3); why.push("stenig botten"); } }
