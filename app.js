@@ -193,6 +193,11 @@ const SRC = ["route", "track", "live", "shown", "heading", "acc", "catches", "fi
 function addOverlays() {
   SRC.forEach(id => { if (!map.getSource(id)) map.addSource(id, { type: "geojson", data: EMPTY }); });
   const add = l => { if (!map.getLayer(l.id)) map.addLayer(l); };
+  // osynliga söklager: Lovande platser och drift läser djup, branter och stenar härifrån,
+  // så de fungerar oavsett bakgrundskarta och vilka lager som visas
+  if (map.getSource("chart")) add({ id: "q-depare", type: "fill", source: "chart", "source-layer": "depare", paint: { "fill-opacity": 0 } });
+  if (map.getSource("lines")) add({ id: "q-steep", type: "line", source: "lines", "source-layer": "steep", minzoom: 11, paint: { "line-opacity": 0, "line-width": 4 } });
+  if (map.getSource("rocks")) add({ id: "q-rocks", type: "circle", source: "rocks", "source-layer": "rocks", minzoom: 11.5, filter: ["in", ["get", "k"], ["literal", [1, 2, 3]]], paint: { "circle-opacity": 0, "circle-stroke-opacity": 0, "circle-radius": 3 } });
   const wxColor = ["case", [">", ["get", "g"], ["get", "lim"]], "#d64545", [">", ["get", "g"], ["*", .75, ["get", "lim"]]], "#e2a90c", "#2f8f5b"];
   add({ id: "wx-grid", type: "symbol", source: "wxgrid", layout: { "icon-image": "wind", "icon-size": ["interpolate", ["linear"], ["get", "w"], 0, .8, 15, 1.5], "icon-rotate": ["get", "rot"], "icon-rotation-alignment": "map", "icon-allow-overlap": true, "text-field": ["get", "lbl"], "text-font": ["Noto Sans Medium"], "text-size": 11, "text-offset": [0, 1.7], "text-allow-overlap": true }, paint: { "icon-color": wxColor, "icon-halo-color": "rgba(255,255,255,.85)", "icon-halo-width": 1.2, "text-color": "#14232e", "text-halo-color": "rgba(255,255,255,.9)", "text-halo-width": 1.6 } });
   add({ id: "wx-obs", type: "symbol", source: "wxobs", layout: { "icon-image": "wind", "icon-size": 1.6, "icon-rotate": ["get", "rot"], "icon-rotation-alignment": "map", "icon-allow-overlap": true, "text-field": ["get", "lbl"], "text-font": ["Noto Sans Medium"], "text-size": 13, "text-offset": [0, 1.9], "text-allow-overlap": true }, paint: { "icon-color": wxColor, "icon-halo-color": "#0f2a3d", "icon-halo-width": 2, "text-color": "#0f2a3d", "text-halo-color": "#fff", "text-halo-width": 2 } });
@@ -2823,7 +2828,7 @@ const SPOT_SP = {
 };
 let spotMarkers = [];
 function clearSpots() { spotMarkers.forEach(m => m.remove()); spotMarkers = []; }
-function depthLayer() { return ["depare", "depare-sat"].find(l => map.getLayer(l) && map.getLayoutProperty(l, "visibility") !== "none"); }
+function depthLayer() { return ["q-depare", "depare", "depare-sat"].find(l => map.getLayer(l) && map.getLayoutProperty(l, "visibility") !== "none"); }
 function sampleDepth(pt, L) { const h = map.queryRenderedFeatures(pt, { layers: [L] }); if (!h.length) return null; const p = h[0].properties; return { d1: +p.d1, d2: p.d2 != null ? +p.d2 : null }; }
 function findSpots(sp) {
   const P = SPOT_SP[sp], L = depthLayer(); if (!L) return { err: "Byt till sjökort eller flygfoto för att hitta platser." };
@@ -2833,8 +2838,8 @@ function findSpots(sp) {
   const near = Math.max(6, Math.round(60 / mPerPx));   // ca 60 m runt punkten
   const windFrom = wx ? wx.current.wind_direction_10m : null, windV = wx ? wx.current.wind_speed_10m : 0;
   const sst = sstInfo(), month = new Date().getMonth() + 1;
-  const steepOn = map.getLayer("steep") && map.getLayoutProperty("steep", "visibility") !== "none";
-  const rockOn = map.getLayer("rocks") && map.getLayoutProperty("rocks", "visibility") !== "none";
+  const steepL = map.getLayer("q-steep") ? "q-steep" : "steep", rockL = map.getLayer("q-rocks") ? "q-rocks" : "rocks";
+  const steepOn = !!map.getLayer(steepL), rockOn = !!map.getLayer(rockL);
   const mine = S.catches.filter(x => x.species === sp);
   const cands = [];
   for (let y = 140; y < H - 160; y += step) for (let x = 20; x < W - 70; x += step) {
@@ -2854,8 +2859,8 @@ function findSpots(sp) {
       if (onshore && P.onshore < 0) s += P.onshore;
       if (!onshore && P.shelter && land.some(b => Math.abs(angDiff(b, windFrom)) < 60)) { s += P.shelter / 2; why.push("i lä för vinden"); }
     }
-    if (steepOn && P.steep) { const st = map.queryRenderedFeatures([[x - near, y - near], [x + near, y + near]], { layers: ["steep"] }); if (st.length) { s += P.steep; why.push("brant kant"); } }
-    if (rockOn && P.rocks) { const rk = map.queryRenderedFeatures([[x - near, y - near], [x + near, y + near]], { layers: ["rocks"] }).length; if (rk >= 2) { s += Math.min(P.rocks, rk * 3); why.push("stenig botten"); } }
+    if (steepOn && P.steep) { const st = map.queryRenderedFeatures([[x - near, y - near], [x + near, y + near]], { layers: [steepL] }); if (st.length) { s += P.steep; why.push("brant kant"); } }
+    if (rockOn && P.rocks) { const rk = map.queryRenderedFeatures([[x - near, y - near], [x + near, y + near]], { layers: [rockL] }).length; if (rk >= 2) { s += Math.min(P.rocks, rk * 3); why.push("stenig botten"); } }
     if (mine.some(m => distNm(m, map.unproject([x, y])) * NM < 400)) { s += 12; why.push(`du har fått ${sp.toLowerCase()} här förut`); }
     cands.push({ x, y, s, why });
   }

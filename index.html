@@ -179,6 +179,7 @@ body:has(#satlegend:not([hidden])) #b-follow{bottom:calc(112px + var(--legend-h,
   #sheet.compact{max-height:none}
   #sheet.full{max-height:none}
   body.sheet-open #inst{left:420px}
+  body.sheet-open #wxbar{left:calc(420px + var(--sal))}
 }
 .sh-head{display:flex;align-items:center;gap:8px;padding:12px max(16px,var(--sal)) 8px;border-bottom:1px solid var(--line)}
 .sh-head h2{margin:0;font:700 20px var(--f-num);letter-spacing:.03em;text-transform:uppercase;flex:1;text-wrap:balance}
@@ -305,6 +306,7 @@ label.row{flex-wrap:nowrap;align-items:center}
   /* paneler på vänster sida */
   #sheet,#sheet.peek,#sheet.compact,#sheet.full{left:calc(8px + var(--sal));right:auto;top:calc(54px + var(--sat));bottom:calc(8px + var(--sab));width:min(380px,46vw);max-height:none;height:auto;border-radius:16px;padding-bottom:0}
   #sheet{transform:translateX(-110%)}#sheet.open{transform:none}
+  body.sheet-open #wxbar{left:calc(min(380px,46vw) + 18px + var(--sal))}
   #sheet.peek .sh-body{display:flex}#sheet.peek .sh-head h2::after{display:none}
   .grab{display:none}
   .sh-body,body.sheet-open .sh-body{padding-bottom:16px}
@@ -384,8 +386,8 @@ label.row{flex-wrap:nowrap;align-items:center}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script src="config.js?v=202611091355"></script>
-<script src="chartstyle.js?v=202611091355"></script>
-<script src="app.js?v=202611091355"></script>
+<script src="config.js?v=202611091405"></script>
+<script src="chartstyle.js?v=202611091405"></script>
+<script src="app.js?v=202611091405"></script>
 </body>
 </html>
