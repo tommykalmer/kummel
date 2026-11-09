@@ -508,10 +508,11 @@ function boatIconSvg(type) {
   const hull = type === "segel" ? "M17 2C22 8 24 14 24 20L22.5 31H11.5L10 20C10 14 12 8 17 2Z"
     : type === "kajak" ? "M17 1C21.5 9 21.5 25 17 33C12.5 25 12.5 9 17 1Z"
     : "M17 2C23 7 26 13 26 19L25 31H9L8 19C8 13 11 7 17 2Z";
-  const deck = type === "segel" ? `<circle cx="17" cy="13" r="1.8" fill="#fff"/><path d="M17 13V26" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>`
-    : type === "kajak" ? `<ellipse cx="17" cy="18" rx="1.6" ry="3" fill="#fff" opacity=".9"/>`
-    : `<path d="M12 16.5Q17 13.5 22 16.5V21H12Z" fill="#fff" opacity=".92"/>`;
-  return `<svg width="34" height="34" viewBox="0 0 34 34"><path d="${hull}" fill="#d64545" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>${deck}</svg>`;
+  const deck = type === "segel" ? `<circle cx="17" cy="11" r="1.6" fill="#fff"/><path d="M17 11V14M17 20V27" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>`
+    : type === "kajak" ? ""
+    : `<path d="M12 21.5Q17 19.5 22 21.5V25H12Z" fill="#fff" opacity=".92"/>`;
+  // exakt position = mitten (17,17): markeras med en liten prick så att man ser var GPS-punkten är
+  return `<svg width="28" height="28" viewBox="0 0 34 34"><path d="${hull}" fill="#d64545" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/>${deck}<circle cx="17" cy="17" r="2.2" fill="#0f2a3d" stroke="#fff" stroke-width="1"/></svg>`;
 }
 function renderBoatIcon() { boatEl.innerHTML = boatIconSvg(boat().type); }
 renderBoatIcon();
