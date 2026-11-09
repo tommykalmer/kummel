@@ -1,25 +1,20 @@
 #!/usr/bin/env bash
-# Diagnostik: vattenstånd på Åland (FMI mareografer), parametrar och prognos
 out=data/diag.md; echo "# Diagnostik $(date -u)" > $out
-B="19.0,59.7,21.4,60.7"; S=$(date -u -d '-6 hours' +%Y-%m-%dT%H:%M:00Z)
-for p in WATLEV WLEVN2K_PT1S_AVG WATLEV_PT1H_AVG; do
-  echo "## obs $p" >> $out
-  curl -s -m 60 "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=fmi::observations::mareograph::simple&bbox=$B&parameters=$p&starttime=$S" | python3 -c "
-import sys,re; x=sys.stdin.read()
-import xml.etree.ElementTree as E
-r=E.fromstring(x) if x.strip().startswith('<') else None
-if r is None: print(x[:300]); sys.exit()
-for el in r.iter():
-  if el.tag.endswith('BsWfsElement'):
-    pos=[e.text for e in el.iter() if e.tag.endswith('pos')][0]; t=[e.text for e in el.iter() if e.tag.endswith('Time')][0]; v=[e.text for e in el.iter() if e.tag.endswith('ParameterValue')][0]
-    print(' ',pos.strip(),t,v)
-print(x[:400] if 'Exception' in x else '')" | tail -8 >> $out
+S=$(date -u -d '-30 hours' +%Y-%m-%dT%H:00:00Z)
+echo "## stationer (namn, fmisid, pos)" >> $out
+curl -s -m 60 "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=fmi::observations::mareograph::timevaluepair&parameters=WATLEV&starttime=$(date -u -d '-2 hours' +%Y-%m-%dT%H:00:00Z)" > /tmp/m.xml
+python3 - >> $out <<'PY'
+import re
+x=open('/tmp/m.xml').read()
+for blk in re.findall(r'<target:Location.*?</target:Location>', x, re.S):
+  i=re.search(r'fmisid">(\d+)',blk); n=re.search(r'locationcode/name">([^<]+)',blk); p=re.search(r'<gml:pos>([^<]+)',x[x.find(blk):])
+  print('-', n and n.group(1), i and i.group(1))
+PY
+for id in 134252 134253 100669; do
+ echo "## Degerby? fmisid $id WATLEV + N2000" >> $out
+ curl -s -m 60 "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=fmi::observations::mareograph::simple&fmisid=$id&parameters=WATLEV,WLEVN2K&starttime=$(date -u -d '-3 hours' +%Y-%m-%dT%H:00:00Z)" | grep -o "<BsWfs:pos>[^<]*\|<BsWfs:Time>[^<]*\|<BsWfs:ParameterName>[^<]*\|<BsWfs:ParameterValue>[^<]*\|ExceptionText>[^<]*" | sed 's/<[^>]*>//' | paste -sd' ' | head -c 900 >> $out; echo >> $out
 done
-echo "## stationer" >> $out
-curl -s -m 60 "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=fmi::observations::mareograph::timevaluepair&bbox=$B&parameters=WATLEV&starttime=$S" | grep -o '<gml:name codeSpace="http://xml.fmi.fi/namespace/locationcode/name">[^<]*\|<gml:identifier codeSpace="http://xml.fmi.fi/namespace/stationcode/fmisid">[^<]*' | sed 's/.*>//' | sort -u >> $out
-echo "## prognos" >> $out
-for q in "fmi::forecast::sealevel::point::simple" ; do for par in SeaLevel SeaLevelN2000; do
- echo "### $q $par" >> $out
- curl -s -m 60 "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=$q&latlon=60.04,20.38&parameters=$par&timestep=60" | grep -o "<BsWfs:Time>[^<]*</BsWfs:Time>\|<BsWfs:ParameterValue>[^<]*\|ExceptionText>[^<]*" | head -8 >> $out
-done; done
+echo "## prognos Degerby (namn per parameter)" >> $out
+curl -s -m 60 "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=fmi::forecast::sealevel::point::simple&latlon=60.03,20.38&timestep=60" | grep -o "<BsWfs:Time>[^<]*\|<BsWfs:ParameterName>[^<]*\|<BsWfs:ParameterValue>[^<]*" | sed 's/<[^>]*>//' | paste -sd' ' | head -c 900 >> $out; echo >> $out
+curl -s -m 60 "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=describeStoredQueries&storedquery_id=fmi::forecast::sealevel::point::simple" | grep -io "<Abstract>[^<]*\|parameters[^<]\{0,200\}" | head -5 >> $out
 cat $out
