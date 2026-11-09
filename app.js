@@ -46,7 +46,6 @@ const boat = () => S.boats.find(b => b.id === S.boatId) || S.boats[0];
 /* funktioner som användaren kan slå av och på (Meny → Funktioner) */
 const FEATS = [
   ["wlevel", "Vattenstånd", "Visar aktuellt vattenstånd och räknar med det i grundvarningar och djuprutan."],
-  ["routewx", "Väder längs rutten", "Vind och våg där du är vid varje tidpunkt längs en planerad rutt."],
   ["hotspots", "Lovande fiskeplatser", "Föreslår platser efter fiskart, vind, djup och temperatur (läget Fiske)."],
   ["drift", "Driftplanering", "Visar hur båten driver med vinden från en vald plats (läget Fiske)."]
 ];
@@ -189,7 +188,7 @@ map.dragRotate.disable();
 let mapReady = false;
 
 /* overlay sources (route, track, boat …) */
-const SRC = ["route", "track", "live", "shown", "heading", "acc", "catches", "fishzone", "mob", "wxgrid", "wxobs", "wxsst", "navto", "ais", "aisvec", "anchor", "routewx", "drift", "driftpts"];
+const SRC = ["route", "track", "live", "shown", "heading", "acc", "catches", "fishzone", "mob", "wxgrid", "wxobs", "wxsst", "navto", "ais", "aisvec", "anchor", "drift", "driftpts"];
 function addOverlays() {
   SRC.forEach(id => { if (!map.getSource(id)) map.addSource(id, { type: "geojson", data: EMPTY }); });
   const add = l => { if (!map.getLayer(l.id)) map.addLayer(l); };
@@ -218,8 +217,6 @@ function addOverlays() {
   add({ id: "drift-line", type: "line", source: "drift", layout: { "line-cap": "round" }, paint: { "line-color": "#7a4fb0", "line-width": 4, "line-dasharray": [1.2, 1.2] } });
   add({ id: "drift-pts", type: "circle", source: "driftpts", paint: { "circle-radius": 5, "circle-color": "#ffffff", "circle-stroke-color": "#7a4fb0", "circle-stroke-width": 3 } });
   add({ id: "drift-lbl", type: "symbol", source: "driftpts", layout: { "text-field": ["get", "lbl"], "text-font": ["Noto Sans Medium"], "text-size": 12, "text-offset": [0, 1.3], "text-anchor": "top", "text-allow-overlap": true }, paint: { "text-color": "#4b2a7a", "text-halo-color": "#ffffff", "text-halo-width": 2 } });
-  add({ id: "routewx", type: "symbol", source: "routewx", layout: { "icon-image": "wind", "icon-size": 1.15, "icon-rotate": ["get", "rot"], "icon-rotation-alignment": "map", "icon-allow-overlap": true, "text-field": ["get", "lbl"], "text-font": ["Noto Sans Medium"], "text-size": 11, "text-offset": [0, 1.9], "text-allow-overlap": false, "text-optional": true },
-    paint: { "icon-color": ["case", [">", ["get", "g"], ["get", "lim"]], "#d64545", [">", ["get", "g"], ["*", .75, ["get", "lim"]]], "#e2a90c", "#2f8f5b"], "icon-halo-color": "#ffffff", "icon-halo-width": 1.5, "text-color": "#14232e", "text-halo-color": "#ffffff", "text-halo-width": 2 } });
   add({ id: "navto", type: "line", source: "navto", paint: { "line-color": "#2f8f5b", "line-width": 3, "line-dasharray": [1, 1.2] } });
   add({ id: "heading", type: "line", source: "heading", paint: { "line-color": "#d64545", "line-width": 2, "line-dasharray": [3, 3] } });
   add({ id: "catch-heat", type: "heatmap", source: "catches", maxzoom: 16, layout: { visibility: "none" }, paint: { "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 8, 18, 14, 40], "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 8, .8, 14, 1.6], "heatmap-opacity": .75,
@@ -1149,7 +1146,7 @@ function startPlanning(initial) {
   if (!initial) toast("Tryck på kartan för att lägga till punkter", 2200);
 }
 function stopPlanning(keep) {
-  closeWpMenu(); setData("routewx", EMPTY); rwxLast = null;
+  closeWpMenu();
   planning = false; document.body.classList.remove("plan"); $("#b-route").setAttribute("aria-pressed", "false");
   if (!keep) { wps = []; wpsOff = []; autoInfo = null; routeId = null; routeName = ""; drawWps(); }
 }
@@ -1248,7 +1245,7 @@ function renderRoute() {
     ${wps.length >= 2 ? `<div class="muted">Dra i en punkt för att flytta den. Tryck på linjen för att lägga till en punkt där, eller på en punkt för att ta bort den.</div>` : ""}
     ${wps.length < 2 ? `<div class="muted">Tryck ut start och mål, och låt appen föreslå vägen längs farlederna. Eller tryck ut hela rutten själv.</div>` : ""}
     ${autoInfo ? `<div class="callout ${autoInfo.offNm > .3 ? "bad" : "ok"}">${autoInfo.edited ? "Justerat ruttförslag. Kontrollera dina ändringar mot sjökortet. " : ""}Ruttförslag längs farleder: <b>${autoInfo.onNm.toFixed(1)} nm i farled</b>${autoInfo.minDraft ? `, minsta farledsdjup ${autoInfo.minDraft.toFixed(1)} m` : ""}${autoInfo.unknownNm > .1 ? `, varav ${autoInfo.unknownNm.toFixed(1)} nm med okänt farledsdjup` : ""}.${autoInfo.offNm > .02 ? ` <b>${autoInfo.offNm.toFixed(2)} nm utanför farled</b> (orange)${autoInfo.unchecked ? ": appen hittade ingen väg i tillräckligt djupt vatten där, rita den själv" : autoInfo.shallow ? ": vägen dit passerar vatten som enligt sjökortet kan vara grundare än din båt behöver, kör försiktigt och kontrollera" : ": vägen går runt land och kända grund men stenar finns inte i datan, kontrollera mot sjökortet"}.` : ""}</div>` : ""}
-    ${shTxt}${dark}${feat("routewx") && wps.length > 1 ? `<div class="card"><h3>Väder längs rutten</h3><div id="rt-wx"><div class="muted">Hämtar väder längs rutten …</div></div></div>` : routeWindNote()}
+    ${shTxt}${dark}${routeWindNote()}
     <div>${st.legs.map((l, i) => `<div class="leg"><span class="pill">${i + 1}→${i + 2}</span><span>${compass(l.brg)}</span><span class="num">${String(Math.round(l.brg)).padStart(3, "0")}°</span><span class="num">${l.d.toFixed(2)} nm</span></div>`).join("") || `<div class="muted">Tryck på kartan för att lägga till punkter.</div>`}</div>
     ${wps.length > 1 ? `<div class="card"><h3>Ankomsttid</h3>
       <label class="f">Vill vara framme kl<span class="row" style="flex-wrap:nowrap"><input type="time" id="rt-arr" value="${S.arrTime || ""}" style="flex:1"><button class="btn" id="rt-arr-clr" type="button">Ingen tid</button></span></label>
@@ -1257,7 +1254,6 @@ function renderRoute() {
     ${wps.length > 1 ? `<label class="f">Namn på rutten<input id="rt-name" value="${esc(routeName)}" placeholder="t.ex. Hem – Kökar"></label>` : ""}
     <div class="row"><button class="btn" id="rt-undo">Ångra</button><button class="btn" id="rt-rev">Vänd</button><button class="btn pri" id="rt-save">Spara rutt</button><button class="btn" id="rt-share">Dela</button><button class="btn warn" id="rt-clear">Rensa</button></div>
     <div class="muted">Kontrollera alltid djup och faror mot sjökortet längs hela rutten.</div>`, "route");
-  if (feat("routewx")) routeWxSchedule();
   const arr = $("#rt-arr");
   if (arr) {
     const upd = () => { S.arrTime = arr.value; save(); $("#rt-arrout").innerHTML = arrivalPlan(st.nm, st.h); };
@@ -1749,83 +1745,6 @@ function routeWindNote() {
   const lim = boat().maxWind || 10;
   return maxG > lim ? `<div class="callout bad">Byvind upp till <b>${maxG.toFixed(0)} m/s</b> under turen, över din gräns på ${lim} m/s.</div>` : `<div class="callout ok">Byvind högst ${maxG.toFixed(0)} m/s under turen.</div>`;
 }
-/* ---------- väder längs rutten ----------
-   Rutten delas i punkter (var ~15–20 min). För varje punkt räknas ut när du är där, och vädret
-   för just den platsen och timmen hämtas. Visas som pilar längs rutten och som en tidslinje. */
-let rwxCache = {}, rwxT = null, rwxLast = null;
-function routeSamples(pts, depMs) {
-  const b = boat(), sp = Math.max(1, +b.speed || 5), legs = []; let tot = 0;
-  for (let i = 1; i < pts.length; i++) { const d = distNm(pts[i - 1], pts[i]); legs.push({ a: pts[i - 1], b: pts[i], d, s: tot, brg: bearing(pts[i - 1], pts[i]) }); tot += d; }
-  if (!tot) return [];
-  const hours = tot / sp, n = Math.max(2, Math.min(12, Math.round(hours * 60 / 18) + 1)), out = [];
-  for (let k = 0; k < n; k++) {
-    const d = tot * k / (n - 1), L = legs.find(l => d <= l.s + l.d + 1e-9) || legs[legs.length - 1], f = L.d ? (d - L.s) / L.d : 0;
-    out.push({ lat: L.a.lat + (L.b.lat - L.a.lat) * f, lng: L.a.lng + (L.b.lng - L.a.lng) * f, brg: L.brg, t: depMs + d / sp * 3600000, d });
-  }
-  return out;
-}
-async function rwxFetch(samples) {
-  const key = samples.map(s => s.lat.toFixed(2) + "," + s.lng.toFixed(2)).join(";");
-  const c = rwxCache[key]; if (c && Date.now() - c.at < 30 * 60000) return c;
-  const la = samples.map(s => s.lat.toFixed(3)).join(","), lo = samples.map(s => s.lng.toFixed(3)).join(",");
-  const [f, m] = await Promise.all([
-    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=ms&forecast_days=3&timeformat=unixtime`).then(r => r.json()),
-    fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${la}&longitude=${lo}&hourly=wave_height&forecast_days=3&timeformat=unixtime`).then(r => r.ok ? r.json() : null).catch(() => null)
-  ]);
-  const F = Array.isArray(f) ? f : [f], M = m ? (Array.isArray(m) ? m : [m]) : [];
-  if (!F[0] || !F[0].hourly) throw new Error("ingen prognos");
-  return rwxCache[key] = { at: Date.now(), F, M };
-}
-function rwxAt(data, k, t) {   // väder för punkt k vid tiden t (närmaste timme)
-  const h = data.F[k]?.hourly; if (!h) return null;
-  let i = 0, best = Infinity; h.time.forEach((s, j) => { const dd = Math.abs(s * 1000 - t); if (dd < best) { best = dd; i = j; } });
-  if (best > 2 * 3600000) return null;
-  const mh = data.M[k]?.hourly, wave = mh && mh.wave_height ? mh.wave_height[i] : null;
-  return { w: h.wind_speed_10m[i], g: h.wind_gusts_10m[i], dir: h.wind_direction_10m[i], wave };
-}
-function rwxDep() { return Date.now() + (S.rtDep || 0) * 60000; }
-function routeWxSchedule() { clearTimeout(rwxT); rwxT = setTimeout(routeWxRun, 500); }
-async function routeWxRun() {
-  const box = $("#rt-wx");
-  if (!feat("routewx") || !planning || wps.length < 2) { setData("routewx", EMPTY); return; }
-  const samples = routeSamples(wps, rwxDep());
-  if (!samples.length) return;
-  let data; try { data = await rwxFetch(samples); } catch (e) { if (box) box.innerHTML = `<div class="muted">Vädret längs rutten kunde inte hämtas just nu.</div>`; return; }
-  if (!planning) return;
-  const lim = boat().maxWind || 10, rows = samples.map((s, k) => ({ ...s, ...(rwxAt(data, k, s.t) || {}) })).filter(r => r.w != null);
-  rwxLast = { samples, data };
-  setData("routewx", { type: "FeatureCollection", features: rows.filter((r, i) => i % (rows.length > 8 ? 2 : 1) === 0 || i === rows.length - 1).map(r => ({ type: "Feature",
-    properties: { rot: (r.dir + 180) % 360, g: r.g, lim, lbl: `${hm(new Date(r.t))} · ${Math.round(r.w)} (${Math.round(r.g)})` }, geometry: { type: "Point", coordinates: [r.lng, r.lat] } })) });
-  // varningar: över gränsen, motvind med sjö
-  const over = rows.filter(r => r.g > lim), head = rows.filter(r => Math.abs(angDiff(r.brg, r.dir)) < 50 && (r.wave || 0) >= .5);
-  const span = rs => `${hm(new Date(rs[0].t))}–${hm(new Date(rs[rs.length - 1].t))}`;
-  const warn = [];
-  if (over.length) warn.push(`<div class="callout bad">Byar upp till <b>${Math.round(Math.max(...over.map(r => r.g)))} m/s</b> kl ${span(over)}, över din gräns på ${lim} m/s.</div>`);
-  if (head.length) warn.push(`<div class="callout">Motvind och ${Math.max(...head.map(r => r.wave || 0)).toFixed(1).replace(".", ",")} m sjö kl ${span(head)}. Räkna med att det går långsammare och blir blött.</div>`);
-  if (!warn.length) warn.push(`<div class="callout ok">Inom din vindgräns hela vägen (byar högst ${Math.round(Math.max(...rows.map(r => r.g)))} m/s).</div>`);
-  // bästa avgång närmaste 12 timmarna (lägsta maxbyar längs rutten)
-  let best = null;
-  for (let m = 0; m <= 12 * 60; m += 30) {
-    const ss = routeSamples(wps, Date.now() + m * 60000), gs = ss.map((s, k) => rwxAt(data, k, s.t)).filter(Boolean);
-    if (gs.length < ss.length) continue;
-    const mg = Math.max(...gs.map(x => x.g)); if (!best || mg < best.mg - .01) best = { m, mg };
-  }
-  const curMax = Math.max(...rows.map(r => r.g));
-  const bestTxt = best && best.mg <= curMax - 2 && best.m !== (S.rtDep || 0) ? `<div class="muted">Lugnast närmaste 12 h: avgång <b>${hm(new Date(Date.now() + best.m * 60000))}</b>, byar högst ${Math.round(best.mg)} m/s. <button class="btn sm" id="rwx-best">Välj</button></div>` : "";
-  if (!box) return;
-  box.innerHTML = `
-    <div class="row" style="justify-content:space-between;flex-wrap:nowrap"><span class="muted">Avgång</span><b id="rwx-deptxt">${(S.rtDep || 0) ? hm(new Date(rwxDep())) : "nu"}</b></div>
-    <input type="range" id="rwx-dep" min="0" max="${24 * 60}" step="30" value="${S.rtDep || 0}" aria-label="Avgångstid">
-    <div class="rwx-strip">${rows.map(r => { const c = r.g > lim ? "#d64545" : r.g > lim * .75 ? "#e2a90c" : "#2f8f5b";
-      return `<div class="rwx-col"><span class="muted">${hm(new Date(r.t))}</span><svg viewBox="0 0 24 24" style="transform:rotate(${(r.dir + 180) % 360}deg)"><path d="M12 3 18 20 12 16 6 20Z" fill="${c}"/></svg><b>${Math.round(r.w)}<small>(${Math.round(r.g)})</small></b>${r.wave != null ? `<span class="muted">${r.wave.toFixed(1).replace(".", ",")} m</span>` : ""}</div>`; }).join("")}</div>
-    <div class="muted" style="font-size:12px">Vind m/s (byar) och våghöjd där du är vid varje tidpunkt, i ${boat().speed} kn.</div>
-    ${warn.join("")}${bestTxt}`;
-  const dep = $("#rwx-dep");
-  dep.oninput = () => { S.rtDep = +dep.value; $("#rwx-deptxt").textContent = S.rtDep ? hm(new Date(rwxDep())) : "nu"; };
-  dep.onchange = () => { save(); routeWxRun(); };
-  const bb = $("#rwx-best"); if (bb) bb.onclick = () => { S.rtDep = best.m; save(); routeWxRun(); };
-}
-
 function darkCheck(eta) {
   const ss = sunInfo.sunset.find(s => s.toDateString() === eta.toDateString());
   return ss && eta > ss ? `<div class="callout bad">Du är framme ${fmtDur((eta - ss) / 3600000)} efter solnedgången (${hm(ss)}).</div>` : "";
@@ -2965,7 +2884,6 @@ function openFeatures() {
   document.querySelectorAll("[data-feat]").forEach(x => x.onchange = () => {
     S.feat = { ...(S.feat || {}), [x.dataset.feat]: x.checked }; save(); track("feature_toggle", { f: x.dataset.feat, on: x.checked ? 1 : 0 });
     if (x.dataset.feat === "wlevel") { loadWaterLevel(true); boatChanged(); }
-    if (x.dataset.feat === "routewx" && planning) renderRoute();
     if (typeof featChanged === "function") featChanged(x.dataset.feat);
   });
 }
