@@ -43,14 +43,8 @@ let saveT;
 function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }, 200); }
 const uid = () => Math.random().toString(36).slice(2, 9);
 const boat = () => S.boats.find(b => b.id === S.boatId) || S.boats[0];
-/* funktioner som användaren kan slå av och på (Meny → Funktioner) */
-const FEATS = [
-  ["wlevel", "Vattenstånd", "Visar aktuellt vattenstånd och räknar med det i grundvarningar och djuprutan."],
-  ["hotspots", "Lovande fiskeplatser", "Föreslår platser efter fiskart, vind, djup och temperatur (läget Fiske)."],
-  ["drift", "Driftplanering", "Visar hur båten driver med vinden från en vald plats (läget Fiske)."]
-];
-const FEAT_ON = { wlevel: 1, hotspots: 1, drift: 1 };
-const feat = k => S.feat && k in S.feat ? !!S.feat[k] : !!FEAT_ON[k];
+/* vattenstånd, lovande platser och drift är alltid påslagna (menyn Funktioner togs bort) */
+const feat = () => true;
 const boatNeed = () => { const b = boat(); return (+b.draft || 0) + (+b.margin || 0); };
 /* djup som behövs på sjökortet: båtens behov, plus det vattnet står under medelvattenstånd just nu */
 const wlM = () => feat("wlevel") && S.wlAdjust !== false && wl && Date.now() - wl.at < 6 * 3600000 ? wl.cm / 100 : 0;
@@ -2191,14 +2185,13 @@ function openMenu() {
       <button class="btn" id="m-data">Flytta och säkerhetskopiera</button>
       <button class="btn" id="m-anchor">Ankarlarm${S.anchor ? " (på)" : ""}</button>
       <button class="btn" id="m-offline">Offlinekarta${S.offline ? " (nedladdad)" : ""}</button>
-      <button class="btn" id="m-feat">Funktioner</button>
       <button class="btn" id="m-legend">Teckenförklaring</button>
       <button class="btn" id="m-welcome">Så fungerar Kummel</button>
       <button class="btn" id="m-about">Om Kummel</button>
     </div>
     <div class="maker">${ALAND_FLAG} Kummel · en produkt från ${MAKER}, ${MAKER_TOWN}</div>`, "menu");
   $("#m-boats").onclick = openBoats; $("#m-places").onclick = openPlaces; $("#m-routes").onclick = openRoutes;
-  $("#m-log").onclick = openLog; $("#m-catch").onclick = openCatches; $("#m-data").onclick = openData; $("#m-about").onclick = openAbout; $("#m-welcome").onclick = () => termsOk() ? openTour() : openWelcome(); $("#m-legend").onclick = openLegend; $("#m-feat").onclick = openFeatures; $("#m-anchor").onclick = openAnchor; $("#m-offline").onclick = openOffline;
+  $("#m-log").onclick = openLog; $("#m-catch").onclick = openCatches; $("#m-data").onclick = openData; $("#m-about").onclick = openAbout; $("#m-welcome").onclick = () => termsOk() ? openTour() : openWelcome(); $("#m-legend").onclick = openLegend; $("#m-anchor").onclick = openAnchor; $("#m-offline").onclick = openOffline;
 }
 $("#b-menu").onclick = openMenu;
 function openPlaces() {
@@ -2882,18 +2875,6 @@ function featChanged(f) {
   if (f === "hotspots" || f === "drift") { const on = S.mode === "fiske" && (feat("hotspots") || feat("drift")); $("#b-spots").classList.toggle("hidden", !on); if (!feat("hotspots")) clearSpots(); if (!feat("drift") && sheetView === "drift") closeSheet(); }
 }
 
-/* ---------- funktioner (inställningar) ---------- */
-function openFeatures() {
-  openSheet("Funktioner", `
-    <div class="muted">Välj vad Kummel ska visa och göra. Allt kan slås på igen när som helst.</div>
-    <div class="list">${FEATS.map(([k, t, d]) => `<label class="feat-row"><input type="checkbox" data-feat="${k}" ${feat(k) ? "checked" : ""}><div><b>${t}</b><div class="muted">${d}</div></div></label>`).join("")}</div>`, "features");
-  document.querySelectorAll("[data-feat]").forEach(x => x.onchange = () => {
-    S.feat = { ...(S.feat || {}), [x.dataset.feat]: x.checked }; save(); track("feature_toggle", { f: x.dataset.feat, on: x.checked ? 1 : 0 });
-    if (x.dataset.feat === "wlevel") { loadWaterLevel(true); boatChanged(); }
-    if (typeof featChanged === "function") featChanged(x.dataset.feat);
-  });
-}
-
 /* ---------- teckenförklaring ---------- */
 function openLegend() {
   const P = KummelChart.dayColors(), ic = id => `<span class="lg-ic"><img src="${KummelChart.iconURL(id)}" alt=""></span>`;
@@ -2998,7 +2979,7 @@ function openTour() {
       ${row("#b-route", "<b>Planera rutt.</b> Välj start och mål, så föreslås en väg längs farlederna med ankomsttid.")}
       ${row("#b-wx", "<b>Sjöväder.</b> Vind, vågor och vattentemperatur över kartan, nu och framåt.")}
       ${row("#b-layers", "<b>Kartlager.</b> Sjökort, flygbild, AIS-fartyg med mera.")}
-      ${row("#b-menu", "<b>Meny.</b> Båtar, sparade platser och rutter, loggbok, offlinekarta och vilka funktioner du vill använda.")}
+      ${row("#b-menu", "<b>Meny.</b> Båtar, sparade platser och rutter, loggbok, fångstlogg och offlinekarta.")}
       ${row("#b-night", "<b>Nattläge.</b> Mörk karta eller rött ljus för kvällen.")}
     </div>
     <div class="card"><h3>Fiske</h3><div class="wl">
