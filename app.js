@@ -184,6 +184,8 @@ document.addEventListener("click", e => {
 }, true);
 map.addControl(new maplibregl.ScaleControl({ unit: "nautical", maxWidth: 110 }), "bottom-left");
 map.touchZoomRotate.enableRotation();
+// mus/styrplatta: dra = flytta kartan, aldrig vrida (högerklick-dra och ctrl-dra vred kartan av misstag på datorn)
+map.dragRotate.disable();
 let mapReady = false;
 
 /* overlay sources (route, track, boat …) */
@@ -486,7 +488,7 @@ function setFollow(on, quiet) {
 }
 function followBoat(jump) {
   const c = map.getContainer(), k = Math.min(c.clientWidth, c.clientHeight) * .22;
-  const moving = gps.sog > 2 && gps.cog != null;
+  const moving = gps.sog > 2 && gps.cog != null && (gps.acc || 0) < 50;   // datorns wifi-position hoppar och ger skenbar fart
   const opts = { center: lnglat(gps), duration: jump ? 600 : 900, easing: t => t };
   if (courseUp && moving) { opts.bearing = gps.cog; opts.offset = [0, k]; }
   else if (moving) { const r = rad(gps.cog - map.getBearing()); opts.offset = [-Math.sin(r) * k, Math.cos(r) * k]; }
@@ -587,7 +589,7 @@ function onFix(p) {
   $("#g-sog").textContent = gps.sog.toFixed(1);
   $("#g-cog").textContent = cog != null ? String(Math.round(cog)).padStart(3, "0") : "–";
   if (first && follow) map.jumpTo({ center: lnglat(pos), zoom: Math.max(map.getZoom(), 13) });
-  if (!follow && followWanted && gps.sog > 1.5 && Date.now() - lastTouch > 20000) { setFollow(true); toast("Följer båten igen", 1500); }
+  if (!follow && followWanted && gps.sog > 1.5 && (gps.acc || 0) < 50 && Date.now() - lastTouch > 20000) { setFollow(true); toast("Följer båten igen", 1500); }
   if (follow) { followBoat(false); $("#g-pos").innerHTML = fmtPos(pos); $("#g-poslbl").textContent = "GPS"; }
   $("#b-follow").classList.toggle("hidden", follow || !followWanted);
   if (recording) addTrackPoint(pos, t, gps.sog);
@@ -2226,6 +2228,7 @@ function openLayers() {
       <div class="muted">Traficoms inskannade sjökort ovanpå vektorkortet. Längre ut blir det svårläst eftersom kortet förminskas.</div>
     </div>` : ""}
     <div class="card"><h3>Visa på kartan</h3>
+      <div class="row" style="gap:8px;margin-bottom:4px"><button class="btn sm" id="ly-all">Välj alla</button><button class="btn sm" id="ly-none">Avmarkera alla</button></div>
       ${[["fairways", "Farleder, ledlinjer och farledsdjup"], ["marks", "Sjömärken och fyrar"], ["rocks", "Stenar och grund"], ["sectors", "Ljussektorer"], ["contours", "Djupkurvor"], ["satdepth", "Djupfärg på flygfotot"], ["limits", "Fartbegränsningar och förbudsområden"], ["land", "Ortnamn, vägar och hus"], ["steep", "Branter (syns i läget Fiske)"]].filter(([g]) => applies(g)).map(([g, t]) => `<label class="row"><input type="checkbox" data-grp="${g}" ${(S.layers.groups || {})[g] !== false ? "checked" : ""}> ${t}</label>`).join("")}
       ${applies("soundings") ? `<label class="row"><input type="checkbox" id="ly-snd" ${S.layers.soundings ? "checked" : ""}> Djupsiffror${S.layers.base === "sat" ? " (bara grundare än din båt)" : ""}</label>` : ""}
       <label class="row"><input type="checkbox" id="ly-ais" ${S.layers.ais ? "checked" : ""}> AIS-fartyg i realtid</label>
@@ -2239,6 +2242,8 @@ function openLayers() {
   on("#ly-det", "onchange", e => { S.layers.detail = e.target.checked; save(); applyLayers(); });
   $("#ly-prop").onchange = e => { S.layers.props = e.target.checked; save(); applyLayers(); if (e.target.checked && map.getZoom() < 12) toast("Fastighetsgränser visas när du zoomar in närmare", 2200); };
   on("#ly-dz", "onchange", e => { S.layers.detailZoom = +e.target.value; save(); applyLayers(); });
+  const setAll = on => { const card = $("#ly-all").closest(".card"); card.querySelectorAll("input[type=checkbox]:not(:disabled)").forEach(x => { if (x.checked !== on) { x.checked = on; x.dispatchEvent(new Event("change")); } }); };
+  $("#ly-all").onclick = () => setAll(true); $("#ly-none").onclick = () => setAll(false);
   document.querySelectorAll("[data-grp]").forEach(x => x.onchange = () => { S.layers.groups = { ...(S.layers.groups || {}), [x.dataset.grp]: x.checked }; save(); applyLayers(); });
   document.querySelectorAll("input[name=base]").forEach(x => x.onchange = () => { S.layers.base = x.value; save(); applyLayers(); track("base_map", { base: x.value }); const y = $("#sh-body").scrollTop; openLayers(); $("#sh-body").scrollTop = y; });
 }
