@@ -503,7 +503,18 @@ $("#b-north").onclick = () => {
 /* ---------- GPS ---------- */
 const boatEl = document.createElement("div");
 boatEl.className = "boat-icon";
-boatEl.innerHTML = `<svg width="34" height="34" viewBox="0 0 34 34"><path d="M17 3 25 29 17 24 9 29Z" fill="#d64545" stroke="#fff" stroke-width="2"/></svg>`;
+/* egen båt sedd ovanifrån, fören uppåt; formen följer båttypen */
+function boatIconSvg(type) {
+  const hull = type === "segel" ? "M17 2C22 8 24 14 24 20L22.5 31H11.5L10 20C10 14 12 8 17 2Z"
+    : type === "kajak" ? "M17 1C21.5 9 21.5 25 17 33C12.5 25 12.5 9 17 1Z"
+    : "M17 2C23 7 26 13 26 19L25 31H9L8 19C8 13 11 7 17 2Z";
+  const deck = type === "segel" ? `<circle cx="17" cy="13" r="1.8" fill="#fff"/><path d="M17 13V26" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>`
+    : type === "kajak" ? `<ellipse cx="17" cy="18" rx="1.6" ry="3" fill="#fff" opacity=".9"/>`
+    : `<path d="M12 16.5Q17 13.5 22 16.5V21H12Z" fill="#fff" opacity=".92"/>`;
+  return `<svg width="34" height="34" viewBox="0 0 34 34"><path d="${hull}" fill="#d64545" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>${deck}</svg>`;
+}
+function renderBoatIcon() { boatEl.innerHTML = boatIconSvg(boat().type); }
+renderBoatIcon();
 const boatMarker = new maplibregl.Marker({ element: boatEl, rotationAlignment: "map" });
 let boatShown = false;
 
@@ -2089,7 +2100,7 @@ map.on("moveend", () => { if (S.layers.ais) { clearTimeout(loadAis.t); loadAis.t
 /* ---------- boats ---------- */
 const BTYPES = { motor: "Motorbåt", segel: "Segelbåt", rib: "RIB", kajak: "Kajak / kanot", ovrig: "Annan" };
 const BDEF = { motor: { speed: 20, fuel: 18, maxWind: 10, draft: .6 }, segel: { speed: 5.5, fuel: 1.5, maxWind: 13, draft: 1.6 }, rib: { speed: 28, fuel: 25, maxWind: 9, draft: .5 }, kajak: { speed: 3, fuel: 0, maxWind: 6, draft: .2 }, ovrig: { speed: 6, fuel: 3, maxWind: 8, draft: .8 } };
-function boatChanged() { if (mapReady) { KummelChart.setNeed(map, needDepth()); renderSatLegend(S.layers.base === "sat" && (S.layers.groups || {}).satdepth !== false); } if (wx) renderChip(); }
+function boatChanged() { renderBoatIcon(); if (mapReady) { KummelChart.setNeed(map, needDepth()); renderSatLegend(S.layers.base === "sat" && (S.layers.groups || {}).satdepth !== false); } if (wx) renderChip(); }
 function openBoats() {
   openSheet("Båtar", `
     <div class="list">${S.boats.map(b => `<div class="card ${b.id === S.boatId ? "sel" : ""}">
@@ -3011,7 +3022,7 @@ function openWelcome() {
   setSheetState($("#sheet"), 2);
   $("#sheet").classList.toggle("locked", must); document.body.classList.toggle("terms", must);
   const ok = () => { const first = !termsOk(); S.termsOk = TERMS_V; S.welcomed = 1; save(); if (first) { setTimeout(() => toast("Tips: Meny → Så fungerar Kummel visar vad knapparna gör", 3500), 2500); setTimeout(askStats, 7000); } setTimeout(openSharedRoute, 400); $("#sheet").classList.remove("locked"); document.body.classList.remove("terms"); };
-  $("#wl-btype").onchange = e => { boat().type = e.target.value; save(); };
+  $("#wl-btype").onchange = e => { boat().type = e.target.value; save(); renderBoatIcon(); };
   $("#wl-draft").onchange = e => { const v = parseFloat(String(e.target.value).replace(",", ".")); if (v >= 0 && v <= 5) { boat().draft = v; save(); boatChanged(); } };
   $("#wl-go").onclick = () => { ok(); closeSheet(); $("#b-locate").click(); };
   $("#wl-skip").onclick = () => { ok(); closeSheet(); };
