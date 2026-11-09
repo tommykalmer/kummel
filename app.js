@@ -24,7 +24,8 @@ const DEFAULT_STATE = {
 const ALAND_FLAG = `<svg class="flag" viewBox="0 0 26 17" aria-label="Ålands flagga"><rect width="26" height="17" fill="#0053a5"/><rect x="7" width="5" height="17" fill="#ffce00"/><rect y="6" width="26" height="5" fill="#ffce00"/><rect x="8.5" width="2" height="17" fill="#d21034"/><rect y="7.5" width="26" height="2" fill="#d21034"/></svg>`;
 const MAKER = "AsterIQ Ab", MAKER_TOWN = "Mariehamn", MAKER_ID = "3553529-1";   // FO-nummer
 const SITE = "www.kummel.app", SITE_URL = "https://www.kummel.app/";   // appens adress, visas på delade bilder m.m.
-let draftCatch = null;   // fångst som inte är sparad än (Fisk! utan att trycka Spara)
+let draftCatch = null;
+let wl = null;   // vattenstånd {cm, at, station, km, obs:[{t,v}], fc:[{t,v}]}   // fångst som inte är sparad än (Fisk! utan att trycka Spara)
 let S = load();
 function load() {
   try {
@@ -42,7 +43,20 @@ let saveT;
 function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }, 200); }
 const uid = () => Math.random().toString(36).slice(2, 9);
 const boat = () => S.boats.find(b => b.id === S.boatId) || S.boats[0];
-const needDepth = () => { const b = boat(); return (+b.draft || 0) + (+b.margin || 0); };
+/* funktioner som användaren kan slå av och på (Meny → Funktioner) */
+const FEATS = [
+  ["wlevel", "Vattenstånd", "Visar aktuellt vattenstånd och räknar med det i grundvarningar och djuprutan."],
+  ["windflow", "Strömmande vind", "Vinden som rörliga linjer över kartan när sjövädret är på."],
+  ["sstfill", "Vattentemperatur i färg", "Färgar vattnet efter temperatur när du visar vattentemperatur i sjövädret."],
+  ["routewx", "Väder längs rutten", "Vind och våg där du är vid varje tidpunkt längs en planerad rutt."],
+  ["hotspots", "Lovande fiskeplatser", "Föreslår platser efter fiskart, vind, djup och temperatur (läget Fiske)."],
+  ["drift", "Driftplanering", "Visar hur båten driver med vinden från en vald plats (läget Fiske)."]
+];
+const feat = k => !S.feat || S.feat[k] !== false;
+const boatNeed = () => { const b = boat(); return (+b.draft || 0) + (+b.margin || 0); };
+/* djup som behövs på sjökortet: båtens behov, plus det vattnet står under medelvattenstånd just nu */
+const wlM = () => feat("wlevel") && S.wlAdjust !== false && wl && Date.now() - wl.at < 6 * 3600000 ? wl.cm / 100 : 0;
+const needDepth = () => Math.max(0, +(boatNeed() - wlM()).toFixed(2));
 
 /* GPS state up front: map handlers read it from the first frame */
 let gps = null, watchId = null, follow = false, courseUp = false, lastFix = null, wakeLock = null;
@@ -234,7 +248,7 @@ const dz = () => +S.layers.detailZoom || 13;
 function renderSatLegend(on) {
   const el = $("#satlegend"); if (!el) return;
   el.hidden = !on; if (!on) return;
-  const n = needDepth().toFixed(1).replace(".", ",");
+  const n = needDepth().toFixed(1).replace(".", ",") + (wlM() && Math.abs(wl.cm) >= 3 ? ` (vattenst. ${fmtCm(wl.cm)})` : "");
   el.innerHTML = `<b>Djup</b><span><i style="background:#ff5a5a"></i>under ${n} m</span><span><i style="background:#7fd6ff"></i>till 3 m</span><span><i style="background:#3d9ed6"></i>3–6 m</span><span><i style="background:#1f5f9a"></i>6–10 m</span><span><i style="background:transparent;border:1px solid #fff"></i>över 10 m</span>`;
   requestAnimationFrame(() => document.documentElement.style.setProperty("--legend-h", el.offsetHeight + "px"));
 }
@@ -367,7 +381,7 @@ function closeSheet() {
 }
 /* vilken knapp hör panelen till? Knappen lyser medan panelen är öppen, och ett nytt tryck stänger den */
 let sheetPref = null;
-const MENU_VIEWS = ["legend", "menu", "places", "routes", "log", "catches", "data", "about", "anchor", "offline", "boats", "boatedit", "welcome", "share", "pastcatch"];
+const MENU_VIEWS = ["features", "legend", "menu", "places", "routes", "log", "catches", "data", "about", "anchor", "offline", "boats", "boatedit", "welcome", "share", "pastcatch"];
 function railOwner(v) {
   if (!v) return null;
   if (v === "layers") return "#b-layers"; if (v === "place") return "#b-place"; if (v === "fishidx") return "#b-idx"; if (v === "depth") return "#b-depth";
@@ -599,7 +613,7 @@ function depthAlarm(pos) {
   const min = Math.min(...hits.map(f => KummelChart.minDepthOf(f)).filter(v => v != null));
   if (isFinite(min) && min < needDepth()) {
     lastAlarm = Date.now();
-    toast(`Grunt framåt: ${min.toFixed(1)} m inom 3 min. ${boat().name} behöver ${needDepth().toFixed(1)} m.`, 6000);
+    toast(`Grunt framåt: ${min.toFixed(1)} m enligt kartan inom 3 min. ${boat().name} behöver ${boatNeed().toFixed(1)} m${wlM() ? ` (vattenstånd ${fmtCm(wl.cm)})` : ""}.`, 6000);
     try { navigator.vibrate && navigator.vibrate([300, 150, 300]); } catch (e) {}
   }
 }
@@ -1130,7 +1144,8 @@ map.on("click", e => {
       const p = hits[0].properties, lo = p.d1 ?? 0, hi = p.d2;
       const txt = lo < 0 ? "Torrfallande" : hi != null ? `${String(lo).replace(".", ",")}–${String(hi).replace(".", ",")} m` : `över ${String(lo).replace(".", ",")} m`;
       const warn = lo < needDepth() ? `<div style="color:#d22b2b;font-weight:600">För grunt för ${esc(boat().name)}</div>` : "";
-      depthPop = new maplibregl.Popup({ closeButton: false, offset: 10, className: "wp-pop" }).setLngLat(e.lngLat).setHTML(`<div style="font:600 15px var(--f-ui);color:#14232e">Djup ${txt}</div>${warn}<div style="font-size:11px;color:#5d6b73">Enligt sjökortet. Stenar kan finnas.</div>`).addTo(map);
+      const nowTxt = wlM() && Math.abs(wl.cm) >= 3 && lo >= 0 ? `<div style="font-size:12px;color:#14232e">Just nu ca ${String(Math.max(0, lo + wl.cm / 100).toFixed(1)).replace(".", ",")}${hi != null ? "–" + String((hi + wl.cm / 100).toFixed(1)).replace(".", ",") : ""} m (vattenstånd ${fmtCm(wl.cm)})</div>` : "";
+      depthPop = new maplibregl.Popup({ closeButton: false, offset: 10, className: "wp-pop" }).setLngLat(e.lngLat).setHTML(`<div style="font:600 15px var(--f-ui);color:#14232e">Djup ${txt}</div>${nowTxt}${warn}<div style="font-size:11px;color:#5d6b73">Enligt sjökortet. Stenar kan finnas.</div>`).addTo(map);
       const pop = depthPop, el = pop.getElement();
       el.style.cursor = "pointer"; el.addEventListener("click", ev => { ev.stopPropagation(); pop.remove(); if (depthPop === pop) depthPop = null; });
       setTimeout(() => { pop.remove(); if (depthPop === pop) depthPop = null; }, 8000);
@@ -1919,6 +1934,7 @@ function renderWxLayer() {
   $("#wxb-sub").textContent = water ? `Vattentemperatur vid ytan${wxStep === 0 ? "" : " · prognos"}` : `Vind m/s (byar) och våghöjd · ${wxObs.length && wxStep === 0 ? "kuststationer uppmätta" : "prognos"}`;
   document.querySelectorAll("[data-wxm]").forEach(b => b.setAttribute("aria-pressed", b.dataset.wxm === wxMode));
   $("#wxb-legend-wind").classList.toggle("hidden", water); $("#wxb-legend-water").classList.toggle("hidden", !water);
+  flowStart(); sstPaint();
 }
 /* uppmätt vind från Meteorologiska institutets kuststationer (öppen data) */
 async function loadWxObs() {
@@ -1949,7 +1965,7 @@ function setWx(on) {
   $("#b-wx").setAttribute("aria-pressed", on);
   $("#wxbar").classList.toggle("hidden", !on);
   if (on) { wxStep = 0; $("#wxb-range").value = 0; loadWxGrid(); loadWxObs(); }
-  else { setData("wxgrid", EMPTY); setData("wxobs", EMPTY); setData("wxsst", EMPTY); }
+  else { setData("wxgrid", EMPTY); setData("wxobs", EMPTY); setData("wxsst", EMPTY); flowStop(); sstPaint(); }
 }
 $("#b-wx").onclick = () => setWx(!wxOn);
 $("#wxb-close").onclick = () => setWx(false);
@@ -2136,13 +2152,14 @@ function openMenu() {
       <button class="btn" id="m-data">Flytta och säkerhetskopiera</button>
       <button class="btn" id="m-anchor">Ankarlarm${S.anchor ? " (på)" : ""}</button>
       <button class="btn" id="m-offline">Offlinekarta${S.offline ? " (nedladdad)" : ""}</button>
+      <button class="btn" id="m-feat">Funktioner</button>
       <button class="btn" id="m-legend">Teckenförklaring</button>
       <button class="btn" id="m-welcome">Så fungerar Kummel</button>
       <button class="btn" id="m-about">Om Kummel</button>
     </div>
     <div class="maker">${ALAND_FLAG} Kummel · en produkt från ${MAKER}, ${MAKER_TOWN}</div>`, "menu");
   $("#m-boats").onclick = openBoats; $("#m-places").onclick = openPlaces; $("#m-routes").onclick = openRoutes;
-  $("#m-log").onclick = openLog; $("#m-catch").onclick = openCatches; $("#m-data").onclick = openData; $("#m-about").onclick = openAbout; $("#m-welcome").onclick = openWelcome; $("#m-legend").onclick = openLegend; $("#m-anchor").onclick = openAnchor; $("#m-offline").onclick = openOffline;
+  $("#m-log").onclick = openLog; $("#m-catch").onclick = openCatches; $("#m-data").onclick = openData; $("#m-about").onclick = openAbout; $("#m-welcome").onclick = openWelcome; $("#m-legend").onclick = openLegend; $("#m-feat").onclick = openFeatures; $("#m-anchor").onclick = openAnchor; $("#m-offline").onclick = openOffline;
 }
 $("#b-menu").onclick = openMenu;
 function openPlaces() {
@@ -2542,6 +2559,190 @@ function openSharedRoute() {
 }
 window.addEventListener("hashchange", () => { if (/#rutt=/.test(location.hash) && termsOk()) openSharedRoute(); });
 
+/* ---------- vattenstånd (Meteorologiska institutet) ----------
+   Mätvärde från närmaste mareograf (cm mot teoretiskt medelvattenstånd, samma nivå som farlederna
+   på Åland), plus prognos för platsen. Sjökortets djup visas som vanligt; vattenståndet visas och
+   räknas in i grundvarningar och djuprutan. */
+const WL_STATIONS = [
+  { id: 134252, name: "Degerby, Föglö", lat: 60.0317, lng: 20.3848 },
+  { id: 134225, name: "Ruissalo, Åbo", lat: 60.4285, lng: 22.1009 },
+  { id: 134253, name: "Hangö", lat: 59.8226, lng: 22.9766 },
+  { id: 134224, name: "Raumo", lat: 61.1335, lng: 21.4255 }
+];
+let wlKey = "";
+async function fmiSeries(url) {
+  const xml = new DOMParser().parseFromString(await (await fetch(url)).text(), "text/xml"), out = {};
+  for (const el of xml.getElementsByTagNameNS("*", "BsWfsElement")) {
+    const n = el.getElementsByTagNameNS("*", "ParameterName")[0]?.textContent, v = parseFloat(el.getElementsByTagNameNS("*", "ParameterValue")[0]?.textContent);
+    const t = Date.parse(el.getElementsByTagNameNS("*", "Time")[0]?.textContent);
+    if (!isNaN(v) && t) (out[n] || (out[n] = [])).push({ t, v });
+  }
+  Object.values(out).forEach(s => s.sort((x, y) => x.t - y.t));
+  return out;
+}
+async function loadWaterLevel(force) {
+  if (!feat("wlevel")) { wl = null; renderWl(); return; }
+  const c = gps && follow ? gps : ll(map.getCenter());
+  const st = WL_STATIONS.map(s => ({ ...s, km: distNm(c, s) * 1.852 })).sort((x, y) => x.km - y.km)[0];
+  const key = st.id + ":" + c.lat.toFixed(1) + c.lng.toFixed(1);
+  if (!force && key === wlKey && wl && Date.now() - wl.at < 15 * 60000) return;
+  const iso = ms => new Date(ms).toISOString().slice(0, 13) + ":00:00Z", base = "https://opendata.fmi.fi/wfs?service=WFS&version=2.0.0&request=getFeature&storedquery_id=";
+  try {
+    const [o, f] = await Promise.all([
+      fmiSeries(`${base}fmi::observations::mareograph::simple&fmisid=${st.id}&parameters=WATLEV&timestep=60&starttime=${iso(Date.now() - 30 * 3600000)}`),
+      fmiSeries(`${base}fmi::forecast::sealevel::point::simple&latlon=${c.lat.toFixed(3)},${c.lng.toFixed(3)}&parameters=SeaLevel&timestep=60`).catch(() => ({}))
+    ]);
+    const obs = (o.WATLEV || []).map(p => ({ t: p.t, v: p.v / 10 }));   // mm -> cm
+    const fc = (f.SeaLevel || []).filter(p => p.t > Date.now() - 3600000).slice(0, 48);
+    const last = obs[obs.length - 1]; if (!last && !fc.length) throw new Error("inga data");
+    const cm = last ? last.v : fc[0].v, prev = obs.find(p => p.t >= (last ? last.t : Date.now()) - 3 * 3600000);
+    wl = { cm: Math.round(cm), at: Date.now(), t: last ? last.t : fc[0].t, station: st.name, km: st.km, obs, fc, trend: last && prev ? last.v - prev.v : null };
+    wlKey = key;
+  } catch (e) { if (!wl) { renderWl(); return; } }
+  renderWl(); boatChanged();
+  if (sheetView === "wlevel") openWaterLevel();
+}
+const fmtCm = v => (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(Math.round(v)) + " cm";
+function renderWl() {
+  const el = $("#wlbar"); if (!el) return;
+  el.classList.toggle("hidden", !feat("wlevel") || !wl);
+  if (!wl) return;
+  const tr = wl.trend == null ? "" : wl.trend > 1.5 ? " ↑" : wl.trend < -1.5 ? " ↓" : " →";
+  el.innerHTML = `Vattenstånd <b>${fmtCm(wl.cm)}</b>${tr}`;
+  el.classList.toggle("low", wl.cm <= -20); el.classList.toggle("high", wl.cm >= 30);
+}
+function wlChart() {
+  const pts = [...wl.obs.map(p => ({ ...p, f: 0 })), ...wl.fc.filter(p => !wl.obs.length || p.t > wl.obs[wl.obs.length - 1].t).map(p => ({ ...p, f: 1 }))];
+  if (pts.length < 2) return "";
+  const W = 320, H = 130, t0 = pts[0].t, t1 = pts[pts.length - 1].t, vs = pts.map(p => p.v);
+  const lo = Math.min(-20, ...vs) - 5, hi = Math.max(20, ...vs) + 5;
+  const X = t => 8 + (t - t0) / (t1 - t0) * (W - 16), Y = v => 8 + (hi - v) / (hi - lo) * (H - 28);
+  const path = f => pts.filter((p, i) => p.f === f || (f === 1 && pts[i + 1] && pts[i + 1].f === 1 && p.f === 0)).map((p, i) => `${i ? "L" : "M"}${X(p.t).toFixed(1)},${Y(p.v).toFixed(1)}`).join("");
+  const now = X(Date.now()), ticks = [];
+  for (let t = Math.ceil(t0 / 21600000) * 21600000; t < t1; t += 21600000) { const d = new Date(t); ticks.push(`<text x="${X(t)}" y="${H - 4}" font-size="10" text-anchor="middle" fill="currentColor" opacity=".6">${d.getHours() === 0 ? DAYS[d.getDay()] : pad(d.getHours())}</text>`); }
+  return `<svg viewBox="0 0 ${W} ${H}" class="wl-chart">
+    <line x1="8" x2="${W - 8}" y1="${Y(0)}" y2="${Y(0)}" stroke="currentColor" stroke-opacity=".35" stroke-dasharray="3 3"/>
+    <text x="${W - 8}" y="${Y(0) - 3}" font-size="10" text-anchor="end" fill="currentColor" opacity=".6">medel</text>
+    <path d="${path(0)}" fill="none" stroke="#1d6fa3" stroke-width="2.5"/>
+    <path d="${path(1)}" fill="none" stroke="#1d6fa3" stroke-width="2" stroke-dasharray="4 3"/>
+    ${now > 8 && now < W - 8 ? `<line x1="${now}" x2="${now}" y1="4" y2="${H - 18}" stroke="#d64545" stroke-width="1.5"/>` : ""}
+    ${ticks.join("")}</svg>`;
+}
+function openWaterLevel() {
+  if (!wl) { openSheet("Vattenstånd", `<div class="muted">Hämtar vattenstånd …</div>`, "wlevel"); loadWaterLevel(true); return; }
+  const need = boatNeed(), eff = needDepth(), b = boat();
+  const minF = wl.fc.length ? wl.fc.reduce((m, p) => p.v < m.v ? p : m) : null, maxF = wl.fc.length ? wl.fc.reduce((m, p) => p.v > m.v ? p : m) : null;
+  const when = t => { const d = new Date(t); return `${d.toDateString() === new Date().toDateString() ? "i dag" : DAYS[d.getDay()]} ${pad(d.getHours())}:00`; };
+  openSheet("Vattenstånd", `
+    <div class="wl-big"><b>${fmtCm(wl.cm)}</b><span>${wl.cm < -3 ? "under" : wl.cm > 3 ? "över" : "nära"} medelvattenstånd${wl.trend != null ? ` · ${wl.trend > 1.5 ? "stiger" : wl.trend < -1.5 ? "sjunker" : "stabilt"}` : ""}</span></div>
+    <div class="muted">Uppmätt i ${esc(wl.station)}${wl.km > 15 ? ` (${Math.round(wl.km)} km bort)` : ""}, kl ${hm(new Date(wl.t))}. Streckad linje är prognos.</div>
+    ${wlChart()}
+    ${minF ? `<div class="muted">Närmaste dygnen: lägst ${fmtCm(minF.v)} ${when(minF.t)}, högst ${fmtCm(maxF.v)} ${when(maxF.t)}.</div>` : ""}
+    <div class="card"><h3>Vad betyder det?</h3><div class="muted">Djupen på sjökortet gäller medelvattenstånd. ${wl.cm < -3 ? `Just nu står vattnet ${Math.abs(wl.cm)} cm lägre, så alla grund är ${Math.abs(wl.cm)} cm grundare än kartan visar.` : wl.cm > 3 ? `Just nu står vattnet ${wl.cm} cm högre, så det är ${wl.cm} cm djupare än kartan visar.` : "Just nu stämmer kartans djup ganska väl."}</div></div>
+    <label class="row"><input type="checkbox" id="wl-adj" ${S.wlAdjust !== false ? "checked" : ""}> Räkna med vattenståndet i grundvarningar och röd "för grunt"-färg</label>
+    <div class="muted">${esc(b.name)} behöver ${need.toFixed(1).replace(".", ",")} m. ${S.wlAdjust !== false && Math.abs(wl.cm) >= 3 ? `Med dagens vattenstånd markeras allt grundare än <b>${eff.toFixed(1).replace(".", ",")} m på kartan</b>.` : ""}</div>
+    <div class="disclaimer">Källa: Meteorologiska institutet. Vattenståndet kan variera lokalt, särskilt i trånga vikar och vid kraftig vind.</div>`, "wlevel");
+  $("#wl-adj").onchange = e => { S.wlAdjust = e.target.checked; save(); boatChanged(); openWaterLevel(); };
+}
+setInterval(() => loadWaterLevel(), 15 * 60000);
+
+/* ---------- strömmande vind (partiklar som flyter med vinden, som på Windy) ---------- */
+let flowRAF = null, flowParts = [], flowField = null, flowCv = null;
+function windField() {   // vind per skärmruta (px/bildruta), interpolerad mellan prognospunkterna
+  if (!wxGrid || !wxGrid.pts.length) return null;
+  const i = wxGrid.t0 + wxStep, br = map.getBearing() * Math.PI / 180, P = [];
+  wxGrid.pts.forEach((p, k) => { const h = wxGrid.F[k]?.hourly; if (!h || h.wind_speed_10m[i] == null) return;
+    const s = map.project([p.lng, p.lat]), w = h.wind_speed_10m[i], th = ((h.wind_direction_10m[i] + 180) % 360) * Math.PI / 180 - br;
+    P.push({ x: s.x, y: s.y, u: Math.sin(th) * w, v: -Math.cos(th) * w, w }); });
+  if (!P.length) return null;
+  const c = map.getContainer(), W = c.clientWidth, H = c.clientHeight, G = 24, cols = Math.ceil(W / G) + 1, rows = Math.ceil(H / G) + 1, U = new Float32Array(cols * rows), V = new Float32Array(cols * rows), S2 = new Float32Array(cols * rows);
+  for (let r = 0; r < rows; r++) for (let q = 0; q < cols; q++) {
+    let su = 0, sv = 0, sw = 0, ws = 0; const x = q * G, y = r * G;
+    for (const p of P) { const d = (p.x - x) ** 2 + (p.y - y) ** 2 + 400, k = 1 / d; su += p.u * k; sv += p.v * k; ws += p.w * k; sw += k; }
+    U[r * cols + q] = su / sw; V[r * cols + q] = sv / sw; S2[r * cols + q] = ws / sw;
+  }
+  return { W, H, G, cols, rows, U, V, S: S2, at: (x, y) => { const q = Math.max(0, Math.min(cols - 1, Math.round(x / G))), r = Math.max(0, Math.min(rows - 1, Math.round(y / G))), j = r * cols + q; return [U[j], V[j], S2[j]]; } };
+}
+function flowColor(w) { const lim = boat().maxWind || 10; return w > lim ? "255,110,110" : w > lim * .75 ? "255,214,102" : "255,255,255"; }
+function flowStart() {
+  flowStop();
+  if (!wxOn || wxMode === "water" || !feat("windflow") || document.hidden) return;
+  flowField = windField(); if (!flowField) return;
+  if (!flowCv) { flowCv = document.createElement("canvas"); flowCv.id = "flowcv"; map.getContainer().appendChild(flowCv); }
+  const dpr = Math.min(2, window.devicePixelRatio || 1), F = flowField;
+  flowCv.width = F.W * dpr; flowCv.height = F.H * dpr; flowCv.style.width = F.W + "px"; flowCv.style.height = F.H + "px"; flowCv.style.display = "block";
+  const g = flowCv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.lineCap = "round";
+  const N = Math.round(Math.min(1800, F.W * F.H / 380)), spawn = p => { p.x = Math.random() * F.W; p.y = Math.random() * F.H; p.age = 0; p.life = 40 + Math.random() * 70; return p; };
+  flowParts = Array.from({ length: N }, () => spawn({}));
+  const k = .22 * Math.pow(2, Math.max(0, 12 - map.getZoom()) * .15);   // px per (m/s) och bildruta
+  const step = () => {
+    g.globalCompositeOperation = "destination-in"; g.fillStyle = "rgba(0,0,0,.92)"; g.fillRect(0, 0, F.W, F.H);
+    g.globalCompositeOperation = "source-over"; g.lineWidth = 1.4;
+    for (const p of flowParts) {
+      const [u, v, w] = F.at(p.x, p.y), nx = p.x + u * k, ny = p.y + v * k;
+      g.strokeStyle = `rgba(${flowColor(w)},${Math.min(.85, .25 + w / 18)})`;
+      g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(nx, ny); g.stroke();
+      p.x = nx; p.y = ny;
+      if (++p.age > p.life || nx < 0 || ny < 0 || nx > F.W || ny > F.H) spawn(p);
+    }
+    flowRAF = requestAnimationFrame(step);
+  };
+  flowRAF = requestAnimationFrame(step);
+}
+function flowStop() { if (flowRAF) cancelAnimationFrame(flowRAF); flowRAF = null; if (flowCv) { flowCv.getContext("2d").clearRect(0, 0, flowCv.width, flowCv.height); flowCv.style.display = "none"; } }
+map.on("movestart", flowStop);
+map.on("moveend", () => { if (wxOn) { flowStart(); sstPaint(); } });
+document.addEventListener("visibilitychange", () => { if (document.hidden) flowStop(); else if (wxOn) flowStart(); });
+window.addEventListener("resize", () => { if (wxOn) { flowStart(); sstPaint(); } });
+
+/* ---------- vattentemperatur som färg över vattnet ----------
+   Mjuk färgyta interpolerad mellan prognospunkterna och mätstationerna, ritad bara där det är vatten
+   (djupområdena på sjökortet används som mask). Siffrorna visas ovanpå som tidigare. */
+let sstCv = null;
+const SST_STOPS = [[0, [59, 76, 192]], [4, [91, 143, 249]], [8, [63, 182, 199]], [12, [76, 195, 138]], [16, [232, 197, 71]], [20, [240, 138, 60]], [24, [214, 62, 62]]];
+function sstRGB(v) { for (let i = 1; i < SST_STOPS.length; i++) if (v <= SST_STOPS[i][0] || i === SST_STOPS.length - 1) { const [a, ca] = SST_STOPS[i - 1], [b, cb] = SST_STOPS[i], f = Math.max(0, Math.min(1, (v - a) / (b - a))); return ca.map((x, j) => Math.round(x + (cb[j] - x) * f)); } }
+function sstPaint() {
+  if (sstCv) { sstCv.getContext("2d").clearRect(0, 0, sstCv.width, sstCv.height); sstCv.style.display = "none"; }
+  if (!wxOn || wxMode !== "water" || !feat("sstfill") || !wxGrid) return;
+  const i = wxGrid.t0 + wxStep, P = [];
+  wxGrid.pts.forEach((p, k) => { const v = wxGrid.M[k]?.hourly?.sea_surface_temperature?.[i]; if (v != null) { const s = map.project([p.lng, p.lat]); P.push({ x: s.x, y: s.y, v, w: 1 }); } });
+  if (wxStep === 0) wxWater.forEach(o => { const s = map.project([o.lng, o.lat]); P.push({ x: s.x, y: s.y, v: o.v, w: 3 }); });   // mätvärden väger tyngre
+  if (!P.length) return;
+  const maskLayer = ["depare", "depare-sat"].find(l => map.getLayer(l) && map.getLayoutProperty(l, "visibility") !== "none");
+  if (!maskLayer) return;
+  const c = map.getContainer(), W = c.clientWidth, H = c.clientHeight, dpr = Math.min(2, window.devicePixelRatio || 1);
+  if (!sstCv) { sstCv = document.createElement("canvas"); sstCv.id = "sstcv"; map.getContainer().appendChild(sstCv); }
+  sstCv.width = W * dpr; sstCv.height = H * dpr; sstCv.style.width = W + "px"; sstCv.style.height = H + "px"; sstCv.style.display = "block";
+  const g = sstCv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // mask: vattenytor i bild
+  const feats = map.queryRenderedFeatures({ layers: [maskLayer] }); if (!feats.length) return;
+  g.beginPath();
+  for (const f of feats) { const gm = f.geometry, polys = gm.type === "Polygon" ? [gm.coordinates] : gm.type === "MultiPolygon" ? gm.coordinates : [];
+    for (const poly of polys) for (const ring of poly) ring.forEach((pt, j) => { const s = map.project(pt); j ? g.lineTo(s.x, s.y) : g.moveTo(s.x, s.y); }); }
+  g.save(); g.clip("nonzero");   // nonzero: tilarnas överlapp tar inte ut varandra
+  const G = 10; g.globalAlpha = .5;
+  for (let y = 0; y < H; y += G) for (let x = 0; x < W; x += G) {
+    let s = 0, sw = 0; for (const p of P) { const k = p.w / ((p.x - x) ** 2 + (p.y - y) ** 2 + 900); s += p.v * k; sw += k; }
+    const [r, gg, b] = sstRGB(s / sw); g.fillStyle = `rgb(${r},${gg},${b})`; g.fillRect(x, y, G, G);
+  }
+  g.restore();
+}
+map.on("movestart", () => { if (sstCv) sstCv.style.display = "none"; });
+
+/* ---------- funktioner (inställningar) ---------- */
+function openFeatures() {
+  openSheet("Funktioner", `
+    <div class="muted">Välj vad Kummel ska visa och göra. Allt kan slås på igen när som helst.</div>
+    <div class="list">${FEATS.map(([k, t, d]) => `<label class="feat-row"><input type="checkbox" data-feat="${k}" ${feat(k) ? "checked" : ""}><div><b>${t}</b><div class="muted">${d}</div></div></label>`).join("")}</div>`, "features");
+  document.querySelectorAll("[data-feat]").forEach(x => x.onchange = () => {
+    S.feat = { ...(S.feat || {}), [x.dataset.feat]: x.checked }; save(); track("feature_toggle", { f: x.dataset.feat, on: x.checked ? 1 : 0 });
+    if (x.dataset.feat === "wlevel") { loadWaterLevel(true); boatChanged(); }
+    if (x.dataset.feat === "windflow") { if (wxOn) flowStart(); }
+    if (x.dataset.feat === "sstfill") sstPaint();
+    if (typeof featChanged === "function") featChanged(x.dataset.feat);
+  });
+}
+
 /* ---------- teckenförklaring ---------- */
 function openLegend() {
   const P = KummelChart.dayColors(), ic = id => `<span class="lg-ic"><img src="${KummelChart.iconURL(id)}" alt=""></span>`;
@@ -2688,6 +2889,8 @@ setMode(S.mode);
 if (S.layers.ais) setAis(true);
 if (S.anchor) { anchorBar(); startGps(); keepAwake(); toast("Ankarlarmet är på", 2000); }
 statsOn(); setTimeout(askStats, 4000);
+setTimeout(() => loadWaterLevel(), 2500);
+$("#wlbar").onclick = openWaterLevel;
 if (S.compassSlow) { if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function") document.addEventListener("click", () => setCompass(true), { once: true }); else setCompass(true); }
 if (!termsOk()) openWelcome();
 else if (!openSharedRoute() && navigator.geolocation && navigator.permissions && navigator.permissions.query)

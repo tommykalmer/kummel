@@ -254,6 +254,14 @@ body:has(#navbar:not(.hidden)) #anchorbar,body:has(#wxbar:not(.hidden)) #anchorb
 .maker{font-size:12px;color:var(--muted);text-align:center;padding:6px 0 2px;display:flex;gap:8px;align-items:center;justify-content:center}
 #statsask{position:fixed;z-index:940;left:calc(10px + var(--sal));right:calc(10px + var(--sar));bottom:calc(10px + var(--sab));max-width:520px;margin:0 auto;background:var(--paper);color:var(--fg);border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.3);padding:14px 16px;display:flex;flex-direction:column;gap:10px;font-size:14px}
 .pos-line{display:flex;gap:10px;align-items:center;justify-content:space-between}
+#wlbar{position:fixed;z-index:499;top:calc(92px + var(--sat));left:calc(12px + var(--sal));font:600 12px/1 var(--f-ui);color:var(--fg);background:color-mix(in srgb,var(--panel) 92%,transparent);border:0;border-radius:8px;padding:6px 9px;box-shadow:var(--shadow);cursor:pointer}
+#wlbar b{font-variant-numeric:tabular-nums}#wlbar.low b{color:#d64545}#wlbar.high b{color:#1d6fa3}#wlbar.hidden{display:none}
+body:has(#navbar:not(.hidden)) #wlbar,body:has(#wxbar:not(.hidden)) #wlbar{display:none}
+body:has(#wlbar:not(.hidden)) #anchorbar{top:calc(124px + var(--sat))}
+.wl-big{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.wl-big b{font:800 34px var(--f-num)}.wl-big span{color:var(--muted)}
+.wl-chart{width:100%;height:auto;color:var(--fg);flex:none}
+.feat-row{display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-bottom:1px dashed var(--line)}.feat-row input{margin-top:4px;flex:none;width:20px;height:20px}
+#flowcv,#sstcv{position:absolute;inset:0;pointer-events:none;display:none}#sstcv{z-index:1}#flowcv{z-index:2}
 .disclaimer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
 .hidden{display:none!important}
 label.row{flex-wrap:nowrap;align-items:center}
@@ -271,6 +279,8 @@ label.row{flex-wrap:nowrap;align-items:center}
   .brand{padding:6px 10px}.modes{padding:3px}.modes button{padding:5px 10px}#wxchip{padding:4px 10px}
   #nonav{top:calc(54px + var(--sat))}
   #anchorbar{top:calc(82px + var(--sat))}
+  #wlbar{top:calc(54px + var(--sat));left:calc(250px + var(--sal))}
+  body:has(#wlbar:not(.hidden)) #anchorbar{top:calc(82px + var(--sat))}
   .rb,.rb.sm,#rail .rb{width:42px;height:42px}.rb svg,.rb.sm svg{width:20px;height:20px}
   #rail{top:calc(54px + var(--sat));display:grid;grid-template-rows:repeat(4,42px);grid-auto-flow:column;gap:6px;direction:rtl}
   #rail > *{direction:ltr}
@@ -291,7 +301,7 @@ label.row{flex-wrap:nowrap;align-items:center}
   .grab{display:none}
   .sh-body,body.sheet-open .sh-body{padding-bottom:16px}
   body.sheet-open .sh-head,body.sheet-open .sh-body{padding-right:max(16px,var(--sar))}
-  body.sheet-open #lrail,body.sheet-open #nonav,body.sheet-open #anchorbar,body.sheet-open #inst,body.sheet-open #satlegend{visibility:hidden}
+  body.sheet-open #lrail,body.sheet-open #wlbar,body.sheet-open #nonav,body.sheet-open #anchorbar,body.sheet-open #inst,body.sheet-open #satlegend{visibility:hidden}
   body.sheet-open #fab{visibility:visible}
   .toast{top:auto;bottom:calc(96px + var(--sab))}
 }
@@ -305,6 +315,7 @@ label.row{flex-wrap:nowrap;align-items:center}
 
 <button id="anchorbar" class="hidden" type="button"></button>
 <div id="anchoralarm" class="hidden" role="alert"><div class="aa-in"><div class="aa-big">⚓ ANKARLARM</div><div id="aa-why"></div><div class="row"><button class="btn" id="aa-mute">Tysta 1 min</button><button class="btn" id="aa-off">Jag har koll</button></div></div></div>
+<button id="wlbar" class="hidden" type="button"></button>
 <button id="nonav" type="button">Ej för navigering · Läs mer</button>
 <div id="top">
   <div class="brand"><svg viewBox="0 0 100 100" class="brand-ic"><g transform="translate(50 50) scale(1.15) translate(-50 -50)"><path d="M50 16 L80 84 L20 84 Z" fill="#0053a5"/><rect x="18" y="63" width="64" height="9" fill="#ffce00"/><rect x="18" y="65.6" width="64" height="3.8" fill="#d21034"/></g></svg><span class="bt">Kummel</span></div>
@@ -364,8 +375,8 @@ label.row{flex-wrap:nowrap;align-items:center}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script src="config.js?v=202611081546"></script>
-<script src="chartstyle.js?v=202611081546"></script>
-<script src="app.js?v=202611081546"></script>
+<script src="config.js?v=202611091050"></script>
+<script src="chartstyle.js?v=202611091050"></script>
+<script src="app.js?v=202611091050"></script>
 </body>
 </html>
