@@ -358,7 +358,7 @@ function setMode(m) {
   $("#b-fish").classList.toggle("hidden", m !== "fiske");
   $("#b-depth").classList.toggle("hidden", m !== "fiske");
   $("#b-idx").classList.toggle("hidden", m !== "fiske"); idxBadge();
-  $("#b-spots").classList.toggle("hidden", m !== "fiske" || !feat("hotspots")); if (m !== "fiske") clearSpots();
+  $("#b-spots").classList.toggle("hidden", m !== "fiske" || !(feat("hotspots") || feat("drift"))); if (m !== "fiske") clearSpots();
   refreshCatches(); updateFishZone();
   if (wx) renderChip();
 }
@@ -1079,7 +1079,7 @@ function idxBadge() {
   b.hidden = !ix; if (ix) { b.textContent = ix[0].s; b.style.background = idxColor(ix[0].s); }
 }
 $("#b-idx").onclick = openFishIndex;
-$("#b-spots").onclick = openSpots;
+$("#b-spots").onclick = () => feat("hotspots") ? openSpots() : openDrift();   // bara drift påslagen: direkt till driften
 async function openFishIndex() {
   if (!wx) { openSheet("Fiskeläge", `<div class="muted">Hämtar väder …</div>`, "fishidx"); await loadWx(true); }
   const ix = fishIndex(wx);
@@ -2879,7 +2879,7 @@ function learnDrift(pos, sog, cog) {
   }
 }
 function featChanged(f) {
-  if (f === "hotspots" || f === "drift") { const on = S.mode === "fiske" && feat("hotspots"); $("#b-spots").classList.toggle("hidden", !on); if (!feat("hotspots")) clearSpots(); }
+  if (f === "hotspots" || f === "drift") { const on = S.mode === "fiske" && (feat("hotspots") || feat("drift")); $("#b-spots").classList.toggle("hidden", !on); if (!feat("hotspots")) clearSpots(); if (!feat("drift") && sheetView === "drift") closeSheet(); }
 }
 
 /* ---------- funktioner (inställningar) ---------- */
