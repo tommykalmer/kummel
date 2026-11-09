@@ -52,7 +52,8 @@ const FEATS = [
   ["hotspots", "Lovande fiskeplatser", "Föreslår platser efter fiskart, vind, djup och temperatur (läget Fiske)."],
   ["drift", "Driftplanering", "Visar hur båten driver med vinden från en vald plats (läget Fiske)."]
 ];
-const feat = k => !S.feat || S.feat[k] !== false;
+const FEAT_ON = { wlevel: 1, hotspots: 1, drift: 1 };
+const feat = k => S.feat && k in S.feat ? !!S.feat[k] : !!FEAT_ON[k];
 const boatNeed = () => { const b = boat(); return (+b.draft || 0) + (+b.margin || 0); };
 /* djup som behövs på sjökortet: båtens behov, plus det vattnet står under medelvattenstånd just nu */
 const wlM = () => feat("wlevel") && S.wlAdjust !== false && wl && Date.now() - wl.at < 6 * 3600000 ? wl.cm / 100 : 0;
