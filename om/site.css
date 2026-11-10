@@ -96,3 +96,13 @@ footer{background:#0a1d2b;color:#9fb3c0;font-size:15px;padding:40px 0}
 footer .wrap{display:flex;gap:30px;flex-wrap:wrap;justify-content:space-between}
 footer a{color:#d5e2ea;text-decoration:none}
 footer nav{display:flex;flex-direction:column;gap:6px}
+
+/* flygbild */
+.satsec{background:#0f2a3d;color:#fff}
+.satsec h2{color:#fff}.satsec .kicker{color:var(--signal)}.satsec .intro{color:#c9d8e2}
+.satwide{margin:0 0 34px}
+.satwide img{border-radius:14px;border:6px solid #0a1d2b;box-shadow:0 30px 60px rgba(0,0,0,.35)}
+.satsec figcaption{font-size:14px;color:#9fb3c0;text-align:center;margin-top:10px}
+.satpair{display:grid;grid-template-columns:repeat(2,minmax(0,340px));gap:40px;justify-content:center}
+.satsec .shot img{border-color:#0a1d2b}
+@media (max-width:620px){.satpair{gap:14px}.satsec .shot{max-width:none}}
