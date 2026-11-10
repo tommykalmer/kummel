@@ -1,0 +1,34 @@
+name: Skärmbilder till landningssidan
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  shots:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: |
+          npm i --no-save playwright@1.48.2
+          npx playwright install --with-deps chromium
+          pip install pillow
+      - run: node scripts/landing-shots.js shots-raw
+      - name: Konvertera till webp
+        run: |
+          python3 - <<'PY'
+          from PIL import Image
+          import glob, os
+          for f in glob.glob('shots-raw/*.png'):
+              n = os.path.basename(f)[:-4]; im = Image.open(f).convert('RGB')
+              w = 1600 if 'dator' in n else 585
+              im.resize((w, int(im.height * w / im.width)), Image.LANCZOS).save(f'om/img/{n}.webp', 'WEBP', quality=80, method=6)
+              print(n, im.size)
+          PY
+      - uses: actions/upload-artifact@v4
+        with: { name: shots-raw, path: shots-raw }
+      - run: |
+          git config user.name "kummel-bot"; git config user.email "kummel-bot@users.noreply.github.com"
+          git add om/img/sat-*.webp; git commit -m "Skärmbilder: flygbild" || exit 0
+          git pull --rebase origin main; git push origin HEAD:main
