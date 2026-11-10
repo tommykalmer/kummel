@@ -2692,7 +2692,9 @@ function windField() {   // vind per skärmruta (px/bildruta), interpolerad mell
   }
   return { W, H, G, cols, rows, U, V, S: S2, at: (x, y) => { const q = Math.max(0, Math.min(cols - 1, Math.round(x / G))), r = Math.max(0, Math.min(rows - 1, Math.round(y / G))), j = r * cols + q; return [U[j], V[j], S2[j]]; } };
 }
-function flowColor(w) { const lim = boat().maxWind || 10; return w > lim ? "255,110,110" : w > lim * .75 ? "255,214,102" : "255,255,255"; }
+// ljust sjökort: mörka linjer (vita syntes inte mot det vita vattnet); flygbild och mörka teman: ljusa linjer
+const flowLight = () => (S.theme || "day") === "day" && S.layers.base !== "sat";
+function flowColor(w) { const lim = boat().maxWind || 10, L = flowLight(); return w > lim ? (L ? "205,35,35" : "255,110,110") : w > lim * .75 ? (L ? "200,120,0" : "255,214,102") : (L ? "16,58,92" : "255,255,255"); }
 function flowStart() {
   flowStop();
   if (!wxOn || wxMode !== "flow" || document.hidden) return;
@@ -2705,11 +2707,11 @@ function flowStart() {
   flowParts = Array.from({ length: N }, () => spawn({}));
   const k = .22 * Math.pow(2, Math.max(0, 12 - map.getZoom()) * .15);   // px per (m/s) och bildruta
   const step = () => {
-    g.globalCompositeOperation = "destination-in"; g.fillStyle = "rgba(0,0,0,.92)"; g.fillRect(0, 0, F.W, F.H);
-    g.globalCompositeOperation = "source-over"; g.lineWidth = 1.4;
+    g.globalCompositeOperation = "destination-in"; g.fillStyle = "rgba(0,0,0,.94)"; g.fillRect(0, 0, F.W, F.H);
+    g.globalCompositeOperation = "source-over"; g.lineWidth = 1.6;
     for (const p of flowParts) {
-      const [u, v, w] = F.at(p.x, p.y), nx = p.x + u * k, ny = p.y + v * k;
-      g.strokeStyle = `rgba(${flowColor(w)},${Math.min(.85, .25 + w / 18)})`;
+      const [u, v, w] = F.at(p.x, p.y), sp = w > .1 ? Math.max(1, 3 / w) : 1, nx = p.x + u * k * sp, ny = p.y + v * k * sp;   // svag vind rör sig ändå synligt
+      g.strokeStyle = `rgba(${flowColor(w)},${Math.min(.9, .5 + w / 25)})`;
       g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(nx, ny); g.stroke();
       p.x = nx; p.y = ny;
       if (++p.age > p.life || nx < 0 || ny < 0 || nx > F.W || ny > F.H) spawn(p);
