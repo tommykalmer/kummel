@@ -14,16 +14,15 @@ const server = http.createServer((req, res) => {
 }).listen(8777);
 const SHOTS = [
   { name: "sat-dator", dev: { viewport: { width: 1440, height: 860 }, deviceScaleFactor: 1.5 }, view: { lat: 60.093, lng: 19.955, z: 13.4 } },
-  { name: "sat-mobil", dev: { ...devices["iPhone 13"], deviceScaleFactor: 2 }, view: { lat: 60.0985, lng: 19.967, z: 13.6 } },
-  { name: "sat-mobil2", dev: { ...devices["iPhone 13"], deviceScaleFactor: 2 }, view: { lat: 60.0455, lng: 20.035, z: 13.2 } },
-  { name: "sat-djup", dev: { ...devices["iPhone 13"], deviceScaleFactor: 2 }, view: { lat: 60.0985, lng: 19.967, z: 14.2 }, tapDepth: true },
+  { name: "sat-mobil", dev: { ...devices["iPhone 13"], deviceScaleFactor: 2 }, view: { lat: 60.098, lng: 19.968, z: 12.5 }, groups: { satdepth: false } },
+  { name: "sat-mobil2", dev: { ...devices["iPhone 13"], deviceScaleFactor: 2 }, view: { lat: 60.05, lng: 20.03, z: 12.2 } },
 ];
 (async () => {
   const b = await chromium.launch();
   for (const s of SHOTS) {
     const c = await b.newContext(s.dev);
     await c.route("https://www.googletagmanager.com/**", r => r.abort());
-    await c.addInitScript(v => localStorage.setItem("kummel.v1", JSON.stringify({ termsOk: 9, welcomed: 1, stats: 0, v2: 1, v3: 1, autoAck: 1, view: v, layers: { base: "sat", detail: false, detailZoom: 13, soundings: true, groups: {} } })), s.view);
+    await c.addInitScript(([v, g]) => localStorage.setItem("kummel.v1", JSON.stringify({ termsOk: 9, welcomed: 1, stats: 0, v2: 1, v3: 1, autoAck: 1, view: v, layers: { base: "sat", detail: false, detailZoom: 13, soundings: true, groups: g || {} } })), [s.view, s.groups]);
     const p = await c.newPage(); p.on("pageerror", e => console.log("ERR", e.message));
     await p.goto("http://localhost:8777/index.html"); await p.waitForTimeout(4000);
     await p.evaluate(v => { try { setFollow(false, true); } catch (e) {} map.jumpTo({ center: [v.lng, v.lat], zoom: v.z, bearing: 0 }); }, s.view);
