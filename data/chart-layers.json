@@ -1,26 +1,116 @@
 [
  {
   "service": "avoin",
+  "name": "avoin:Berths_L",
+  "title": "Berths_L",
+  "layer": "berths_l",
+  "count": 2,
+  "geom": {
+   "LineString": 2
+  },
+  "fields": {
+   "IDENTIFIER": [
+    "FI 0003033518 01020",
+    "FI 0003033519 01020"
+   ],
+   "OBJNAM": [
+    "2",
+    "3"
+   ],
+   "PVM": [
+    "2026-02-22T19:28:24"
+   ],
+   "SORDAT": [
+    "20180221"
+   ]
+  }
+ },
+ {
+  "service": "avoin",
+  "name": "avoin:Dam_L",
+  "title": "Dam_L",
+  "layer": "dam_l",
+  "count": 2,
+  "geom": {
+   "LineString": 2
+  },
+  "fields": {
+   "CATDAM": [
+    "2"
+   ],
+   "IDENTIFIER": [
+    "FI 0000000073 00305",
+    "FI 0000001588 00100"
+   ],
+   "PVM": [
+    "2026-02-22T19:26:27"
+   ],
+   "SORDAT": [
+    "20070306",
+    "20100129"
+   ]
+  }
+ },
+ {
+  "service": "avoin",
+  "name": "avoin:Gate_L",
+  "title": "Gate_L",
+  "layer": "gate_l",
+  "count": 6,
+  "geom": {
+   "LineString": 6
+  },
+  "fields": {
+   "CATGAT": [
+    "4"
+   ],
+   "IDENTIFIER": [
+    "FI 0000001090 21700",
+    "FI 0000050983 00303",
+    "FI 0000283893 21000",
+    "FI 0000363206 20900",
+    "FI 0000480273 21500",
+    "FI 0002016382 00306"
+   ],
+   "PVM": [
+    "2026-02-22T19:23:16"
+   ],
+   "SORDAT": [
+    "20080808",
+    "20100317",
+    "20110323",
+    "20080403",
+    "20051012",
+    "20100129"
+   ]
+  }
+ },
+ {
+  "service": "avoin",
   "name": "avoin:kohtaamis_ja_ohittamiskieltoalueet",
   "title": "Kohtaamis- ja ohittamiskieltoalueet",
   "layer": "kohtaamis_ja_ohittamiskieltoalueet",
-  "count": 6,
+  "count": 21,
   "geom": {
-   "Polygon": 6
+   "Polygon": 21
   },
   "fields": {
    "ALUENRO": [
+    23,
     24,
     25,
     26,
     27,
-    28,
-    30
+    28
    ],
    "VTS_ALUE": [
-    "Archipelago VTS"
+    "Archipelago VTS",
+    "Hanko VTS",
+    "Helsinki VTS sector 2",
+    "Helsinki VTS sector 1"
    ],
    "JNRO": [
+    3255,
     2775,
     2785,
     2940,
@@ -28,6 +118,7 @@
     3010
    ],
    "VAYLA_NIMI": [
+    "Utö-Naantali väylä",
     "Ledskärin rinnakkaisväylä",
     "Prästskärin rinnakkaisväylä",
     "Nyhamn-Rödskär väylä",
@@ -35,6 +126,7 @@
     "Isokari-Lövskär väylä"
    ],
    "VAYLA_NIMI_SV": [
+    "Utö-Nådendal farled",
     "Ledskärs parallellfarled",
     "Prästskär parallellfarled",
     "Nyhamn-Rödskär farled",
@@ -48,8 +140,8 @@
     "Valtion väylä"
    ],
    "SAADOSPERUSTE": [
-    "TRAFICOM/377875/03.04.01.00/2022",
-    "TRAFICOM/572435/05.01.24/2021"
+    "TRAFICOM/572435/05.01.24/2021",
+    "TRAFICOM/377875/03.04.01.00/2022"
    ],
    "VOIMAANTULOPVM": [
     "2021-12-06T22:00:00Z",
@@ -68,45 +160,356 @@
  },
  {
   "service": "avoin",
+  "name": "avoin:navigational_warnings_a",
+  "title": "Navigational warnings (Area)",
+  "layer": "navigational_warnings_a",
+  "count": 1,
+  "geom": {
+   "MultiPolygon": 1
+  },
+  "fields": {
+   "ID": [
+    47
+   ],
+   "WARNINGINFORMATIONNAVWARNTYPEDETAILS_FI": [
+    "Vesiväylä, suositeltu tai ei suositeltu laivaliikenteelle"
+   ],
+   "WARNINGINFORMATIONNAVWARNTYPEDETAILS_SV": [
+    "Farled rekommenderad eller icke rekommenderad"
+   ],
+   "WARNINGINFORMATIONNAVWARNTYPEDETAILS_EN": [
+    "Waterway recommended or not recommended for shipping"
+   ],
+   "WARNINGINFORMATIONNAVWARNTYPEDETAILSCODE": [
+    296
+   ],
+   "WARNINGINFORMATION_FI": [
+    "KORKEASAAREN JA SOMPASAAREN VÄLISELLÄ VESIALUEELLA PUOMI JOKA MERKITTY ORANSSEILLA POIJUILLA. VENEILIJÖITÄ KEHOTETAAN VAROVAISUUTEEN."
+   ],
+   "WARNINGINFORMATION_SV": [
+    "EN BOM MARKERAD MED ORANGE BOJAR I VATTENOMRÅDE MELLAN HÖGHOLMEN OCH SUMPARN. BÅTFÖRARE UPPMANAS TILL FÖRSIKTIGHET."
+   ],
+   "WARNINGINFORMATION_EN": [
+    "BOOM IN THE AREA BETWEEN KORKEASAARI AND SOMPASAARI, MARKED WITH ORANGE BUOYS\nBOATERS ARE ADVISED TO NAVIGATE WITH CAUTION."
+   ],
+   "INTSERVICE": [
+    "false   "
+   ],
+   "MESSAGESERIESIDENTIFIERAGENCYRESPONSIBLEFORPRODUCTION": [
+    "FI05"
+   ],
+   "MESSAGESERIESIDENTIFIERINTEROPERABILITYIDENTIFIER": [
+    "urn:mrn:fin:navwarn:FI05:VV:2026:1"
+   ],
+   "MESSAGESERIESIDENTIFIERNAMEOFSERIES_FI": [
+    "Varoituksia veneilijöille"
+   ],
+   "MESSAGESERIESIDENTIFIERNAMEOFSERIES_SV": [
+    "Navigationsvarningar för båtfarare"
+   ],
+   "MESSAGESERIESIDENTIFIERNAMEOFSERIES_EN": [
+    "Warnings for Yachtmen"
+   ],
+   "MESSAGESERIESIDENTIFIERNATIONALITY": [
+    "FI"
+   ],
+   "MESSAGESERIESIDENTIFIERWARNINGNUMBER": [
+    1
+   ],
+   "MESSAGESERIESIDENTIFIERWARNINGTYPE": [
+    "Local Navigational Warning"
+   ],
+   "MESSAGESERIESIDENTIFIERWARNINGTYPECODE": [
+    1
+   ],
+   "MESSAGESERIESIDENTIFIERYEAR": [
+    2026
+   ],
+   "NAVWARNTYPEGENERAL_FI": [
+    "Reittimuutos"
+   ],
+   "NAVWARNTYPEGENERAL_SV": [
+    "Ruttändring"
+   ],
+   "NAVWARNTYPEGENERAL_EN": [
+    "Routeing change"
+   ],
+   "NAVWARNTYPEGENERALCODE": [
+    14
+   ],
+   "PUBLICATIONTIME": [
+    "2026-01-09T13:09:53Z"
+   ],
+   "GENERALAREALOCATIONNAME_FI": [
+    "Suomenlahti"
+   ],
+   "GENERALAREALOCATIONNAME_SV": [
+    "Finska viken"
+   ],
+   "GENERALAREALOCATIONNAME_EN": [
+    "Gulf of Finland"
+   ],
+   "LOCALITYLOCATIONNAME_FI": [
+    "HELSINKI"
+   ],
+   "LOCALITYLOCATIONNAME_EN": [
+    "HELSINKI"
+   ],
+   "LOCALITYLOCATIONNAME_SV": [
+    "HELSINGFORS"
+   ]
+  }
+ },
+ {
+  "service": "avoin",
+  "name": "avoin:navigational_warnings_l",
+  "title": "Navigational warnings (Line)",
+  "layer": "navigational_warnings_l",
+  "count": 1,
+  "geom": {
+   "MultiLineString": 1
+  },
+  "fields": {
+   "ID": [
+    245
+   ],
+   "WARNINGINFORMATION_FI": [
+    "KUUSISTONSALMESSA SUORTITETAAN SILLANRAKENNUSTÖITÄ. TYÖNAIKAISIIN RAKENTEISIIN JÄRJESTETTY 10 M LEVEÄ JA 16 M KORKEA KULKUAUKKO VENEILIJÖILLE. VENEVÄYLÄ VOIDAAN JOUTUA SULKEMAAN LYHYIKSI AJOIKSI. VENEILIJÖITÄ KEHOITETAAN VAROVAISEEN NAVIGOINTIIN."
+   ],
+   "WARNINGINFORMATION_SV": [
+    "BROBYGGARBETE I KUSTÖ SUND. EN 10 M BRED OCH 16 M HÖG PASSAGE ORDNAD FÖR BÅTFÖRARE I DE TILLFÄLLIGA KOSTRUKTIONERNA. BÅTFARLEDEN KAN BEHÖVA STÄNGAS FÖR KORTA PERIODER. BÅTFÖRARARE OMBEDES TILL FÖRSIKTIG NAVIGATION."
+   ],
+   "WARNINGINFORMATION_EN": [
+    "BRIDGE CONSTRUCTION WORK ONGOING IN KUUSISTONSALMI. A 10 M WIDE AND 16 M HIGH PASSAGE ESTABLISHED FOR YACHTSMEN WITHIN THE TEMPORARY CONSTRUCTIONS. THE FAIRWAY MIGHT BE CLOSED FOR SHORT PERIODS. YACHTSMEN ARE ADVICED TO NAVIGATE WITH CAUTION."
+   ],
+   "INTSERVICE": [
+    "false   "
+   ],
+   "MESSAGESERIESIDENTIFIERAGENCYRESPONSIBLEFORPRODUCTION": [
+    "FI05"
+   ],
+   "MESSAGESERIESIDENTIFIERINTEROPERABILITYIDENTIFIER": [
+    "urn:mrn:fin:navwarn:FI05:VV:2026:17"
+   ],
+   "MESSAGESERIESIDENTIFIERNAMEOFSERIES_FI": [
+    "Varoituksia veneilijöille"
+   ],
+   "MESSAGESERIESIDENTIFIERNAMEOFSERIES_SV": [
+    "Navigationsvarningar för båtfarare"
+   ],
+   "MESSAGESERIESIDENTIFIERNAMEOFSERIES_EN": [
+    "Warnings for Yachtmen"
+   ],
+   "MESSAGESERIESIDENTIFIERNATIONALITY": [
+    "FI"
+   ],
+   "MESSAGESERIESIDENTIFIERWARNINGNUMBER": [
+    17
+   ],
+   "MESSAGESERIESIDENTIFIERWARNINGTYPE": [
+    "Local Navigational Warning"
+   ],
+   "MESSAGESERIESIDENTIFIERWARNINGTYPECODE": [
+    1
+   ],
+   "MESSAGESERIESIDENTIFIERYEAR": [
+    2026
+   ],
+   "NAVWARNTYPEGENERAL_FI": [
+    "Muut vaarat"
+   ],
+   "NAVWARNTYPEGENERAL_SV": [
+    "Andra faror"
+   ],
+   "NAVWARNTYPEGENERAL_EN": [
+    "Other hazards"
+   ],
+   "NAVWARNTYPEGENERALCODE": [
+    5
+   ],
+   "PUBLICATIONTIME": [
+    "2026-04-23T14:11:53Z"
+   ],
+   "GENERALAREALOCATIONNAME_FI": [
+    "Saaristomeri"
+   ],
+   "GENERALAREALOCATIONNAME_SV": [
+    "Skärgårdshavet"
+   ],
+   "GENERALAREALOCATIONNAME_EN": [
+    "Archipelago Sea"
+   ],
+   "LOCALITYLOCATIONNAME_FI": [
+    "AIRISTO-HARVALUOTO-LEMLAHTI VENEREITTI"
+   ],
+   "LOCALITYLOCATIONNAME_EN": [
+    "AIRISTO-HARVALUOTO-LEMLAHTI BOAT ROUTE"
+   ],
+   "LOCALITYLOCATIONNAME_SV": [
+    "AIRISTO-HARVALUOTO-LEMLAHTI BÅTRUTT"
+   ]
+  }
+ },
+ {
+  "service": "avoin",
+  "name": "avoin:navigational_warnings_p",
+  "title": "Navigational warnings (Point)",
+  "layer": "navigational_warnings_p",
+  "count": 2,
+  "geom": {
+   "MultiPoint": 2
+  },
+  "fields": {
+   "ID": [
+    574,
+    1593
+   ],
+   "WARNINGINFORMATIONNAVWARNTYPEDETAILS_FI": [
+    "Valaistu kiinteä turvalaite - valo ei käytössä",
+    "Valaistu poiju - valo ei käytössä"
+   ],
+   "WARNINGINFORMATIONNAVWARNTYPEDETAILS_SV": [
+    "Belyst fast signalanordning - ljuset ej tänt",
+    "Lysboj - ljuset ej tänt"
+   ],
+   "WARNINGINFORMATIONNAVWARNTYPEDETAILS_EN": [
+    "Lighted beacon - light unlit",
+    "Light buoy - light unlit"
+   ],
+   "WARNINGINFORMATIONNAVWARNTYPEDETAILSCODE": [
+    175,
+    153
+   ],
+   "WARNINGINFORMATION_FI": [
+    "SEKTORILOISTO TUPALAHTI TL 20128 PAIKASSA 60-27.36N 022-03.41E. VALO EI TOIMI.",
+    "\nPUNAINEN POIJU  VUO 4 NR 67843\nPAIKASSA 60-8.96 N, 025-12.31 E\n\nVALO EI TOIMI"
+   ],
+   "WARNINGINFORMATION_SV": [
+    "SEKTORFYR TUPALAHTI NR 20128 I POSITION 60-27.36N 022-03.41E. LJUSET UR FUNKTION.",
+    "\nRÖD BOJ VUO 4 NR 67843\nI POSTITION 60-8.96 N, 025-12.31 E\n\nLJUSET UR FUNKTION"
+   ],
+   "WARNINGINFORMATION_EN": [
+    "SECTORLIGHT TUPALAHTI NO 20128 IN POSITION 60-27.36N 022-03.41E. LIGHT OUT OF ORDER.",
+    "\nRED BUOY VUO 4 NR 67843\nIN POSITION 60-8.96 N, 025-12.31 E\n\nLIGHT OUT OF ORDER"
+   ],
+   "INTSERVICE": [
+    "true    "
+   ],
+   "MESSAGESERIESIDENTIFIERAGENCYRESPONSIBLEFORPRODUCTION": [
+    "FI05"
+   ],
+   "MESSAGESERIESIDENTIFIERINTEROPERABILITYIDENTIFIER": [
+    "urn:mrn:fin:navwarn:FI05:LC:2026:574",
+    "urn:mrn:fin:navwarn:FI05:LC:2026:606"
+   ],
+   "MESSAGESERIESIDENTIFIERNAMEOFSERIES_FI": [
+    "Coastal and Local Warnings"
+   ],
+   "MESSAGESERIESIDENTIFIERNAMEOFSERIES_SV": [
+    "Coastal and Local Warnings"
+   ],
+   "MESSAGESERIESIDENTIFIERNAMEOFSERIES_EN": [
+    "Coastal and Local Warnings"
+   ],
+   "MESSAGESERIESIDENTIFIERNATIONALITY": [
+    "FI"
+   ],
+   "MESSAGESERIESIDENTIFIERWARNINGNUMBER": [
+    574,
+    606
+   ],
+   "MESSAGESERIESIDENTIFIERWARNINGTYPE": [
+    "Local Navigational Warning"
+   ],
+   "MESSAGESERIESIDENTIFIERWARNINGTYPECODE": [
+    1
+   ],
+   "MESSAGESERIESIDENTIFIERYEAR": [
+    2026
+   ],
+   "NAVWARNTYPEGENERAL_FI": [
+    "Turvalaitteiden muutokset"
+   ],
+   "NAVWARNTYPEGENERAL_SV": [
+    "Ändringar av säkerhetsanordningar"
+   ],
+   "NAVWARNTYPEGENERAL_EN": [
+    "Aids to navigation changes"
+   ],
+   "NAVWARNTYPEGENERALCODE": [
+    1
+   ],
+   "PUBLICATIONTIME": [
+    "2026-10-21T14:45:08Z",
+    "2026-11-10T20:01:55Z"
+   ],
+   "GENERALAREALOCATIONNAME_FI": [
+    "Saaristomeri",
+    "Suomenlahti"
+   ],
+   "GENERALAREALOCATIONNAME_SV": [
+    "Skärgårdshavet",
+    "Finska viken"
+   ],
+   "GENERALAREALOCATIONNAME_EN": [
+    "Archipelago Sea",
+    "Gulf of Finland"
+   ],
+   "LOCALITYLOCATIONNAME_FI": [
+    "NAANTALI",
+    "VUOSAAREN VÄYLÄ"
+   ],
+   "LOCALITYLOCATIONNAME_EN": [
+    "NAANTALI",
+    "VUOSAARI FAIRWAY"
+   ],
+   "LOCALITYLOCATIONNAME_SV": [
+    "NÅDENDAL",
+    "NORDSJÖ FARLED"
+   ]
+  }
+ },
+ {
+  "service": "avoin",
   "name": "avoin:PilotBoardingPlace_P",
   "title": "PilotBoardingPlace_P",
   "layer": "pilotboardingplace_p",
-  "count": 7,
+  "count": 20,
   "geom": {
-   "Point": 7
+   "Point": 20
   },
   "fields": {
    "IDENTIFIER": [
+    "FI 0000004578 00602",
+    "FI 0000004579 00602",
+    "FI 0000004580 00602",
     "FI 0000006152 00599",
-    "FI 0000084127 20700",
-    "FI 0000208698 21100",
-    "FI 0000359114 00403",
-    "FI 0001772129 55000",
-    "FI 0001772130 55000"
+    "FI 0000016400 00305",
+    "FI 0000077623 22400"
    ],
    "RWF_ID": [
+    "1410467",
+    "1410488",
+    "1410472",
     "23147612",
-    "1410508",
-    "1410477",
-    "23147613",
-    "23147629",
-    "23147627"
+    "23147663",
+    "23147660"
    ],
    "REP_ID": [
+    "2049577",
+    "2049598",
+    "2049582",
     "2049599",
-    "2049618",
-    "2049587",
-    "2049600",
-    "16913270",
-    "16913271"
+    "2049607",
+    "2049605"
    ],
    "REP_USAGE_ID": [
+    "2425307",
+    "2425328",
+    "2425312",
     "34204669",
-    "2425350",
-    "2425317",
-    "34204671",
-    "34204703",
-    "34204704"
+    "34204872",
+    "34204864"
    ],
    "CATPIL": [
     "3"
@@ -115,12 +518,12 @@
     "www.pilotorder.fi"
    ],
    "OBJNAM": [
+    "Porkkala N",
+    "Helsinki S",
+    "Helsinki N",
     "Isokari N",
-    "Nyhamn",
-    "Marhällan",
-    "Isokari  S",
-    "Utö A",
-    "Utö B"
+    "Vuosaari",
+    "Emäsalo A"
    ],
    "SORIND": [
     "FI,FI,rgstr,Katiska Dnro 3020/1023/2011",
@@ -140,19 +543,58 @@
   "name": "avoin:Pontoon_A",
   "title": "Pontoon_A",
   "layer": "pontoon_a",
-  "count": 1,
+  "count": 14,
   "geom": {
-   "Polygon": 1
+   "Polygon": 14
   },
   "fields": {
    "IDENTIFIER": [
-    "FI 0019718443 05011"
+    "FI 0000042984 42600",
+    "FI 0000042985 42600",
+    "FI 0000068051 40900",
+    "FI 0000159988 41900",
+    "FI 0000311873 42100",
+    "FI 0000329897 42100"
    ],
    "PVM": [
     "2026-02-22T19:28:11"
    ],
    "SORDAT": [
-    "20121218"
+    "20140702",
+    "20170922",
+    "20120413",
+    "20140826",
+    "20141209",
+    "20210512"
+   ]
+  }
+ },
+ {
+  "service": "avoin",
+  "name": "avoin:Pontoon_L",
+  "title": "Pontoon_L",
+  "layer": "pontoon_l",
+  "count": 3,
+  "geom": {
+   "LineString": 3
+  },
+  "fields": {
+   "IDENTIFIER": [
+    "FI 0000322242 55000",
+    "FI 0000638206 55000",
+    "FI 0011810700 40100"
+   ],
+   "PVM": [
+    "2026-02-22T19:29:03",
+    "2026-02-22T19:28:50"
+   ],
+   "SORDAT": [
+    "20201217",
+    "20120921",
+    "20181119"
+   ],
+   "STATUS": [
+    "1"
    ]
   }
  },
@@ -161,9 +603,9 @@
   "name": "avoin:Rdocal_L",
   "title": "Rdocal_L",
   "layer": "rdocal_l",
-  "count": 8,
+  "count": 35,
   "geom": {
-   "LineString": 8
+   "LineString": 35
   },
   "fields": {
    "IDENTIFIER": [
@@ -172,7 +614,7 @@
     "FI 0000000299 00599",
     "FI 0000000300 00599",
     "FI 0000000301 00599",
-    "FI 0000360900 00406"
+    "FI 0000000302 00599"
    ],
    "OBJNAM": [
     "Reporting wintertime 60N"
@@ -183,7 +625,7 @@
     "9.6",
     "66",
     "61.1",
-    "313"
+    "270"
    ],
    "TRAFIC": [
     "3"
@@ -191,14 +633,21 @@
    "SORDAT": [
     "20181210",
     "20200127",
-    "20241129"
+    "20180418",
+    "20180302",
+    "20151203",
+    "20170908"
    ],
    "PVM": [
     "2026-02-22T19:00:21"
    ],
    "INFORM": [
     "Archipelago VTS, VHF 71. See www.fintraffic.fi/en > Maritime Traffic",
-    "Vessels bound for Gulf of Bothnia ports in which traffic restrictions apply shall, when passing latitude 60-00N, report their nationality, name, port of destination, ETA and speed to ICE INFO on VHF c"
+    "Helsinki Traffic, VHF 60. See www.fintraffic.fi/en > Maritime Traffic",
+    "Tallinn Traffic, VHF 61. See www.fintraffic.fi/en > Maritime Traffic",
+    "Kotka VTS, VHF 67. See www.fintraffic.fi/en > Maritime Traffic",
+    "Helsinki VTS, VHF 09. See www.fintraffic.fi/en > Maritime Traffic",
+    "Helsinki VTS, VHF 71. See www.fintraffic.fi/en > Maritime Traffic"
    ]
   }
  },
@@ -207,39 +656,50 @@
   "name": "avoin:Rdocal_P",
   "title": "Rdocal_P",
   "layer": "rdocal_p",
-  "count": 7,
+  "count": 22,
   "geom": {
-   "Point": 7
+   "Point": 22
   },
   "fields": {
    "IDENTIFIER": [
+    "FI 0000000009 00305",
+    "FI 0000000304 00599",
     "FI 0000002703 55000",
     "FI 0000002704 55000",
     "FI 0000002705 55000",
-    "FI 0000017424 00302",
-    "FI 0000042811 20000",
-    "FI 0000058161 20100"
+    "FI 0000004545 00599"
    ],
    "OBJNAM": [
+    "Särkänsalmi (15 min)",
+    "Fläckgrund (20 min)",
     "Marhällan N (20 min)",
     "Marhällan S (20 min)",
     "Korsö (20 min)",
-    "Ledsund (20 min)",
-    "Ljungö (20 min)",
-    "South of Ledskär (20 min)"
+    "Lövskär (20 min)"
    ],
    "INFORM": [
-    "Archipelago VTS, VHF 71. See www.fintraffic.fi/en > Maritime Traffic"
+    "Helsinki VTS, VHF 71. See www.fintraffic.fi/en > Maritime Traffic",
+    "Archipelago VTS, VHF 71. See www.fintraffic.fi/en > Maritime Traffic",
+    "Hanko VTS, VHF 67. See www.fintraffic.fi/en > Maritime Traffic",
+    "Helsinki VTS, VHF 09. See www.fintraffic.fi/en > Maritime Traffic"
    ],
    "COMCHA": [
-    "[71]"
+    "[71]",
+    "[67]",
+    "[09]"
    ],
    "AHTI_VTSAR": [
-    "4"
+    "1",
+    "4",
+    "5",
+    "2"
    ],
    "SORDAT": [
-    "20190605",
+    "20151203",
     "20200127",
+    "20190605",
+    "20170609",
+    "20151202",
     "20210617"
    ],
    "PVM": [
@@ -252,43 +712,98 @@
   "name": "avoin:ShorelineConstruction_L",
   "title": "ShorelineConstruction_L",
   "layer": "shorelineconstruction_l",
-  "count": 2124,
+  "count": 14272,
   "geom": {
-   "LineString": 2124
+   "LineString": 14272
   },
   "fields": {
-   "CATSLC": [
-    "4",
-    "1",
-    "6",
-    "14"
-   ],
    "IDENTIFIER": [
-    "FI 0000065609 40700",
-    "FI 0000065894 40700",
-    "FI 0000065905 40700",
-    "FI 0000065906 40700",
-    "FI 0000065907 40700",
-    "FI 0000065908 40700"
+    "FI 0000000928 41000",
+    "FI 0000000929 41000",
+    "FI 0000003654 41500",
+    "FI 0000003657 41500",
+    "FI 0000003659 41500",
+    "FI 0000004027 55000"
    ],
    "PVM": [
+    "2026-02-22T19:28:26",
+    "2026-02-22T19:28:38",
     "2026-02-22T19:28:39",
+    "2026-02-22T19:28:40",
     "2026-02-22T19:28:41",
-    "2026-02-22T19:28:46",
-    "2026-02-22T19:28:45",
-    "2026-02-22T19:28:44",
-    "2026-02-22T19:28:48"
+    "2026-02-22T19:28:43"
    ],
    "SORDAT": [
-    "20150112",
-    "20150113",
-    "20140811",
-    "20150226",
-    "20150302",
-    "20150126"
+    "20100412",
+    "20180911",
+    "20170922",
+    "20150204",
+    "20180524",
+    "20101220"
+   ],
+   "CATSLC": [
+    "6",
+    "4",
+    "1",
+    "14",
+    "13"
    ],
    "STATUS": [
     "1"
+   ],
+   "OBJNAM": [
+    "Quay G"
+   ]
+  }
+ },
+ {
+  "service": "avoin",
+  "name": "avoin:ShorelineConstruction_P",
+  "title": "ShorelineConstruction_P",
+  "layer": "shorelineconstruction_p",
+  "count": 1,
+  "geom": {
+   "Point": 1
+  },
+  "fields": {
+   "CATSLC": [
+    "13"
+   ],
+   "IDENTIFIER": [
+    "FI 0000000986 00522"
+   ],
+   "PVM": [
+    "2024-01-08T06:44:29"
+   ],
+   "SORDAT": [
+    "20180420"
+   ]
+  }
+ },
+ {
+  "service": "avoin",
+  "name": "avoin:sisavesien_vertaustasot",
+  "title": "Sisävesien vertaustasot",
+  "layer": "sisavesien_vertaustasot",
+  "count": 1,
+  "geom": {
+   "MultiPolygon": 1
+  },
+  "fields": {
+   "ID": [
+    19
+   ],
+   "N2000_LW": [
+    79.35
+   ],
+   "N2000_HW": [
+    80.05
+   ],
+   "NN_LW": [
+    78.8
+   ],
+   "NN_HW": [
+    79.6
    ]
   }
  },
@@ -297,19 +812,32 @@
   "name": "avoin:VTSArea_A",
   "title": "VTSArea_A",
   "layer": "vtsarea_a",
-  "count": 1,
+  "count": 6,
   "geom": {
-   "Polygon": 1
+   "Polygon": 6
   },
   "fields": {
    "IDENTIFIER": [
-    "FI 0000000305 00599"
+    "FI 0000000305 00599",
+    "FI 0000001974 55000",
+    "FI 0000359308 00403",
+    "FI 0000359309 00403",
+    "FI 0000359310 00403",
+    "FI 0000359311 00403"
    ],
    "OBJNAM": [
-    "Archipelago VTS"
+    "Archipelago VTS",
+    "Kotka VTS",
+    "Hanko VTS",
+    "Helsinki VTS sector 1",
+    "Helsinki VTS sector 2"
    ],
    "INFORM": [
-    "Archipelago VTS, VHF 71. See www.fintraffic.fi/en > Maritime Traffic"
+    "Archipelago VTS, VHF 71. See www.fintraffic.fi/en > Maritime Traffic",
+    "Kotka VTS, VHF 67. See www.fintraffic.fi/en > Maritime Traffic",
+    "Hanko VTS, VHF 67. See www.fintraffic.fi/en > Maritime Traffic",
+    "Helsinki VTS, VHF 71. See www.fintraffic.fi/en > Maritime Traffic",
+    "Helsinki VTS, VHF 09. See www.fintraffic.fi/en > Maritime Traffic"
    ],
    "JRSDTN": [
     "3"
@@ -318,7 +846,11 @@
     "FI"
    ],
    "SORDAT": [
-    "20151127"
+    "20151127",
+    "20181016",
+    "20170613",
+    "20151203",
+    "20180118"
    ],
    "PVM": [
     "2026-02-22T19:00:20"
@@ -362,51 +894,51 @@
   "name": "rajoitettu:DepthArea_A",
   "title": "DepthArea_A",
   "layer": "deptharea_a",
-  "count": 32103,
+  "count": 71353,
   "geom": {
-   "Polygon": 32092,
-   "MultiPolygon": 11
+   "Polygon": 71340,
+   "MultiPolygon": 13
   },
   "fields": {
    "DRVAL1": [
     "0",
-    "30",
-    "50",
+    "10",
     "20",
+    "50",
     "6",
-    "10"
+    "15"
    ],
    "DRVAL2": [
     "10",
+    "20",
     "50",
     "100",
-    "30",
-    "15",
-    "6"
+    "6",
+    "15"
    ],
    "IDENTIFIER": [
-    "FI 0000089576 40900",
-    "FI 0001721714 55000",
-    "FI 0001721870 55000",
-    "FI 0001737881 55000",
-    "FI 0001737883 55000",
-    "FI 0001771774 55000"
+    "FI 0000008190 41000",
+    "FI 0000008196 41000",
+    "FI 0000008207 41000",
+    "FI 0000008212 41000",
+    "FI 0000008215 41000",
+    "FI 0000008222 41000"
    ],
    "PVM": [
-    "2026-02-22T19:18:39",
-    "2026-02-22T19:17:35",
-    "2026-02-22T19:18:36",
-    "2026-02-22T19:18:58",
-    "2026-02-22T19:17:33",
-    "2026-02-22T19:18:05"
+    "2026-02-22T19:17:16",
+    "2026-02-22T19:18:59",
+    "2026-02-22T19:18:12",
+    "2026-02-22T19:18:35",
+    "2026-02-22T19:18:51",
+    "2026-02-22T19:18:37"
    ],
    "SORDAT": [
-    "20090520",
-    "20230512",
-    "20230321",
-    "20220630",
-    "20230609",
-    "20230802"
+    "20101220",
+    "20150928",
+    "20110208",
+    "20120309",
+    "20110513",
+    "20120606"
    ]
   }
  },
@@ -415,47 +947,47 @@
   "name": "rajoitettu:DepthContour_L",
   "title": "DepthContour_L",
   "layer": "depthcontour_l",
-  "count": 37578,
+  "count": 88981,
   "geom": {
-   "LineString": 37560,
-   "MultiLineString": 18
+   "LineString": 88954,
+   "MultiLineString": 27
   },
   "fields": {
+   "IDENTIFIER": [
+    "FI 0000000910 41000",
+    "FI 0000000915 41000",
+    "FI 0000000917 41000",
+    "FI 0000000918 41000",
+    "FI 0000000936 41000",
+    "FI 0000000938 41000"
+   ],
+   "PVM": [
+    "2026-02-22T19:15:28",
+    "2026-02-22T19:15:29",
+    "2026-02-22T19:15:30",
+    "2026-02-22T19:15:32",
+    "2026-02-22T19:15:31",
+    "2026-02-22T19:15:33"
+   ],
+   "SORDAT": [
+    "20100531",
+    "20100412",
+    "20141003",
+    "20050811",
+    "20120313",
+    "20100728"
+   ],
+   "VALDCO": [
+    10,
+    6,
+    3,
+    20,
+    50,
+    15
+   ],
    "AHTI_VERDA": [
     "MSL",
     "N2000"
-   ],
-   "IDENTIFIER": [
-    "FI 0000365714 22400",
-    "FI 0000365880 22400",
-    "FI 0001718505 55000",
-    "FI 0001718506 55000",
-    "FI 0001718507 55000",
-    "FI 0001718508 55000"
-   ],
-   "PVM": [
-    "2026-02-22T19:15:56",
-    "2026-02-22T19:16:13",
-    "2026-02-22T19:16:14",
-    "2026-02-22T19:16:12",
-    "2026-02-22T19:16:17",
-    "2026-02-22T19:16:18"
-   ],
-   "SORDAT": [
-    "20240531",
-    "20140821",
-    "20120222",
-    "20030710",
-    "20230314",
-    "20020110"
-   ],
-   "VALDCO": [
-    6,
-    3,
-    50,
-    30,
-    10,
-    20
    ]
   }
  },
@@ -491,12 +1023,14 @@
   "name": "rajoitettu:PrecautionaryArea_A",
   "title": "PrecautionaryArea_A",
   "layer": "precautionaryarea_a",
-  "count": 4,
+  "count": 6,
   "geom": {
-   "Polygon": 4
+   "Polygon": 6
   },
   "fields": {
    "IDENTIFIER": [
+    "FI 0000063591 00303",
+    "FI 0000063596 00303",
     "FI 0000817568 00311",
     "FI 0002330165 55000",
     "FI 0031484983 05001",
@@ -510,6 +1044,8 @@
     "2026-02-22T19:24:26"
    ],
    "SORDAT": [
+    "20100927",
+    "20140804",
     "20090617"
    ]
   }
@@ -519,55 +1055,63 @@
   "name": "rajoitettu:Sounding_P",
   "title": "Sounding_P",
   "layer": "sounding_p",
-  "count": 31949,
+  "count": 78469,
   "geom": {
-   "Point": 31949
+   "Point": 78469
   },
   "fields": {
    "IDENTIFIER": [
-    "FI 0001233327 55000",
-    "FI 0001233339 55000",
-    "FI 0001233345 55000",
-    "FI 0001233355 55000",
-    "FI 0001771216 55000",
-    "FI 0001771217 55000"
+    "FI 0000000070 23600",
+    "FI 0000000071 21700",
+    "FI 0000000072 21700",
+    "FI 0000000073 23600",
+    "FI 0000000074 23600",
+    "FI 0000000075 21700"
    ],
    "PVM": [
-    "2026-02-22T19:14:19",
-    "2026-02-22T19:14:52",
-    "2026-02-22T19:14:53",
-    "2026-02-22T19:14:56",
-    "2026-02-22T19:14:55",
-    "2026-02-22T19:14:54"
+    "2026-02-22T19:13:45",
+    "2026-02-22T19:13:49",
+    "2026-02-22T19:13:50",
+    "2026-02-22T19:13:51",
+    "2026-02-22T19:13:52",
+    "2026-02-22T19:13:54"
    ],
    "QUASOU": [
     "1"
    ],
    "SORDAT": [
-    "20220630",
-    "20060624",
-    "20060630",
-    "20060701",
-    "20120525",
-    "20060618"
+    "20111221",
+    "20020301",
+    "20071220",
+    "20120105",
+    "20080731",
+    "20021220"
+   ],
+   "DEPTH": [
+    0.4,
+    0.7,
+    1.6,
+    2,
+    3,
+    2.5
    ],
    "TECSOU": [
-    "3",
     "1",
-    "UNKNOWN",
+    "3",
     "8",
+    "UNKNOWN",
     "7"
    ],
    "AHTI_VERDA": [
-    "N2000"
+    "A2005",
+    "A2000",
+    "A2011",
+    "A2009",
+    "A2010",
+    "A2007"
    ],
-   "DEPTH": [
-    57,
-    65,
-    50,
-    55,
-    8.9,
-    58
+   "AHTI_NTMEN": [
+    "11/145/10"
    ]
   }
  },
@@ -602,23 +1146,29 @@
   "name": "rajoitettu:TrafficSeaparationZone_A",
   "title": "TrafficSeaparationZone_A",
   "layer": "trafficseaparationzone_a",
-  "count": 2,
+  "count": 6,
   "geom": {
-   "Polygon": 2
+   "Polygon": 6
   },
   "fields": {
    "CATTSS": [
     "1"
    ],
    "IDENTIFIER": [
+    "FI 0000063582 00303",
+    "FI 0000063597 00303",
+    "FI 0000063598 00303",
+    "FI 0000063599 00303",
     "FI 0000817570 00311",
     "FI 0000817571 00311"
    ],
    "PVM": [
-    "2026-02-22T19:23:26",
-    "2026-02-22T19:23:35"
+    "2026-02-22T19:23:35",
+    "2026-02-22T19:23:26"
    ],
    "SORDAT": [
+    "20100827",
+    "20140804",
     "20090617"
    ]
   }
@@ -654,26 +1204,28 @@
   "name": "rajoitettu:TrafficSeparationSchemeBoundary_L",
   "title": "TrafficSeparationSchemeBoundary_L",
   "layer": "trafficseparationschemeboundary_l",
-  "count": 9,
+  "count": 13,
   "geom": {
-   "LineString": 9
+   "LineString": 13
   },
   "fields": {
    "CATTSS": [
     "1"
    ],
    "IDENTIFIER": [
+    "FI 0000063576 00303",
+    "FI 0000063577 00303",
+    "FI 0000063593 00303",
+    "FI 0000063594 00303",
     "FI 0000817548 00311",
-    "FI 0000817549 00311",
-    "FI 0000817553 00311",
-    "FI 0000817554 00311",
-    "FI 0000817555 00311",
-    "FI 0000817558 00311"
+    "FI 0000817549 00311"
    ],
    "PVM": [
     "2026-02-22T19:24:04"
    ],
    "SORDAT": [
+    "20100827",
+    "20140804",
     "20090617"
    ]
   }
@@ -683,34 +1235,38 @@
   "name": "rajoitettu:TrafficSeparationSchemeLanePart_A",
   "title": "TrafficSeparationSchemeLanePart_A",
   "layer": "trafficseparationschemelanepart_a",
-  "count": 13,
+  "count": 25,
   "geom": {
-   "Polygon": 13
+   "Polygon": 25
   },
   "fields": {
    "CATTSS": [
     "1"
    ],
    "IDENTIFIER": [
-    "FI 0000817576 00311",
-    "FI 0000817577 00311",
-    "FI 0000817578 00311",
-    "FI 0000817579 00311",
-    "FI 0000817580 00311",
-    "FI 0000817581 00311"
+    "FI 0000063578 00303",
+    "FI 0000063579 00303",
+    "FI 0000063580 00303",
+    "FI 0000063581 00303",
+    "FI 0000063600 00303",
+    "FI 0000063601 00303"
    ],
    "ORIENT": [
-    "320.4",
-    "140.4",
-    "271.4",
-    "319.1",
-    "91.4",
-    "118.4"
+    "260.6",
+    "80.6",
+    "251.5",
+    "71.5",
+    "257.5",
+    "77.5"
    ],
    "PVM": [
-    "2026-02-22T19:24:04"
+    "2026-02-22T19:24:04",
+    "2026-02-22T19:23:52"
    ],
    "SORDAT": [
+    "20120516",
+    "20140804",
+    "20120313",
     "20090702"
    ]
   }
@@ -720,23 +1276,29 @@
   "name": "rajoitettu:TrafficSeparationZone_A",
   "title": "TrafficSeparationZone_A",
   "layer": "trafficseparationzone_a",
-  "count": 2,
+  "count": 6,
   "geom": {
-   "Polygon": 2
+   "Polygon": 6
   },
   "fields": {
    "CATTSS": [
     "1"
    ],
    "IDENTIFIER": [
+    "FI 0000063582 00303",
+    "FI 0000063597 00303",
+    "FI 0000063598 00303",
+    "FI 0000063599 00303",
     "FI 0000817570 00311",
     "FI 0000817571 00311"
    ],
    "PVM": [
-    "2026-02-22T19:23:26",
-    "2026-02-22T19:23:35"
+    "2026-02-22T19:23:35",
+    "2026-02-22T19:23:26"
    ],
    "SORDAT": [
+    "20100827",
+    "20140804",
     "20090617"
    ]
   }
@@ -773,20 +1335,23 @@
   "name": "rajoitettu:UnsurveyedArea_A",
   "title": "UnsurveyedArea_A",
   "layer": "unsurveyedarea_a",
-  "count": 2,
+  "count": 4,
   "geom": {
-   "Polygon": 2
+   "Polygon": 4
   },
   "fields": {
    "IDENTIFIER": [
+    "FI 0000320208 42100",
+    "FI 0000320210 42100",
     "FI 0002205437 55000",
     "FI 0002217317 55000"
    ],
    "PVM": [
-    "2026-02-22T19:13:43",
-    "2026-02-22T19:13:42"
+    "2026-02-22T19:13:42",
+    "2026-02-22T19:13:43"
    ],
    "SORDAT": [
+    "20140916",
     "20140228",
     "20131001"
    ]
@@ -797,135 +1362,140 @@
   "name": "vesivaylatiedot:loistot_uusi",
   "title": "Loistot",
   "layer": "loistot_uusi",
-  "count": 516,
+  "count": 1872,
   "geom": {
-   "Point": 516
+   "Point": 1872
   },
   "fields": {
    "id": [
-    6250,
-    6251,
-    6260,
-    6262,
-    6272,
-    6445
+    4907,
+    4909,
+    4910,
+    4931,
+    4932,
+    4934
    ],
    "laatu": [
     "Pääloisto",
     "Lisäloisto"
    ],
    "korkeusvedesta": [
-    6.5,
-    16.2,
-    18.5,
-    3.8,
-    4.1,
-    14.6
+    25.6,
+    3.3,
+    4.3,
+    12.6,
+    4.0,
+    19.1
    ],
    "korkeusmaasta": [
-    4.2,
-    14.2,
-    14.3,
-    3.5,
-    3.2,
-    5.1
+    23.4,
+    10.1,
+    18.3,
+    4.9,
+    9.4,
+    4.1
    ],
    "maantietkanto": [
-    10.0,
-    13.0,
-    13.6,
-    8.7,
-    8.9,
-    12.6
+    15.2,
+    8.4,
+    9.0,
+    12.0,
+    8.8,
+    13.7
    ],
    "optinenkanto": [
-    6.5,
-    4.8,
-    8.6,
-    9.0,
-    5.6,
-    10.2
+    8.5,
+    1.8,
+    1.9,
+    2.0,
+    3.4,
+    5.2
    ],
    "kiinteavalovoima": [
-    350,
-    360,
+    3465,
+    30,
+    130,
+    500,
     3700,
-    8200,
-    137,
-    1267
+    4885
    ],
    "tehollinenvalovoima": [
-    210,
-    327,
-    3364,
-    4100,
-    68,
-    576
+    3150,
+    4,
+    118,
+    455,
+    249,
+    240
    ],
    "tahdistus": [
     "E",
     "K"
    ],
    "virallvalotunnus": [
-    "Pv-Sx",
     "KV-LB 6 s",
-    "NPv-ESx (2) 3 s",
     "V-B 3 s",
-    "Pv-Sx (2) 6 s",
+    "NPv-ESx",
+    "KiV-FB 6 s",
+    "Pv-Sx",
     "KV-LB 8 s"
    ],
    "viralvalotunnuse": [
-    "Q",
     "LFl 6 s",
-    "VQ (2) 3 s",
     "Fl 3 s",
-    "Q (2) 6 s",
+    "VQ",
+    "FFl 6 s",
+    "Q",
     "LFl 8 s"
    ],
    "laji": [
-    "Yövalo"
+    "Yövalo",
+    "Päivävalo"
    ],
    "tarkkavalotunnus": [
-    "0,3+0,7=1,0 s",
     "2+4=6 s",
-    "0,2+0,8=1,0 s",
-    "2*(0,2+0,3) + 2,0=3,0 s",
     "0,3+2,7=3,0 s",
-    "2*(0,3+0,7) + 4,0=6,0 s"
+    "0,15+2,85=3,00 s",
+    "0,15+0,45=0,60 s",
+    "1+2=3 s",
+    "0,5+2,5=3,0 s"
    ],
    "turvalaitenumero": [
-    "3131",
-    "3132",
-    "3122",
-    "3134",
-    "3155",
-    "3559"
+    "20272",
+    "11704",
+    "20212",
+    "20207",
+    "20208",
+    "20210"
    ],
    "irrotus_pvm": [
-    "2026-11-11T00:21:15Z",
-    "2026-11-11T00:21:13Z",
-    "2026-11-11T00:21:08Z",
-    "2026-11-11T00:21:18Z",
-    "2026-11-11T00:24:57Z",
-    "2026-11-11T00:24:59Z"
+    "2026-11-11T00:15:52Z",
+    "2026-11-11T00:25:59Z",
+    "2026-11-11T00:25:25Z",
+    "2026-11-11T00:15:53Z",
+    "2026-11-11T00:15:54Z",
+    "2026-11-11T00:05:59Z"
    ],
    "jnro": [
-    "3010",
-    "2325",
-    "3110",
-    "3255",
-    "2910",
-    "2975"
+    "4455",
+    "4000",
+    "3705",
+    "4055",
+    "5150",
+    "4675"
    ],
    "valoominaisuusfi": [
     "Kalastusloisto",
+    "Päiväloisto",
     "Lentoestevalo",
-    "Päiväloisto"
+    "Tehovalo, sytytetään tarvittaessa",
+    "Varoitusvalo"
    ],
    "valoominaisuussv": [
     "Fiskefyr",
+    "Dagerfyr",
     "Flyghinderljus",
-    "Dagerfyr"
+    "Effektivljus, tändes vid behov",
+    "Varningsljus"
    ]
   }
  },
@@ -934,58 +1504,62 @@
   "name": "vesivaylatiedot:lajitysalueet_uusi",
   "title": "Läjitysalueet",
   "layer": "lajitysalueet_uusi",
-  "count": 19,
+  "count": 68,
   "geom": {
-   "Polygon": 19
+   "Polygon": 68
   },
   "fields": {
    "id": [
+    101840,
+    104831,
     111978,
     111988,
-    112278,
-    113120,
-    113134,
-    113143
+    112026,
+    112278
    ],
    "lajitustaso": [
+    "-20",
     "12",
     "8",
     "5",
     "13",
-    "-40"
+    "11"
    ],
    "vertailutaso": [
+    "Mw2005",
     "MW2000",
     "MW1990",
     "MW1980",
-    "MW2005",
-    "MW1975",
-    "Mw2005"
+    "MW1972",
+    "MW2005"
    ],
    "lajitustyyppi": [
-    1
+    1,
+    2
    ],
    "vuodet": [
-    "1999",
+    "2003,2004,2005",
     "2003",
+    "1999",
+    "2000",
     "1987",
-    "1978",
-    "1980",
-    "1971,1972,1973"
+    "1983"
    ],
    "maalaatu": [
+    "Mu, Li, Mo",
     "Ka, Mo",
     "Ka, Mr",
-    "Ka, Mr, Ki",
-    "Ka"
+    "Mu",
+    "Mu, Li, Ka, Mo, Hi",
+    "Mu, Li, Mo, Hi"
    ],
    "ruoppaus": [
+    "101841,162450",
+    "104829",
     "111970,111972,111974,111976,122654,122655,122656,122657,122658",
     "111979,111981,111983,111985",
-    "112276",
-    "113116,113118",
-    "113124,113125,113128,113129,113130",
-    "113142"
+    "111703,111705,111707,111709,111712,111714,111716,111717,111719",
+    "112276"
    ],
    "irrotus_pvm": [
     "2026-11-11T00:03:20Z"
@@ -997,74 +1571,74 @@
   "name": "vesivaylatiedot:turvalaitteet_uusi",
   "title": "Merenkulun turvalaitteet",
   "layer": "turvalaitteet_uusi",
-  "count": 2359,
+  "count": 8118,
   "geom": {
-   "MultiPoint": 2359
+   "MultiPoint": 8118
   },
   "fields": {
    "id": [
     4,
-    13,
-    41,
-    43,
-    49,
-    61
+    5,
+    6,
+    7,
+    8,
+    10
    ],
    "turvalaitenumero": [
     "3309",
-    "6312",
-    "3296",
-    "3302",
-    "6099",
-    "6118"
+    "11537",
+    "11476",
+    "11495",
+    "11587",
+    "11436"
    ],
    "nimifi": [
     "Kalkskärskobb",
-    "Fästorna",
-    "Lillharun",
-    "Söderkobb",
-    "Rannö",
-    "Korsö alempi"
+    "Oxhornen alempi",
+    "Lilla Tärnskär",
+    "Längden",
+    "Ytter Tjärhällen",
+    "Harmaja"
    ],
    "sijaintifi": [
     "Kalkskärskobbenin luodolla.",
-    "Västergrundetin E-osassa.",
-    "Lillharunin luodolla Utön ulkopuolella.",
-    "Söderkobbin luodolla.",
-    "Rannön L-osassa.",
-    "Västra-Korsön LO-niemellä."
+    "Oxhornenin kallioluodolla.",
+    "Tärnskärin saariryhmän eteläisimmällä kallioluodolla.",
+    "Längdenin luodolla.",
+    "Ytter Tjärhällenin keskellä.",
+    "Harmajan kallioluodolla."
    ],
    "sijaintisv": [
     "På skäret Kalkskärskobb.",
-    "På S-delen av Västergrundet.",
-    "På klippan Lillharun utanför Utö.",
-    "På grundet Söderkobb.",
-    "På V-delen av Rannö.",
-    "På SV-udden av Västra-Korsö."
+    "På klippan Oxhornen.",
+    "På den sydligaste klippan av Tärnskär.",
+    "På skäret Längden.",
+    "På mitten av Ytter Tjärhällen.",
+    "På skäret Gråhara."
    ],
    "turvalaitetyyppifi": [
     "Sektoriloisto",
+    "Linjamerkki",
     "Apuloisto",
     "Merimajakka",
-    "Poiju",
-    "Linjamerkki",
-    "Viitta"
+    "Tutkamerkki",
+    "Poiju"
    ],
    "turvalaitetyyppisv": [
     "Sektorfyr",
+    "Linjemärke",
     "Hjälpfyr",
     "Havsfyr",
-    "Boj",
-    "Linjemärke",
-    "Remmare"
+    "Radarmärke",
+    "Boj"
    ],
    "mittauspaivamaara": [
     "2003-06-17T00:00:00Z",
-    "1986-06-01T00:00:00Z",
-    "1998-07-08T00:00:00Z",
-    "1998-06-06T00:00:00Z",
-    "1997-06-06T00:00:00Z",
-    "1999-05-27T00:00:00Z"
+    "1996-09-11T00:00:00Z",
+    "2013-11-26T00:00:00Z",
+    "1995-06-01T00:00:00Z",
+    "2000-07-09T00:00:00Z",
+    "1986-06-01T00:00:00Z"
    ],
    "alityyppi": [
     "KIINTEÄ",
@@ -1078,9 +1652,9 @@
     99,
     6,
     4,
-    1,
-    2,
-    5
+    3,
+    5,
+    1
    ],
    "toimintatilakoodi": [
     1,
@@ -1089,51 +1663,51 @@
    ],
    "rakennusvuodet": [
     "1953, 1986, 1990, 1997",
-    "1890 1984",
-    "1946, 1973, 1983, 1987, 2021",
-    "1957, 1986",
-    "1962 1989",
-    "1890 1985 1988"
+    "1963, 1983, 1991, 1999",
+    "1948, 1973, 1985",
+    "1965, 1973, 1987, 1992",
+    "1955, 1976, 1992",
+    "1883, 1960, 1969"
    ],
    "paivitypaivamaara": [
     "2026-10-30T14:51:51Z",
-    "2016-05-17T16:02:44Z",
-    "2026-10-30T14:51:54Z",
-    "2026-10-30T14:51:52Z",
-    "2026-10-30T15:16:14Z",
-    "2026-10-30T14:51:49Z"
+    "2026-10-30T14:51:56Z",
+    "2026-10-02T13:24:57Z",
+    "2026-10-30T14:51:55Z",
+    "2026-10-30T15:16:52Z",
+    "2026-10-30T14:52:01Z"
    ],
    "vahvistuspvm": [
     "1987-01-07T00:00:00Z",
+    "2015-06-09T12:54:49Z",
+    "2007-09-14T00:00:00Z",
     "1983-12-07T00:00:00Z",
-    "1999-06-28T00:00:00Z",
-    "1777-07-07T00:00:00Z",
-    "1997-10-03T00:00:00Z",
-    "2000-12-22T00:00:00Z"
+    "1996-02-12T00:00:00Z",
+    "1999-06-28T00:00:00Z"
    ],
    "paikannustapatyyppi": [
     52,
     51,
-    58,
-    63,
+    65,
+    0,
     53,
-    61
+    58
    ],
    "paikannuskohtatyyppi": [
     1,
+    5,
+    4,
     0,
     2,
-    5,
-    3,
-    4
+    3
    ],
    "tarkkuusluokkakoodi": [
     "51",
     "52",
     "55",
+    "54",
     "58",
-    "57",
-    "54"
+    "57"
    ],
    "huippumerkki": [
     "E",
@@ -1144,8 +1718,8 @@
     "1",
     "4",
     "3",
-    "7",
-    "6"
+    "6",
+    "2"
    ],
    "fasadivalo": [
     "0",
@@ -1153,22 +1727,24 @@
    ],
    "jnro": [
     "2930\\n3255",
-    "2650",
-    "3255",
-    "2455",
-    "2565",
-    "2450"
+    "4410",
+    "4075",
+    "4195",
+    "4980\\n4865",
+    "4455\\n4730"
    ],
    "symboli": [
     "2",
+    "s",
     "t",
     "1",
-    "Q",
-    "M",
-    "s"
+    "u",
+    "Q"
    ],
    "aisfi": [
-    "Ei"
+    "Ei",
+    "Synteettinen",
+    "Virtuaalinen"
    ],
    "kaukohallinta": [
     "0",
@@ -1177,106 +1753,114 @@
    "omistaja": [
     "Väylävirasto",
     "Ahvenanmaan maakuntahallitus",
-    "Västra Korpo fiskargille",
-    "Stiftelsen Sjöfartskvarteret i Mariehamn",
-    "Rajavartiolaitos",
-    "Maarianhaminan kaupunki"
+    "Ruotsin valtio",
+    "Salon kaupunki",
+    "Finnsementti Oy",
+    "Västra Korpo fiskargille"
    ],
    "valosektorien_tiedot": [
     "Alkukulma: 81, Loppukulma: 145, Väri: vi\\nAlkukulma: 145, Loppukulma: 155, Väri: v\\nAlkukulma: 155, Loppukulma: 185, Väri: p\\nAlkukulma: 185, Loppukulma: 222, Väri: vi\\nAlkukulma: 222, Loppukulma: 226.5, Väri: v\\nAlkukulma: 226.5, Loppukulma: 289, Väri: p\\nAlkukulma: 289, Loppukulma: 310, Väri: vi\\nAlkukulma: 310, Loppukulma: 313.5, Väri: v\\nAlkukulma: 313.5, Loppukulma: 81, Väri: p",
-    "Alkukulma: 37, Loppukulma: 74, Väri: p\\nAlkukulma: 74, Loppukulma: 90, Väri: vi\\nAlkukulma: 90, Loppukulma: 103, Väri: v\\nAlkukulma: 103, Loppukulma: 120, Väri: p\\nAlkukulma: 120, Loppukulma: 164, Väri: vi\\nAlkukulma: 164, Loppukulma: 180, Väri: v\\nAlkukulma: 180, Loppukulma: 193, Väri: p\\nAlkukulma: 193, Loppukulma: 234, Väri: vi\\nAlkukulma: 234, Loppukulma: 244, Väri: v\\nAlkukulma: 244, Loppukulma: 303, Väri: p\\nAlkukulma: 303, Loppukulma: 333, Väri: vi\\nAlkukulma: 333, Loppukulma: 37, Väri: v",
-    "Alkukulma: 45, Loppukulma: 101, Väri: p\\nAlkukulma: 101, Loppukulma: 148, Väri: vi\\nAlkukulma: 148, Loppukulma: 155, Väri: v\\nAlkukulma: 155, Loppukulma: 172, Väri: p\\nAlkukulma: 262, Loppukulma: 340, Väri: vi\\nAlkukulma: 340, Loppukulma: 45, Väri: v",
-    "Alkukulma: 39, Loppukulma: 133, Väri: vi\\nAlkukulma: 133, Loppukulma: 136, Väri: v\\nAlkukulma: 136, Loppukulma: 160, Väri: p\\nAlkukulma: 293, Loppukulma: 318.5, Väri: vi\\nAlkukulma: 318.5, Loppukulma: 321, Väri: v\\nAlkukulma: 321, Loppukulma: 39, Väri: p",
+    "Alkukulma: 29.5, Loppukulma: 33.5, Väri: v",
     "Alkukulma: 0, Loppukulma: 360, Väri: v",
-    "Alkukulma: 2, Loppukulma: 11, Väri: v\\nAlkukulma: 11, Loppukulma: 32.5, Väri: p\\nAlkukulma: 32.5, Loppukulma: 64, Väri: vi\\nAlkukulma: 64, Loppukulma: 72.5, Väri: v\\nAlkukulma: 72.5, Loppukulma: 179.5, Väri: p\\nAlkukulma: 318, Loppukulma: 2, Väri: vi"
+    "Alkukulma: 14, Loppukulma: 56, Väri: p\\nAlkukulma: 128, Loppukulma: 200, Väri: vi\\nAlkukulma: 200, Loppukulma: 206, Väri: v\\nAlkukulma: 206, Loppukulma: 220, Väri: p\\nAlkukulma: 220, Loppukulma: 358, Väri: vi\\nAlkukulma: 358, Loppukulma: 14, Väri: v",
+    "Alkukulma: 115.5, Loppukulma: 123.5, Väri: v",
+    "Alkukulma: 4.5, Loppukulma: 10.5, Väri: v\\nAlkukulma: 10.5, Loppukulma: 168, Väri: p\\nAlkukulma: 168, Loppukulma: 187, Väri: vi\\nAlkukulma: 187, Loppukulma: 193, Väri: v\\nAlkukulma: 193, Loppukulma: 212, Väri: p\\nAlkukulma: 212, Loppukulma: 250, Väri: v\\nAlkukulma: 250, Loppukulma: 260, Väri: p\\nAlkukulma: 260, Loppukulma: 312, Väri: v\\nAlkukulma: 312, Loppukulma: 4.5, Väri: vi"
    ],
    "loistojen_tiedot": [
     "Loiston laji: Yövalo, Korkeus vedestä: 22.1, Korkeus maasta: 16.2, Tehollinen valovoima: 1442, Kiinteä valovoima: 1730, Tahdistus: E",
-    "Loiston laji: Yövalo, Korkeus vedestä: 19, Korkeus maasta: 14, Tehollinen valovoima: 249, Kiinteä valovoima: , Tahdistus: E",
-    "Loiston laji: Yövalo, Korkeus vedestä: 16.9, Korkeus maasta: 9.6, Tehollinen valovoima: 471, Kiinteä valovoima: 750, Tahdistus: E",
-    "Loiston laji: Yövalo, Korkeus vedestä: 8.3, Korkeus maasta: 6.3, Tehollinen valovoima: 162, Kiinteä valovoima: 270, Tahdistus: E",
-    "Loiston laji: Yövalo, Korkeus vedestä: 20, Korkeus maasta: 8, Tehollinen valovoima: 69, Kiinteä valovoima: , Tahdistus: E",
-    "Loiston laji: Yövalo, Korkeus vedestä: 7, Korkeus maasta: 2.1, Tehollinen valovoima: 1000, Kiinteä valovoima: 1200, Tahdistus: E"
+    "Loiston laji: Yövalo, Korkeus vedestä: 13.2, Korkeus maasta: , Tehollinen valovoima: 2931, Kiinteä valovoima: , Tahdistus: E",
+    "Loiston laji: Yövalo, Korkeus vedestä: 11.71, Korkeus maasta: 3.8, Tehollinen valovoima: 260, Kiinteä valovoima: , Tahdistus: E",
+    "Loiston laji: Yövalo, Korkeus vedestä: 17, Korkeus maasta: , Tehollinen valovoima: 495, Kiinteä valovoima: 561, Tahdistus: E",
+    "Loiston laji: Yövalo, Korkeus vedestä: 8.9, Korkeus maasta: 6.4, Tehollinen valovoima: 930, Kiinteä valovoima: , Tahdistus: E",
+    "Loiston laji: Yövalo, Korkeus vedestä: 23.8, Korkeus maasta: , Tehollinen valovoima: 72000, Kiinteä valovoima: , Tahdistus: E"
    ],
    "tutkamajakoiden_tiedot": [
     "Malli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE T:  _, Asennuskorkeus: 15, Tunnuspituus: 1.2, Taajuus S: K, Kantama S: 10, Taajuus X: K, Kantama X: 12, Periodi (on): 18, Periodi (off): 12\\nMalli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE T:  _, Asennuskorkeus: 15, Tunnuspituus: 1.2, Taajuus S: K, Kantama S: 10, Taajuus X: K, Kantama X: 12, Periodi (on): 18, Periodi (off): 12",
-    "Malli: Ericon MK II X/S, Laji: Pyyhkivätaajuinen, Tunnus: MORSE T:  _, Asennuskorkeus: 19, Tunnuspituus: 1.2, Taajuus S: K, Kantama S: 10.8, Taajuus X: K, Kantama X: 12.8, Periodi (on): 18, Periodi (off): 12",
-    "Malli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE T:  _, Asennuskorkeus: 18, Tunnuspituus: 1.2, Taajuus S: K, Kantama S: 10.6, Taajuus X: K, Kantama X: 12.6, Periodi (on): 18, Periodi (off): 12",
-    "Malli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE T:  _, Asennuskorkeus: 8.3, Tunnuspituus: 1.2, Taajuus S: K, Kantama S: 8.3, Taajuus X: K, Kantama X: 10.3, Periodi (on): 18, Periodi (off): 12",
-    "Malli: AEI Marconi  Seawatch 300, X, Laji: Pyyhkivätaajuinen, Tunnus: MORSE T:  _, Asennuskorkeus: 20, Tunnuspituus: 1.2, Taajuus S: E, Kantama S: , Taajuus X: K, Kantama X: 13, Periodi (on): 6, Periodi (off): 84",
-    "Malli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE T:  _, Asennuskorkeus: 8.5, Tunnuspituus: 1.2, Taajuus S: K, Kantama S: 8.4, Taajuus X: K, Kantama X: 10.4, Periodi (on): 18, Periodi (off): 12"
+    "Malli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE O:  _ _ _, Asennuskorkeus: 15, Tunnuspituus: 1.2, Taajuus S: K, Kantama S: 10, Taajuus X: K, Kantama X: 12, Periodi (on): 18, Periodi (off): 12",
+    "Malli: PharosMarine Phalcon-2000  X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE T:  _, Asennuskorkeus: 10.3, Tunnuspituus: variable, Taajuus S: K, Kantama S: 9.1, Taajuus X: K, Kantama X: 11.1, Periodi (on): 12, Periodi (off): 18",
+    "Malli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE M:  _ _, Asennuskorkeus: 16.7, Tunnuspituus: 1.2, Taajuus S: K, Kantama S: 10.3, Taajuus X: K, Kantama X: 12.3, Periodi (on): 18, Periodi (off): 12",
+    "Malli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE T:  _, Asennuskorkeus: 8.2, Tunnuspituus: 1.2, Taajuus S: K, Kantama S: 9, Taajuus X: K, Kantama X: 11, Periodi (on): 18, Periodi (off): 12\\nMalli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE T:  _, Asennuskorkeus: 8.2, Tunnuspituus: 1.2, Taajuus S: K, Kantama S: 9, Taajuus X: K, Kantama X: 11, Periodi (on): 18, Periodi (off): 12",
+    "Malli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE /:  _.._., Asennuskorkeus: 23, Tunnuspituus: 3.2, Taajuus S: K, Kantama S: 11.6, Taajuus X: K, Kantama X: 13.6, Periodi (on): 30, Periodi (off): 0\\nMalli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE /:  _.._., Asennuskorkeus: 23, Tunnuspituus: 3.2, Taajuus S: K, Kantama S: 11.6, Taajuus X: K, Kantama X: 13.6, Periodi (on): 30, Periodi (off): 0"
    ],
    "paivatunnusten_tiedot": [
     "Väri: Punainen/valkoinen, Väritys: Vaakavyöt ylhäältä lukien, Muoto: Suorakaide, Pintamateriaali: 1, Kummelin tunnus: , Korkeus (m): 7.2, Leveys (m): 4.1, Korkeus maasta (m): 7.8, Korkeus vedestä: 13.7\\nVäri: Punainen/valkoinen, Väritys: Vaakavyöt ylhäältä lukien, Muoto: Suorakaide, Pintamateriaali: 1, Kummelin tunnus: , Korkeus (m): 7.2, Leveys (m): 4.1, Korkeus maasta (m): 7.8, Korkeus vedestä: 13.7",
-    "Väri: Punainen, Väritys: Yksivärinen, Muoto: Tuntematon, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): 15, Korkeus vedestä: 19",
-    "Väri: Valkoinen/musta, Väritys: Yläosa/alaosa, Muoto: Pyöreä, Pintamateriaali: 5, Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): 12.3, Korkeus vedestä: 19.3",
-    "Väri: Valkoinen/punainen/valkoinen, Väritys: Vaakavyöt ylhäältä lukien, Muoto: Lieriömäinen, Pintamateriaali: 5, Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): 8.7, Korkeus vedestä: 10.7",
-    "Väri: Punainen, Väritys: Yksivärinen, Muoto: Tuntematon, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): 10, Korkeus vedestä: 20",
-    "Väri: Keltainen/punainen/keltainen, Väritys: Pystyraidat, Muoto: Suorakaide, Pintamateriaali: 1, Kummelin tunnus: , Korkeus (m): 3.2, Leveys (m): 2.6, Korkeus maasta (m): 3.7, Korkeus vedestä: 6.4"
+    "Väri: Punainen/keltainen/punainen, Väritys: Pystyraidat, Muoto: Suorakaide, Pintamateriaali: 1, Kummelin tunnus: , Korkeus (m): 7.6, Leveys (m): 6, Korkeus maasta (m): , Korkeus vedestä: ",
+    "Väri: Musta, Väritys: Yksivärinen, Muoto: Suorakaide, Pintamateriaali: 5, Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): , Korkeus vedestä: 10.16",
+    "Väri: Punainen/valkoinen/punainen, Väritys: Vaakavyöt ylhäältä lukien, Muoto: Majakkatorni, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): , Korkeus vedestä: ",
+    "Väri: Punainen/keltainen/punainen, Väritys: Pystyraidat, Muoto: Suorakaide, Pintamateriaali: 10, Kummelin tunnus: , Korkeus (m): 4.5, Leveys (m): 3, Korkeus maasta (m): 6.1, Korkeus vedestä: 8.58\\nVäri: Punainen/keltainen/punainen, Väritys: Pystyraidat, Muoto: Suorakaide, Pintamateriaali: 10, Kummelin tunnus: , Korkeus (m): 4.5, Leveys (m): 3, Korkeus maasta (m): 6.1, Korkeus vedestä: 8.58",
+    "Väri: Punainen/valkoinen/punainen, Väritys: Vaakavyöt ylhäältä lukien, Muoto: Majakkatorni, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): , Korkeus vedestä: \\nVäri: Punainen/valkoinen/punainen, Väritys: Vaakavyöt ylhäältä lukien, Muoto: Majakkatorni, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): , Korkeus vedestä: "
    ],
    "irrotus_pvm": [
     "2026-11-11T00:11:04Z",
-    "2026-11-11T00:17:51Z",
-    "2026-11-11T00:24:54Z",
-    "2026-11-11T00:26:07Z",
-    "2026-11-11T00:27:03Z",
-    "2026-11-11T00:27:04Z"
+    "2026-11-11T00:12:48Z",
+    "2026-11-11T00:12:55Z",
+    "2026-11-11T00:12:57Z",
+    "2026-11-11T00:13:57Z",
+    "2026-11-11T00:15:55Z"
    ],
    "vaylan_nimi": [
     "[2930: Gustaf Dalen-Kalkskär-väylä](vaylat:jnro=2930)\\n[3255: Utö-Naantali väylä](vaylat:jnro=3255)",
-    "[2650: Saaristomeri (avomeri)](vaylat:jnro=2650)",
-    "[3255: Utö-Naantali väylä](vaylat:jnro=3255)",
-    "[2455: Ahvenanmaan pohjoiset väylät](vaylat:jnro=2455)",
-    "[2565: Marhällan-Maarianhamina-väylät](vaylat:jnro=2565)",
-    "[2450: Ahvenanmeri (avomeri)](vaylat:jnro=2450)"
+    "[4410: Kantvikin väylä](vaylat:jnro=4410)",
+    "[4075: Hangon väylä](vaylat:jnro=4075)",
+    "[4195: Lappohjan väylä](vaylat:jnro=4195)",
+    "[4980: Västra Balkan-Ytter Tjärhällen](vaylat:jnro=4980)\\n[4865: Etelä-Suomen talviväylä I ](vaylat:jnro=4865)",
+    "[4455: Etelä-Suomen talviväylä, Porkkala-Helsinki](vaylat:jnro=4455)\\n[4730: Harmajan väylä](vaylat:jnro=4730)"
    ],
    "omistajafi": [
     "Väylävirasto",
     "Ahvenanmaan maakuntahallitus",
-    "Västra Korpo fiskargille",
-    "Stiftelsen Sjöfartskvarteret i Mariehamn",
-    "Rajavartiolaitos",
-    "Maarianhaminan kaupunki"
+    "Ruotsin valtio",
+    "Salon kaupunki",
+    "Finnsementti Oy",
+    "Västra Korpo fiskargille"
    ],
    "asennuskorkeus": [
     15,
-    19,
-    18,
-    8.3,
-    20,
-    8.5
+    10.3,
+    16.7,
+    8.2,
+    23,
+    19
    ],
    "latitude_asteina": [
     "60°0.3126'",
-    "59°51.3742'",
-    "59°43.6609'",
-    "59°56.0303'",
-    "60°31.7236'",
-    "60°2.3613'"
+    "59°57.6339'",
+    "59°45.1943'",
+    "59°46.6497'",
+    "60°8.2407'",
+    "60°6.3011'"
    ],
    "longitude_asteina": [
     "21°4.6624'",
-    "20°20.5664'",
-    "21°24.0431'",
-    "21°14.0151'",
-    "20°11.9253'",
-    "19°53.8253'"
+    "24°16.4568'",
+    "22°57.8037'",
+    "23°14.8685'",
+    "25°18.679'",
+    "24°58.5339'"
    ],
    "nimisv": [
-    "Fästorna",
-    "Lillharun",
-    "Söderkobb",
-    "Rannö",
-    "Korsö nedre",
-    "Flötjan"
+    "Oxhornen nedre",
+    "Lilla Tärnskär",
+    "Längden",
+    "Ytter Tjärhällen",
+    "Gråhara",
+    "Fästorna"
    ],
    "rakennetietokoodi": [
+    "8",
+    "20",
     "1",
     "5",
     "2",
-    "4",
-    "20",
     "9"
+   ],
+   "mmsi": [
+    992304003,
+    992306500,
+    992306505,
+    992306504,
+    992306506,
+    992306508
    ]
   }
  },
@@ -1285,134 +1869,138 @@
   "name": "vesivaylatiedot:navigointilinjat_muut_vaylanpitajat",
   "title": "Muiden väylänpitäjien navigointilinjat",
   "layer": "navigointilinjat_muut_vaylanpitajat",
-  "count": 219,
+  "count": 817,
   "geom": {
-   "LineString": 219
+   "LineString": 817
   },
   "fields": {
    "navigointilinjaid": [
-    141714,
-    202796,
-    211300,
-    211303,
-    211319,
-    211346
+    5292,
+    5296,
+    6330,
+    6348,
+    6364,
+    6430
    ],
    "tyyppi": [
+    "Pakollinen kaarre",
     "Suora linja",
     "Murtoviiva",
-    "Pakollinen kaarre",
     "Teoreettinen kaarre"
    ],
    "tyyppikoodi": [
+    3,
     1,
     2,
-    3,
     4
    ],
    "laatulk": [
     3,
-    1
+    2,
+    1,
+    0
    ],
    "omistaja": [
-    "Kustavin kunta",
-    "Ahvenanmaan maakuntahallitus",
-    "Tuntematon",
-    "Maarianhaminan kaupunki"
+    "Hangon kaupunki",
+    "Helsingin Satama ",
+    "Helsingin kaupunki",
+    "Turun kaupunki",
+    "Kuntoutusyhtymä-Rehab-Group",
+    "Naantalin kaupunki"
    ],
    "mitoitussyvays": [
-    2.0,
-    2.5,
-    3.4,
+    3.0,
+    9.3,
+    9.0,
+    6.9,
     2.4,
-    3.6,
-    3.0
-   ],
-   "suunta": [
-    36.2,
-    159.0,
-    222.9,
-    206.9,
-    163.2,
-    187.0
-   ],
-   "tosisuunta": [
-    36.6,
-    159.3,
-    222.9,
-    206.9,
-    163.2,
-    187.0
+    1.8
    ],
    "pituus": [
-    718,
-    920,
-    71,
-    994,
-    2957,
-    1368
+    132,
+    304,
+    396,
+    62,
+    170,
+    256
+   ],
+   "sade": [
+    197,
+    850,
+    351,
+    250,
+    200,
+    100
    ],
    "diaarinumero": [
-    "TRAFICOM/35487/05.01.26.00/2024",
-    "TRAFICOM/305248/05.01.26.00/2023",
-    "LIVI/7917/06.02.02/2017",
-    "LIVI/7919/06.02.02/2017",
-    "LIVI/7920/06.02.02/2017",
-    "LIVI/7921/06.02.02/2017"
+    "TRAFICOM/184277/05.01.26.00/2025",
+    "TRAFICOM/139591/05.01.26.00/2026",
+    "TRAFICOM/592242/05.01.26.00/2024",
+    "VÄYLÄ/8999/06.02.02/2020",
+    "VÄYLÄ/119/06.02.02/2022",
+    "VÄYLÄ/8112/06.02.02/2021"
    ],
    "vahvistuspaivamaara": [
-    "2024-02-07T00:00:00Z",
-    "2023-09-05T00:00:00Z",
-    "2017-11-07T00:00:00Z",
-    "2017-11-01T00:00:00Z",
-    "2014-11-07T00:00:00Z",
-    "2018-05-13T00:00:00Z"
+    "2025-04-09T00:00:00Z",
+    "2026-03-19T00:00:00Z",
+    "2026-03-18T00:00:00Z",
+    "2024-12-19T00:00:00Z",
+    "2021-10-14T00:00:00Z",
+    "2022-02-03T00:00:00Z"
    ],
    "jnro": [
-    "3020",
-    "2720",
-    "2590",
-    "2585",
-    "2600",
-    "2675"
+    "4065",
+    "4805",
+    "4800",
+    "4660",
+    "4650",
+    "4640"
    ],
    "irrotus_pvm": [
     "2026-11-11T00:28:59Z",
+    "2026-11-11T00:28:58Z",
     "2026-11-11T00:29:00Z",
-    "2026-11-11T00:28:57Z",
-    "2026-11-11T00:28:58Z"
+    "2026-11-11T00:28:57Z"
    ],
    "vaylan_nimi": [
-    "[3020: Lootholman venereitti](vaylat:jnro=3020)",
-    "[2720: Tranviksudd-Vargata-Ballerö-väylä](vaylat:jnro=2720)",
-    "[2590: Stegskär-Nyhamn väylä](vaylat:jnro=2590)",
-    "[2585: Måsskär-Slättholmen väylä](vaylat:jnro=2585)",
-    "[2600: Granön väylä](vaylat:jnro=2600)",
-    "[2675: Färjsund-Bartsgårda väylä](vaylat:jnro=2675)"
+    "[4065: Hangon kappelisataman väylä](vaylat:jnro=4065)",
+    "[4805: Kustaanmiekka-Sörnäinen](vaylat:jnro=4805)",
+    "[4800: Olympialaiturin väylä](vaylat:jnro=4800)",
+    "[4660: Taivallahden väylä](vaylat:jnro=4660)",
+    "[4650: Hietaniemi-Pikkuniemi](vaylat:jnro=4650)",
+    "[4640: Vaskilahden väylä](vaylat:jnro=4640)"
+   ],
+   "suunta": [
+    203.0,
+    320.1,
+    325.0,
+    331.2,
+    1.0,
+    321.3
+   ],
+   "tosisuunta": [
+    203.0,
+    320.1,
+    324.9,
+    331.2,
+    1.4,
+    321.5
    ],
    "haraussyvyys": [
-    3.1,
-    4.4,
-    3.4,
-    4.2,
+    10.6,
+    9.9,
+    8.0,
     3.6,
-    4.0
+    9.5,
+    3.0
    ],
    "vertaustaso": [
-    "MW2015",
-    "MW2016",
-    "MW2017",
-    "MW2008",
-    "MW2019",
-    "MW2023"
-   ],
-   "sade": [
-    731,
-    352,
-    216,
-    243,
-    506,
-    200
+    "MW2000",
+    "MW1990",
+    "MW1995",
+    "MW2001",
+    "MW2005",
+    "NN+78.80"
    ]
   }
  },
@@ -1421,74 +2009,74 @@
   "name": "vesivaylatiedot:turvalaitteet_muut_vaylanpitajat",
   "title": "Muiden väylänpitäjien turvalaitteet",
   "layer": "turvalaitteet_muut_vaylanpitajat",
-  "count": 676,
+  "count": 1592,
   "geom": {
-   "MultiPoint": 676
+   "MultiPoint": 1592
   },
   "fields": {
    "id": [
     13,
+    25,
     49,
-    259,
-    279,
-    280,
-    281
+    254,
+    255,
+    256
    ],
    "turvalaitenumero": [
     "6312",
+    "80357",
     "6099",
-    "3172",
-    "6104",
-    "6102",
-    "6103"
+    "3433",
+    "3432",
+    "22610"
    ],
    "nimifi": [
     "Fästorna",
+    "Svenska Björn",
     "Rannö",
-    "Kälö",
-    "Kallan",
-    "Hundklubben",
-    "Kalven"
+    "Joensuu ylempi",
+    "Joensuu alempi",
+    "Dansbana"
    ],
    "nimisv": [
     "Fästorna",
     "Rannö",
-    "Kallan",
-    "Hundklubben",
-    "Kalven",
-    "Kvarter"
+    "Joensuu övre",
+    "Joensuu nedre",
+    "Luonnonmaa 2A",
+    "Luonnonmaa 4"
    ],
    "sijaintifi": [
     "Västergrundetin E-osassa.",
+    "Eteläisellä Ahvenanmerellä, Ahvenanmaalta 56 km etelään.",
     "Rannön L-osassa.",
-    "Kälön korkeimmalla kohdalla.",
-    "Kallan saarella.",
-    "Hundklubbenin P-rannalla.",
-    "Dånö Kalven P-kärjessä."
+    "Jätevesialtaan KO-sivulla.",
+    "Tienpenkereellä.",
+    "Högenin LU-puolella."
    ],
    "sijaintisv": [
     "På S-delen av Västergrundet.",
     "På V-delen av Rannö.",
-    "På högsta stället på Kälö.",
-    "På skäret Kallan.",
-    "På N-stranden av Hundklubben.",
-    "På N-udden av Dånö Kalven."
+    "Vid avfallsbassägens NÖ-sida.",
+    "Vid vägbanken.",
+    "NV om Högen.",
+    "På högsta stället på Kälö."
    ],
    "turvalaitetyyppifi": [
     "Sektoriloisto",
+    "Merimajakka",
     "Apuloisto",
     "Linjamerkki",
-    "Poiju",
     "Viitta",
-    "Muu merkki"
+    "Poiju"
    ],
    "turvalaitetyyppisv": [
     "Sektorfyr",
+    "Havsfyr",
     "Hjälpfyr",
     "Linjemärke",
-    "Boj",
     "Remmare",
-    "Annat märke"
+    "Boj"
    ],
    "alityyppi": [
     "KIINTEÄ",
@@ -1500,10 +2088,10 @@
    ],
    "navigointilajikoodi": [
     99,
+    1,
+    3,
     5,
     6,
-    3,
-    4,
     2
    ],
    "toimintatilakoodi": [
@@ -1513,43 +2101,43 @@
    ],
    "rakennusvuodet": [
     "1890 1984",
-    "1962 1989",
     "1968",
-    "1959 1989",
-    "1966 1988",
-    "1997"
+    "1962 1989",
+    "1980",
+    "1992",
+    "1999"
    ],
    "paivitypaivamaara": [
     "2016-05-17T16:02:44Z",
-    "2016-05-17T16:02:45Z",
-    "2016-05-17T16:02:47Z",
-    "2018-12-21T11:02:36Z",
-    "2018-12-21T11:02:15Z",
-    "2018-12-21T10:59:38Z"
+    "2023-01-12T15:15:06Z",
+    "2005-11-07T00:00:00Z",
+    "2003-01-10T00:00:00Z",
+    "2026-01-16T15:55:21Z",
+    "2016-05-17T16:02:45Z"
    ],
    "paikannustapatyyppi": [
     51,
+    0,
     52,
-    63,
-    61,
-    62,
-    53
+    53,
+    58,
+    63
    ],
    "paikannuskohtatyyppi": [
     0,
     5,
     1,
+    4,
     2,
-    6,
     3
    ],
    "tarkkuusluokkakoodi": [
     "52",
+    "54",
     "51",
-    "56",
-    "53",
-    "61",
-    "58"
+    "55",
+    "57",
+    "56"
    ],
    "huippumerkki": [
     "E"
@@ -1560,86 +2148,89 @@
    ],
    "jnro": [
     "2650",
+    "2560",
     "2455",
-    "3210",
-    "2660",
-    "2660\\n2455",
-    "2690"
+    "3765",
+    "3530\\n3535",
+    "3210"
    ],
    "symboli": [
     "2",
+    "1",
     "t",
     "s",
-    "O",
-    "k",
-    "Q"
+    "a",
+    "e"
    ],
    "aisfi": [
-    "Ei"
+    "Ei",
+    "Virtuaalinen"
    ],
    "kaukohallinta": [
-    "0"
+    "0",
+    "1"
    ],
    "omistaja": [
     "Ahvenanmaan maakuntahallitus",
+    "Ruotsin valtio",
+    "Salon kaupunki",
+    "Finnsementti Oy",
     "Västra Korpo fiskargille",
-    "Stiftelsen Sjöfartskvarteret i Mariehamn",
-    "Rajavartiolaitos",
-    "Maarianhaminan kaupunki",
-    "Suomen Yleisradio"
+    "Naantalin satama"
    ],
    "valosektorien_tiedot": [
     "Alkukulma: 37, Loppukulma: 74, Väri: p\\nAlkukulma: 74, Loppukulma: 90, Väri: vi\\nAlkukulma: 90, Loppukulma: 103, Väri: v\\nAlkukulma: 103, Loppukulma: 120, Väri: p\\nAlkukulma: 120, Loppukulma: 164, Väri: vi\\nAlkukulma: 164, Loppukulma: 180, Väri: v\\nAlkukulma: 180, Loppukulma: 193, Väri: p\\nAlkukulma: 193, Loppukulma: 234, Väri: vi\\nAlkukulma: 234, Loppukulma: 244, Väri: v\\nAlkukulma: 244, Loppukulma: 303, Väri: p\\nAlkukulma: 303, Loppukulma: 333, Väri: vi\\nAlkukulma: 333, Loppukulma: 37, Väri: v",
     "Alkukulma: 0, Loppukulma: 360, Väri: v",
-    "Alkukulma: 117.5, Loppukulma: 148.5, Väri: v\\nAlkukulma: 148.5, Loppukulma: 178.5, Väri: p\\nAlkukulma: 178.5, Loppukulma: 199, Väri: vi\\nAlkukulma: 199, Loppukulma: 216, Väri: v\\nAlkukulma: 216, Loppukulma: 349, Väri: p\\nAlkukulma: 349, Loppukulma: 117.5, Väri: vi",
-    "Alkukulma: 61, Loppukulma: 131, Väri: vi\\nAlkukulma: 131, Loppukulma: 140, Väri: v\\nAlkukulma: 140, Loppukulma: 209.5, Väri: p\\nAlkukulma: 209.5, Loppukulma: 302, Väri: vi\\nAlkukulma: 302, Loppukulma: 303.5, Väri: v\\nAlkukulma: 303.5, Loppukulma: 61, Väri: p",
-    "Alkukulma: 162.5, Loppukulma: 180, Väri: vi\\nAlkukulma: 180, Loppukulma: 193, Väri: v\\nAlkukulma: 193, Loppukulma: 206, Väri: p",
-    "Alkukulma: 225, Loppukulma: 45, Väri: v"
+    "Alkukulma: 30, Loppukulma: 61, Väri: k",
+    "Alkukulma: 265, Loppukulma: 60, Väri: k",
+    "Alkukulma: 0, Loppukulma: 360, Väri: p",
+    "Alkukulma: 32, Loppukulma: 270, Väri: vi"
    ],
    "loistojen_tiedot": [
     "Loiston laji: Yövalo, Korkeus vedestä: 19, Korkeus maasta: 14, Tehollinen valovoima: 249, Kiinteä valovoima: , Tahdistus: E",
+    "Loiston laji: , Korkeus vedestä: 32.5, Korkeus maasta: , Tehollinen valovoima: 2864, Kiinteä valovoima: 3150, Tahdistus: \\nLoiston laji: , Korkeus vedestä: 16.5, Korkeus maasta: , Tehollinen valovoima: , Kiinteä valovoima: , Tahdistus: ",
     "Loiston laji: Yövalo, Korkeus vedestä: 20, Korkeus maasta: 8, Tehollinen valovoima: 69, Kiinteä valovoima: , Tahdistus: E",
-    "Loiston laji: Yövalo, Korkeus vedestä: 32.5, Korkeus maasta: 2.5, Tehollinen valovoima: , Kiinteä valovoima: 33, Tahdistus: E",
-    "Loiston laji: Yövalo, Korkeus vedestä: 8, Korkeus maasta: 4, Tehollinen valovoima: 42, Kiinteä valovoima: , Tahdistus: E",
-    "Loiston laji: Yövalo, Korkeus vedestä: 10, Korkeus maasta: 3, Tehollinen valovoima: 69, Kiinteä valovoima: , Tahdistus: E",
-    "Loiston laji: Yövalo, Korkeus vedestä: 20, Korkeus maasta: 3, Tehollinen valovoima: 69, Kiinteä valovoima: , Tahdistus: E"
+    "Loiston laji: Yövalo, Korkeus vedestä: 15, Korkeus maasta: 13.4, Tehollinen valovoima: 304, Kiinteä valovoima: , Tahdistus: E",
+    "Loiston laji: Yövalo, Korkeus vedestä: 4.4, Korkeus maasta: 2.8, Tehollinen valovoima: 80, Kiinteä valovoima: , Tahdistus: E",
+    "Loiston laji: Yövalo, Korkeus vedestä: 3.3, Korkeus maasta: , Tehollinen valovoima: 4, Kiinteä valovoima: 30, Tahdistus: E"
    ],
    "tutkamajakoiden_tiedot": [
     "Malli: Ericon MK II X/S, Laji: Pyyhkivätaajuinen, Tunnus: MORSE T:  _, Asennuskorkeus: 19, Tunnuspituus: 1.2, Taajuus S: K, Kantama S: 10.8, Taajuus X: K, Kantama X: 12.8, Periodi (on): 18, Periodi (off): 12",
+    "Malli: Ericon MK II X/S, Laji: Jatkuvalähetteinen, Tunnus: MORSE B:  _..., Asennuskorkeus: , Tunnuspituus: 11, Taajuus S: E, Kantama S: 11, Taajuus X: E, Kantama X: 13, Periodi (on): 15, Periodi (off): 30",
     "Malli: AEI Marconi  Seawatch 300, X, Laji: Pyyhkivätaajuinen, Tunnus: MORSE T:  _, Asennuskorkeus: 20, Tunnuspituus: 1.2, Taajuus S: E, Kantama S: , Taajuus X: K, Kantama X: 13, Periodi (on): 6, Periodi (off): 84",
     "-"
    ],
    "paivatunnusten_tiedot": [
     "Väri: Punainen, Väritys: Yksivärinen, Muoto: Tuntematon, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): 15, Korkeus vedestä: 19",
+    "Väri: Oranssi/musta/oranssi, Väritys: Vaakavyöt ylhäältä lukien, Muoto: Putkimainen, Pintamateriaali: 6, Kummelin tunnus: , Korkeus (m): 32, Leveys (m): 2, Korkeus maasta (m): , Korkeus vedestä: 32",
     "Väri: Punainen, Väritys: Yksivärinen, Muoto: Tuntematon, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): 10, Korkeus vedestä: 20",
-    "Väri: Punainen, Väritys: Yksivärinen, Muoto: Suorakaide, Pintamateriaali: 3, Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): , Korkeus vedestä: ",
-    "Väri: Valkoinen, Väritys: Yksivärinen, Muoto: Suorakaide, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): 6, Korkeus vedestä: 10",
-    "Väri: Punainen, Väritys: Yksivärinen, Muoto: Neliömäinen, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): 3, Leveys (m): 2, Korkeus maasta (m): 3, Korkeus vedestä: 10",
-    "Väri: Punainen, Väritys: Yksivärinen, Muoto: Neliömäinen, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): 3, Leveys (m): 2, Korkeus maasta (m): 3, Korkeus vedestä: 20\\nVäri: Punainen, Väritys: Yksivärinen, Muoto: Neliömäinen, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): 3, Leveys (m): 2, Korkeus maasta (m): 3, Korkeus vedestä: 20"
+    "Väri: Punainen/keltainen/punainen, Väritys: Pystyraidat, Muoto: Suorakaide, Pintamateriaali: 1, Kummelin tunnus: , Korkeus (m): 3.3, Leveys (m): 2.5, Korkeus maasta (m): 13, Korkeus vedestä: 14.6",
+    "Väri: Punainen/keltainen/punainen, Väritys: Pystyraidat, Muoto: Suorakaide, Pintamateriaali: 1, Kummelin tunnus: , Korkeus (m): 2.7, Leveys (m): 2.5, Korkeus maasta (m): 2.7, Korkeus vedestä: 4.3",
+    "Väri: Punainen, Väritys: Yksivärinen, Muoto: Lieriömäinen, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): , Korkeus vedestä: \\nVäri: Punainen, Väritys: Yksivärinen, Muoto: Lieriömäinen, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): , Korkeus vedestä: "
    ],
    "irrotus_pvm": [
     "2026-11-11T00:17:51Z",
+    "2026-11-11T00:21:00Z",
     "2026-11-11T00:26:07Z",
-    "2026-11-11T00:10:41Z",
-    "2026-11-11T00:11:13Z",
-    "2026-11-11T00:11:17Z",
-    "2026-11-11T00:18:03Z"
+    "2026-11-11T00:10:10Z",
+    "2026-11-11T00:10:15Z",
+    "2026-11-11T00:10:41Z"
    ],
    "vaylan_nimi": [
     "[2650: Saaristomeri (avomeri)](vaylat:jnro=2650)",
+    "[2560: DW-reitti](vaylat:jnro=2560)",
     "[2455: Ahvenanmaan pohjoiset väylät](vaylat:jnro=2455)",
-    "[3210: Kälö-Hermanskär-väylä](vaylat:jnro=3210)",
-    "[2660: Avomeri - Hundkubb - Prästö](vaylat:jnro=2660)",
-    "[2660: Avomeri - Hundkubb - Prästö](vaylat:jnro=2660)\\n[2455: Ahvenanmaan pohjoiset väylät](vaylat:jnro=2455)",
-    "[2690: Ledskär-Maarianhamina-väylä](vaylat:jnro=2690)"
+    "[3765: Kirjakkalanselkä - Vuohensaari-väylä](vaylat:jnro=3765)",
+    "[3530: Haverö-Högen veneväylä](vaylat:jnro=3530)\\n[3535: Paraisten väylä](vaylat:jnro=3535)",
+    "[3210: Kälö-Hermanskär-väylä](vaylat:jnro=3210)"
    ],
    "omistajafi": [
     "Ahvenanmaan maakuntahallitus",
+    "Ruotsin valtio",
+    "Salon kaupunki",
+    "Finnsementti Oy",
     "Västra Korpo fiskargille",
-    "Stiftelsen Sjöfartskvarteret i Mariehamn",
-    "Rajavartiolaitos",
-    "Maarianhaminan kaupunki",
-    "Suomen Yleisradio"
+    "Naantalin satama"
    ],
    "asennuskorkeus": [
     19,
@@ -1647,50 +2238,54 @@
    ],
    "latitude_asteina": [
     "59°51.3742'",
+    "59°32.8808'",
     "60°31.7236'",
-    "60°4.6534'",
-    "60°26.9603'",
-    "60°24.1218'",
-    "60°25.2443'"
+    "60°22.4513'",
+    "60°22.0202'",
+    "60°16.8842'"
    ],
    "longitude_asteina": [
     "20°20.5664'",
+    "20°1.1279'",
     "20°11.9253'",
-    "21°21.6142'",
-    "19°44.3403'",
-    "20°1.1839'",
-    "19°48.3127'"
+    "23°5.838'",
+    "23°4.9497'",
+    "22°17.9195'"
+   ],
+   "rakennetietokoodi": [
+    "8",
+    "5",
+    "2",
+    "1",
+    "9",
+    "4"
+   ],
+   "vahvistuspvm": [
+    "2015-06-09T12:54:49Z",
+    "1993-01-21T00:00:00Z",
+    "1999-11-02T00:00:00Z",
+    "1999-09-02T00:00:00Z",
+    "1987-01-07T00:00:00Z",
+    "1997-04-07T00:00:00Z"
    ],
    "mittauspaivamaara": [
     "1998-06-06T00:00:00Z",
+    "1992-06-01T00:00:00Z",
     "2000-08-23T00:00:00Z",
-    "1998-06-05T00:00:00Z",
-    "2006-09-04T00:00:00Z",
-    "2001-09-05T00:00:00Z",
-    "1998-08-27T00:00:00Z"
-   ],
-   "vahvistuspvm": [
-    "1997-04-07T00:00:00Z",
-    "1996-12-09T00:00:00Z",
-    "1996-09-24T00:00:00Z",
-    "1996-09-23T00:00:00Z",
-    "1962-01-01T00:00:00Z",
-    "1995-11-20T00:00:00Z"
+    "1999-12-08T00:00:00Z",
+    "1999-12-09T00:00:00Z",
+    "1999-07-18T00:00:00Z"
    ],
    "tutkaheijastintyyppikoodi": [
-    "4",
     "1",
-    "5",
+    "4",
     "3",
-    "7"
-   ],
-   "rakennetietokoodi": [
     "2",
     "5",
-    "4",
-    "9",
-    "7",
-    "20"
+    "7"
+   ],
+   "mmsi": [
+    992306500
    ]
   }
  },
@@ -1699,117 +2294,128 @@
   "name": "vesivaylatiedot:vaylaalueet_muut_vaylanpitajat",
   "title": "Muiden väylänpitäjien väyläalueet",
   "layer": "vaylaalueet_muut_vaylanpitajat",
-  "count": 154,
+  "count": 427,
   "geom": {
-   "MultiPolygon": 154
+   "MultiPolygon": 427
   },
   "fields": {
    "id": [
-    136707,
-    136712,
-    136715,
-    136725,
-    136727,
-    136730
+    72403,
+    75244,
+    78669,
+    78681,
+    100275,
+    105725
    ],
    "tyyppi": [
     "Navigointialue",
+    "Varmistettu lisäalue",
+    "Kääntöallas",
     "Satama-allas",
-    "Varmistettu lisäalue"
+    "Erikoisalue"
    ],
    "tyyppikoodi": [
     1,
+    11,
+    5,
     4,
-    11
+    9
+   ],
+   "liikenteentyyppi": [
+    "Liikennöintikaista",
+    "Risteävä liikenne",
+    "Liikenneympyrä"
    ],
    "mitoitussyvays": [
-    3.7,
-    2.1,
-    1.8,
-    2.7,
-    2.5,
-    3.2
+    3.0,
+    2.4,
+    0.0,
+    6.9,
+    2.0,
+    1.5
    ],
    "haraussyvyys": [
-    4.7,
-    2.7,
-    2.4,
-    3.7,
-    3.3,
-    3.1
+    3.6,
+    3.0,
+    10.0,
+    7.8,
+    8.0,
+    2.6
    ],
    "vertaustaso": [
+    "MW1990",
+    "MW1995",
+    "MW2000",
+    "MW2005",
     "MW2015",
-    "MW2016",
-    "MW2017",
-    "MW2019",
-    "MW2020",
-    "MW2021"
+    "MW2016"
    ],
    "omistaja": [
-    "Ahvenanmaan maakuntahallitus",
-    "Maarianhaminan kaupunki",
-    "Maarianhaminan satama Oy"
+    "Uudenkaupungin kaupunki",
+    "Raision kaupunki",
+    "Helsingin Satama ",
+    "Naantalin kaupunki",
+    "Kemiönsaaren kunta",
+    "Espoon kaupunki"
    ],
    "merkintalaji": [
     "Lateraali",
-    "Kardinaali"
+    "Kardinaali",
+    "Tuntematon"
    ],
    "merkintalajikoodi": [
     1,
-    2
+    2,
+    0
    ],
    "suunta": [
-    4,
-    344,
-    64,
-    30,
-    15,
-    39
+    244,
+    23,
+    340,
+    331,
+    307,
+    28
    ],
    "liikennointisuunta": [
     "Kaksisuuntainen liikenne",
     "Yksisuuntainen liikenne"
    ],
    "vahvistuspaivamaara": [
-    "2023-09-05T00:00:00Z",
-    "2024-02-07T00:00:00Z",
-    "2017-11-07T00:00:00Z",
-    "2017-11-24T00:00:00Z",
-    "2018-07-03T00:00:00Z",
-    "2024-02-06T00:00:00Z"
+    "2022-02-22T00:00:00Z",
+    "1995-10-09T00:00:00Z",
+    "2026-03-19T00:00:00Z",
+    "2002-04-25T00:00:00Z",
+    "2024-12-19T00:00:00Z",
+    "2026-03-18T00:00:00Z"
    ],
    "diaarinumero": [
-    "TRAFICOM/305248/05.01.26.00/2023",
-    "TRAFICOM/35487/05.01.26.00/2024",
-    "LIVI/7917/06.02.02/2017",
-    "LIVI/7918/06.02.02/2017",
-    "LIVI/7919/06.02.02/2017",
-    "LIVI/7921/06.02.02/2017"
+    "VÄYLÄ/8112/06.02.02/2021",
+    "398/611/95",
+    "TRAFICOM/139591/05.01.26.00/2026",
+    "80/611/2001",
+    "TRAFICOM/592242/05.01.26.00/2024",
+    "TRAFICOM/305248/05.01.26.00/2023"
    ],
    "jnro": [
-    "2515",
-    "2495",
-    "2500",
-    "2550",
-    "2585",
-    "2690"
+    "2380",
+    "3355",
+    "4745",
+    "4805",
+    "4800",
+    "3267"
    ],
    "vaylan_nimi": [
-    "[2515: Utbådan-Marsund-Dånö-väylä](vaylat:jnro=2515)",
-    "[2495: Svartnö-Finbon ankkuripaikka-väylä](vaylat:jnro=2495)",
-    "[2500: Finbon väylä](vaylat:jnro=2500)",
-    "[2550: Hammaruddanin väylä](vaylat:jnro=2550)",
-    "[2585: Måsskär-Slättholmen väylä](vaylat:jnro=2585)",
-    "[2690: Ledskär-Maarianhamina-väylä](vaylat:jnro=2690)"
+    "[2380: Uudenkaupungin kaupunginlahden väylä](vaylat:jnro=2380)",
+    "[3355: Raisionlahden väylä](vaylat:jnro=3355)",
+    "[4745: Kruunuvuorenselkä-Katajanokka](vaylat:jnro=4745)",
+    "[4805: Kustaanmiekka-Sörnäinen](vaylat:jnro=4805)",
+    "[4800: Olympialaiturin väylä](vaylat:jnro=4800)",
+    "[3267: Raumankarin väylä](vaylat:jnro=3267)"
    ],
    "irrotus_pvm": [
+    "2026-11-11T00:27:39Z",
     "2026-11-11T00:27:40Z",
-    "2026-11-11T00:27:38Z",
-    "2026-11-11T00:27:39Z"
-   ],
-   "liikenteentyyppi": [
-    "Liikennöintikaista"
+    "2026-11-11T00:27:38Z"
    ]
   }
  },
@@ -1818,18 +2424,18 @@
   "name": "vesivaylatiedot:navigointilinjat_uusi",
   "title": "Navigointilinjat",
   "layer": "navigointilinjat_uusi",
-  "count": 1322,
+  "count": 4622,
   "geom": {
-   "LineString": 1322
+   "LineString": 4622
   },
   "fields": {
    "navigointilinjaid": [
-    10806,
-    10812,
-    10814,
-    10816,
-    10818,
-    11489
+    2767,
+    2779,
+    3497,
+    3507,
+    3549,
+    3563
    ],
    "tyyppi": [
     "Suora linja",
@@ -1844,110 +2450,112 @@
     3
    ],
    "laatulk": [
-    3,
+    2,
     1,
-    2
+    3,
+    0
    ],
    "omistaja": [
     "Väylävirasto",
-    "Kustavin kunta",
-    "Ahvenanmaan maakuntahallitus",
-    "Tuntematon",
-    "Maarianhaminan kaupunki"
+    "Hangon kaupunki",
+    "Helsingin Satama ",
+    "Helsingin kaupunki",
+    "Turun kaupunki",
+    "Kuntoutusyhtymä-Rehab-Group"
    ],
    "mitoitussyvays": [
-    8.0,
-    3.0,
-    4.6,
-    5.0,
-    2.4,
-    3.5
-   ],
-   "suunta": [
-    115.7,
-    152.2,
-    138.4,
-    177.8,
-    211.4,
-    43.3
-   ],
-   "tosisuunta": [
-    116.0,
-    152.5,
-    138.7,
-    178.1,
-    211.3,
-    43.4
-   ],
-   "pituus": [
-    670,
-    2655,
-    433,
-    473,
-    388,
-    241
-   ],
-   "jnro": [
-    "3245",
-    "2850",
-    "2865",
-    "3185",
-    "3110",
-    "2395\\n3990"
-   ],
-   "irrotus_pvm": [
-    "2026-11-11T00:28:59Z",
-    "2026-11-11T00:28:57Z",
-    "2026-11-11T00:29:00Z",
-    "2026-11-11T00:28:58Z"
-   ],
-   "vaylan_nimi": [
-    "[3245: Utön tuloväylä](vaylat:jnro=3245)",
-    "[2850: Kökar-Norrharu väylä](vaylat:jnro=2850)",
-    "[2865: Smågaddarnan väylä](vaylat:jnro=2865)",
-    "[3185: Berghamnskobbe-Hönsnäs väylä](vaylat:jnro=3185)",
-    "[3110: Torsholma-Iniö-Laupunen yhteysliikenneväylä](vaylat:jnro=3110)",
-    "[2395: Varestuksen väylä](vaylat:jnro=2395)\\n[3990: SMMP Veneilyn runkoväylä](vaylat:jnro=3990)"
+    9.0,
+    9.6,
+    12.0,
+    9.4,
+    4.5,
+    7.3
    ],
    "haraussyvyys": [
-    4.5,
-    4.4,
-    3.8,
-    4.2,
-    3.4,
-    9.5
+    11.0,
+    11.4,
+    15.0,
+    14.5,
+    13.2,
+    11.5
+   ],
+   "suunta": [
+    298.4,
+    19.1,
+    348.1,
+    307.7,
+    315.7,
+    356.5
+   ],
+   "tosisuunta": [
+    298.1,
+    19.4,
+    348.3,
+    308.0,
+    315.9,
+    356.7
+   ],
+   "pituus": [
+    14934,
+    451,
+    221,
+    320,
+    2122,
+    465
    ],
    "vertaustaso": [
-    "MW2014",
     "MW2000",
-    "MW2005",
     "MW2001",
-    "MW2017",
-    "MW2006"
+    "MW1992",
+    "MW2005",
+    "MW1990",
+    "MW2014"
    ],
    "diaarinumero": [
-    "TRAFICOM/35487/05.01.26.00/2024",
-    "VÄYLÄ/8112/06.02.02/2021",
-    "VÄYLÄ/8999/06.02.02/2020",
-    "33/76/2000",
-    "61/611/2000",
-    "2886/76/2008"
+    "TRAFICOM/274211/05.01.26.00/2026",
+    "TRAFICOM/139591/05.01.26.00/2026",
+    "TRAFICOM/861637/05.01.26.00/2025",
+    "TRAFICOM/184277/05.01.26.00/2025",
+    "TRAFICOM/76914/05.01.26.00/2026",
+    "81/76/98"
    ],
    "vahvistuspaivamaara": [
-    "2024-02-07T00:00:00Z",
-    "2022-02-22T00:00:00Z",
-    "2024-02-12T00:00:00Z",
-    "2021-10-14T00:00:00Z",
-    "2000-03-13T00:00:00Z",
-    "2003-03-24T00:00:00Z"
+    "2026-05-19T00:00:00Z",
+    "2026-03-19T00:00:00Z",
+    "2026-01-12T00:00:00Z",
+    "2025-04-07T00:00:00Z",
+    "2026-01-13T00:00:00Z",
+    "2026-03-03T00:00:00Z"
+   ],
+   "jnro": [
+    "5135",
+    "4730",
+    "4195",
+    "4185",
+    "5010",
+    "4950"
+   ],
+   "irrotus_pvm": [
+    "2026-11-11T00:28:58Z",
+    "2026-11-11T00:28:57Z",
+    "2026-11-11T00:28:59Z",
+    "2026-11-11T00:29:00Z"
+   ],
+   "vaylan_nimi": [
+    "[5135: Kalbådagrundin pohjoisenpuolen väylä](vaylat:jnro=5135)",
+    "[4730: Harmajan väylä](vaylat:jnro=4730)",
+    "[4195: Lappohjan väylä](vaylat:jnro=4195)",
+    "[4185: Lappohjan sataman väylä](vaylat:jnro=4185)",
+    "[5010: Onaksen väylä](vaylat:jnro=5010)",
+    "[4950: Sitterskärin väylä](vaylat:jnro=4950)"
    ],
    "sade": [
+    450,
+    197,
+    720,
+    1250,
     1000,
-    690,
-    1515,
-    1080,
-    500,
-    2000
+    1500
    ]
   }
  },
@@ -1956,154 +2564,154 @@
   "name": "vesivaylatiedot:paivatunnukset_uusi",
   "title": "Päivätunnukset",
   "layer": "paivatunnukset_uusi",
-  "count": 2092,
+  "count": 5626,
   "geom": {
-   "Point": 2092
+   "Point": 5626
   },
   "fields": {
    "id": [
-    130,
-    131,
-    132,
-    133,
-    134,
-    135
+    1,
+    2,
+    3,
+    8,
+    24,
+    31
    ],
    "jnro": [
+    "4005",
     "2505",
+    "5151",
+    "4268",
     "3162",
-    "3145",
-    "3160",
-    "3210",
-    "3215"
+    "3402"
    ],
    "paivamerkkivarikoodi": [
-    21,
-    8,
+    1,
+    2,
     23,
-    20,
-    16,
-    5
+    3,
+    5,
+    21
    ],
    "paivamerkkivarifi": [
-    "Musta/keltainen/musta",
-    "Keltainen/musta",
+    "Vihreä",
+    "Musta",
     "Valkoinen/punainen/valkoinen",
-    "Keltainen/musta/keltainen",
-    "Punainen/keltainen/punainen",
-    "Valkoinen"
+    "Punainen",
+    "Valkoinen",
+    "Musta/keltainen/musta"
    ],
    "paivamerkkivarisv": [
-    "Svart/gul/svart",
-    "Gul/svart",
+    "Grön",
+    "Svart",
     "Vit/röd/vit",
-    "Gul/svart/gul",
-    "Röd/gul/röd",
-    "Vit"
+    "Röd",
+    "Vit",
+    "Svart/gul/svart"
    ],
    "paivamerkkivarityskoodi": [
+    5,
     1,
     7,
     2,
-    5,
     6,
     0
    ],
    "paivamerkkivaritysfi": [
+    "Yksivärinen",
     "Vaakavyöt ylhäältä lukien",
     "Yläosa/alaosa",
     "Pystyraidat",
-    "Yksivärinen",
     "Kolmio",
     "Tuntematon"
    ],
    "paivamerkkivarityssv": [
+    "Enfärgad",
     "Vågräta fält uppifrån räknat",
     "Övre/nedre delen",
     "Lodräta fält",
-    "Enfärgad",
     "Triangel",
     "Okänd"
    ],
    "paivamerkkimuotofi": [
-    "Putkimainen",
-    "Pylväsmäinen",
-    "Sukkulamainen",
     "Suorakaide",
-    "Loistokoju",
-    "Lieriömäinen"
+    "Majakkatorni",
+    "Pyöreä",
+    "Kolmiomainen",
+    "Putkimainen",
+    "Pylväsmäinen"
    ],
    "paivamerkkimuotosv": [
-    "Rörformad",
-    "Pelarform",
-    "Spolformad",
     "Rektangulär form",
-    "Fyrkur",
-    "Cylindrisk form"
+    "Fyrtorn",
+    "Cirkulär form",
+    "Triangulär",
+    "Rörformad",
+    "Pelarform"
    ],
    "turvalaitenumero": [
-    6748,
-    44563,
-    44562,
-    28483,
-    7047,
-    43350
+    11540,
+    11515,
+    11632,
+    20584,
+    11334,
+    11516
    ],
    "irrotus_pvm": [
+    "2026-11-11T00:01:07Z",
+    "2026-11-11T00:01:08Z",
+    "2026-11-11T00:01:11Z",
     "2026-11-11T00:03:41Z",
-    "2026-11-11T00:04:51Z",
-    "2026-11-11T00:06:34Z",
-    "2026-11-11T00:09:00Z",
-    "2026-11-11T00:10:41Z",
-    "2026-11-11T00:10:42Z"
+    "2026-11-11T00:03:47Z",
+    "2026-11-11T00:03:53Z"
    ],
    "paivamerkkipintamateriaalikoodi": [
     6,
-    1,
     5,
+    1,
     3,
-    10,
-    4
-   ],
-   "paivamerkkikorkeus": [
-    1.2,
-    2.7,
-    2.2,
-    3.5,
-    1.4,
-    4.3
-   ],
-   "paivamerkkileveys": [
-    0.6,
-    2.0,
-    1.0,
-    1.2,
-    3.05,
-    3.25
+    4,
+    11
    ],
    "paivamerkkikorkeusmaasta": [
+    4.35,
+    12.6,
+    28.9,
+    3.1,
     7.8,
-    3.9,
-    5.0,
-    2.2,
-    3.3,
-    4.6
+    3.9
    ],
    "paivamerkkikorkeusvedesta": [
-    8.4,
-    4.0,
-    4.55,
+    9.97,
+    28.3,
+    12.6,
+    31.5,
+    5.8,
+    8.4
+   ],
+   "paivamerkkikorkeus": [
+    21.32,
+    11.0,
+    3.1,
+    1.2,
+    2.7,
+    2.2
+   ],
+   "paivamerkkileveys": [
+    7.55,
     7.0,
-    3.2,
-    4.85
+    1.0,
+    0.6,
+    2.0,
+    4.6
    ],
    "paivamerkkikummelitunnus": [
-    "A",
+    "2",
+    "N",
+    "J",
+    "O",
     "C",
-    "E",
-    "H",
-    "L",
-    "N"
+    "A"
    ]
   }
  },
@@ -2112,105 +2720,127 @@
   "name": "vesivaylatiedot:rajoitusalue_a_uusi",
   "title": "Rajoitusalueet",
   "layer": "rajoitusalue_a_uusi",
-  "count": 8,
+  "count": 491,
   "geom": {
-   "Polygon": 8
+   "Polygon": 474,
+   "MultiPolygon": 17
   },
   "fields": {
    "id": [
-    103910,
-    144029,
-    235115,
-    242095,
-    242130,
-    242240
+    103894,
+    103895,
+    103897,
+    103898,
+    103899,
+    103900
    ],
    "rajoitustyyppi": [
-    "Aallokon aiheuttamisen kielto",
     "Nopeusrajoitus",
-    "Nopeusrajoitus, Aallokon aiheuttamisen kielto"
+    "Nopeusrajoitus, Aallokon aiheuttamisen kielto",
+    "Aallokon aiheuttamisen kielto",
+    "Vesiskootterilla ajo kielletty",
+    "Ankkurin käyttökielto",
+    "Pysäköimiskielto"
    ],
    "rajoitustyypit": [
-    "02",
     "01",
-    "01, 02"
+    "01, 02",
+    "02",
+    "04",
+    "06",
+    "07"
    ],
    "suuruus": [
-    "0",
-    "17",
-    "24",
     "10",
-    "5",
-    "22"
+    "9",
+    "0",
+    "28",
+    "15",
+    "20"
+   ],
+   "pituus": [
+    "576",
+    "1184",
+    "160",
+    "1149",
+    "1932",
+    "1482"
    ],
    "poikkeus": [
+    "kielto ja rajoitus ei koske virka-, sairaankuljetus- ja pelastustehtävissä tai muussa vastaavasta välttämättömästä syystä sekä puolustuslaitoksen toiminnassa tarpeellista moottorikäyttöisen ajoneuvon käyttöä",
+    "Kielto ja rajoitus ei koske virka-, sairaankuljetus- ja pelastustehtävissä tai muussa vastaavasta välttämättömästä syystä sekä puolustuslaitoksen toiminnassa tarpeellista moottorikäyttöisen ajoneuvon käyttöä",
     "Voimassa 16.5.-15.9. Kielto ja rajoitus ei koske virka-, sairaankuljetus- ja pelastustehtävissä tai muussa vastaavasta välttämättömästä syystä sekä puolustuslaitoksen toiminnassa tarpeellista moottorikäyttöisen ajoneuvon käyttöä.",
-    "rajoitus ei koske virka-, sairaankuljetus- ja pelastustehtävissä tai muussa vastaavasta välttämättömästä syystä sekä puolustuslaitoksen toiminnassa tarpeellista moottorikäyttöisen vesikulkuneuvon käyttöä",
-    "Nopeusrajoitus ei koske vika-, sairaankuljetus- ja pelastustoimen suorittamiseksi tai muusta vastaavasta syystä välttämätöntä vesikulkuneuvolla liikkumista.",
-    "aallokonmuodostaminen kielletty --- kielto ja rajoitus ei koske virka, sairaankuljetus- ja pelastustehtävissä tai muussa vastaavasta välttämättömästä syystä sekä puolustuslaitoksen toiminnassa tarpeellista moottorikäyttöisen ajoneuvon käyttöä",
-    "nopeusrajoitus --- kielto ja rajoitus ei koske virka, sairaankuljetus- ja pelastustehtävissä tai muussa vastaavasta välttämättömästä syystä sekä puolustuslaitoksen toiminnassa tarpeellista moottorikäyttöisen ajoneuvon käyttöä",
-    "nopeusrajoitus, aallokonmuodostaminen kielletty --- kielto ei koske virka-, sairaankuljetus- ja pelastustoiminnan suorittamiseksi tai muusta vastaavasta syystä välttämätöntä vesikulkuneuvolla liikkumista, sama koskee puolustusvoimain toimintaa"
+    "Rajoitus ei koske alle 19 nettorekisteritonnia olevia vesikulkuneuvoja. Rajoitus ei myöskään koske virka-, sairaankuljetus- ja pelastustehtävissä tai muussa vastaavasta välttämättömästä syystä sekä puolustuslaitoksen toiminnassa tarpeellista moottorikäyttöisen ajoneuvon käyttöä.",
+    "Aallokon aiheuttamiskielto ei koske virka-, sairaankuljetus- ja pelastustoimen suorittamiseksi tai muusta vastaavasta syystä välttämätöntä vesikulkuneuvolla liikkumista eikä puolustusvoimien toimintaa.",
+    "Rajoitus ei koske virka-,sair.kuljetus- ja pelastustoimeien suorittamiseksi ja muusta muusta vastaavasta syystä välttämätöntä vesikulkuneuvolla liikkumista eikä puolustusvoimien toiminataa."
    ],
    "paatostila": [
-    "Toistaiseksi"
+    "Toistaiseksi",
+    "Määräaikainen"
    ],
    "alkupaivamaara": [
-    "2001-07-02Z",
-    "2008-03-15Z",
-    "2017-02-01Z",
-    "1996-04-01Z",
-    "1992-06-15Z",
-    "2015-12-01Z"
+    "2000-05-01Z",
+    "2001-05-01Z",
+    "1998-07-15Z",
+    "1999-06-14Z",
+    "2004-05-15Z",
+    "1999-07-16Z"
    ],
    "diaarinumero": [
-    "224/653/98",
-    "1427/614/2006",
-    "LIVI/7910/06.02.02./2016",
-    "0295L0011-26",
-    "07210 365 91 127",
-    "VARELY/596/07.01/2013"
+    "185/653/99",
+    "246/653/2000, 1/1042/2012",
+    "162/610/97, 60/1042/2011",
+    "108/653/97",
+    "68/653/98",
+    "165/653/2003"
    ],
    "tietolahde": [
-    "SYKE",
     "Muu päätösasiakirja",
-    "Traficom"
+    "SYKE",
+    "Muu väyläpäätösaineisto",
+    "Muu merikartta-aineisto",
+    "Muu kartta-aineisto",
+    "Muu väyläsuunnitelma"
    ],
    "jnro": [
-    "2905",
-    "2565",
-    "2805",
-    "3020",
-    "2830",
-    "3200"
+    "4465",
+    "4215",
+    "4995",
+    "4890",
+    "4460",
+    "4440\\n4445"
    ],
    "nimisijainti": [
-    "Hålax",
-    "Apteekkarin väylä",
-    "Lootholma",
-    "Lanskeri-Pohjantiistanklopin välinen salmi",
-    "Ahvenanmaa",
-    "Röst ja Roskär saarten välisessä salmessa"
+    "Dragesviken",
+    "Snacknäs-Rågrundet",
+    "Stora Fårholmen - Lilla Fårholmen",
+    "Karpiselkä",
+    "Hästö-Tallholmen",
+    "Tullsundet"
    ],
    "irrotus_pvm": [
     "2026-11-11T00:27:36Z",
     "2026-11-11T00:27:37Z"
    ],
    "vaylan_nimi": [
-    "[2905: Enklinge-Houtskari väylä](vaylat:jnro=2905)",
-    "[2565: Marhällan-Maarianhamina-väylät](vaylat:jnro=2565)",
-    "[2805: Apteekkarin väylä](vaylat:jnro=2805)",
-    "[3020: Lootholman venereitti](vaylat:jnro=3020)",
-    "[2830: Degerby-Kökar-väylä](vaylat:jnro=2830)",
-    "[3200: Berghamn-Lembersö-väylä](vaylat:jnro=3200)"
-   ],
-   "pituus": [
-    "2549",
-    "500",
-    "1200",
-    "0"
+    "[4465: Dragesvikenin veneväylä](vaylat:jnro=4465)",
+    "[4215: Torsön väylä](vaylat:jnro=4215)",
+    "[4995: Kalkkiranta-Bodö yhteysliikenneväylä](vaylat:jnro=4995)",
+    "[4890: Reposalmen venereitti](vaylat:jnro=4890)",
+    "[4460: Puutarhaväylä](vaylat:jnro=4460)",
+    "[4440: Stora Träskön-Kyrkogårdsön](vaylat:jnro=4440)\\n[4445: Porkkalan merivartioaseman väylä](vaylat:jnro=4445)"
    ],
    "lisatieto": [
-    "Voimassaolojakso: koko vuoden"
+    "Nopeusrajoitus päätöksen diaarinumero on 1/1042/2012 päivämäärällä 30.6.2012.",
+    "Päätös 60/1042/2011 määrää lisäksi aallokonaiheuttamisen kiellon.",
+    "Rajoitus ei koske alle 19 nettorekisteritonnia olevia vesikulkuneuvoja",
+    "alueella Uudenmaan ymp.keskuksen asettama nopeusrajoitus 10 km/h",
+    "Rajoitusta laajennettu 20.4.2006.",
+    "myös aallonaiheuttamiskielto"
+   ],
+   "loppupaivamaara": [
+    "2026-04-01Z",
+    "2026-05-31Z"
    ]
   }
  },
@@ -2219,70 +2849,73 @@
   "name": "vesivaylatiedot:ruoppausalueet_uusi",
   "title": "Ruoppausalueet",
   "layer": "ruoppausalueet_uusi",
-  "count": 94,
+  "count": 292,
   "geom": {
-   "Polygon": 94
+   "Polygon": 289,
+   "MultiPolygon": 3
   },
   "fields": {
    "id": [
+    101841,
+    104829,
     105042,
     105044,
-    111722,
-    111724,
-    111726,
-    111728
+    105046,
+    105048
    ],
    "ruoppaustaso": [
+    "16.5",
+    "3.6",
     "12",
-    "10.5",
-    "9.5",
-    "9.2",
-    "5.5",
-    "7.8"
+    "11.5",
+    "9.7",
+    "9.5"
    ],
    "vertailutaso": [
     "MW2005",
     "MW2000",
     "MW1990",
     "MW1980",
-    "MW1970",
-    "MW2006"
-   ],
-   "vuodet": [
-    "2001",
-    "2004",
-    "1999",
-    "2003",
-    "2002",
-    "1987"
-   ],
-   "maalaatu": [
-    "Maata ja Kalliota",
-    "Ka",
-    "Ka, Ki",
-    "Mo",
-    "Ki",
-    "Ka, Mo"
-   ],
-   "irrotus_pvm": [
-    "2026-11-11T00:03:25Z",
-    "2026-11-11T00:03:22Z",
-    "2026-11-11T00:03:23Z",
-    "2026-11-11T00:03:24Z",
-    "2026-11-11T00:03:21Z"
+    "MW1972",
+    "MW1970"
    ],
    "ruoppausmenetelma": [
     "2",
+    "3",
     "0",
-    "3"
+    "1"
+   ],
+   "vuodet": [
+    "2003,2004,2005",
+    "2003",
+    "2001",
+    "2001,2002",
+    "v.2000",
+    "2000"
+   ],
+   "maalaatu": [
+    "Mu, Li, Mo",
+    "Mo",
+    "Maata ja Kalliota",
+    "Poistettu lohkareita",
+    "Ka",
+    "Li"
    ],
    "lajitys": [
+    "101840",
+    "104831",
+    "112026",
+    "112026,117378",
     "111978",
-    "111988",
-    "112278",
-    "113120",
-    "113134",
-    "113145"
+    "111988"
+   ],
+   "irrotus_pvm": [
+    "2026-11-11T00:03:20Z",
+    "2026-11-11T00:03:25Z",
+    "2026-11-11T00:03:22Z",
+    "2026-11-11T00:03:24Z",
+    "2026-11-11T00:03:21Z",
+    "2026-11-11T00:03:23Z"
    ]
   }
  },
@@ -2291,118 +2924,122 @@
   "name": "vesivaylatiedot:taululinjat_uusi",
   "title": "Taululinjat",
   "layer": "taululinjat_uusi",
-  "count": 272,
+  "count": 682,
   "geom": {
-   "MultiLineString": 272
+   "MultiLineString": 682
   },
   "fields": {
    "taululinjaid": [
-    12072,
-    12076,
-    12080,
-    12088,
-    12092,
-    12104
+    2917,
+    2921,
+    2925,
+    2929,
+    2933,
+    2943
    ],
    "suunta": [
-    "9.6",
-    "351.4",
-    "189.1",
-    "142.9",
-    "223.1",
-    "122.3"
+    "43.3",
+    "74.8",
+    "275.4",
+    "55.5",
+    "270.6",
+    "31.6"
    ],
    "jnro": [
-    "3255",
-    "2840",
-    "2850",
-    "2865",
-    "2785",
-    "2780"
+    "4455",
+    "4865",
+    "4410",
+    "4000",
+    "4060",
+    "4075"
    ],
    "etutlid": [
-    "20125",
-    "3480",
-    "3299",
-    "6325",
-    "28738",
-    "28740"
+    "11421",
+    "11562",
+    "11563",
+    "28364",
+    "11580",
+    "11537"
    ],
    "takatlid": [
-    "20124",
-    "3297",
-    "3300",
-    "6326",
-    "28923",
-    "28934"
+    "11682",
+    "11422",
+    "11564",
+    "28365",
+    "11581",
+    "11538"
    ],
    "navigointilinjaid": [
-    "[160630](navigointilinjat:navigointilinjaid=160630)\\n[205051](navigointilinjat:navigointilinjaid=205051)",
-    "[160636](navigointilinjat:navigointilinjaid=160636)\\n[205042](navigointilinjat:navigointilinjaid=205042)\\n[205045](navigointilinjat:navigointilinjaid=205045)\\n[205048](navigointilinjat:navigointilinjaid=205048)",
-    "[287579](navigointilinjat:navigointilinjaid=287579)\\n[287584](navigointilinjat:navigointilinjaid=287584)",
-    "[223169](navigointilinjat:navigointilinjaid=223169)\\n[223173](navigointilinjat:navigointilinjaid=223173)\\n[223176](navigointilinjat:navigointilinjaid=223176)\\n[223179](navigointilinjat:navigointilinjaid=223179)",
-    "[221959](navigointilinjat:navigointilinjaid=221959)\\n[221963](navigointilinjat:navigointilinjaid=221963)\\n[223304](navigointilinjat:navigointilinjaid=223304)\\n[222197](navigointilinjat:navigointilinjaid=222197)",
-    "[221967](navigointilinjat:navigointilinjaid=221967)"
+    "[192496](navigointilinjat:navigointilinjaid=192496)\\n[192729](navigointilinjat:navigointilinjaid=192729)\\n[206004](navigointilinjat:navigointilinjaid=206004)",
+    "[192500](navigointilinjat:navigointilinjaid=192500)\\n[205998](navigointilinjat:navigointilinjaid=205998)\\n[206001](navigointilinjat:navigointilinjaid=206001)",
+    "[264238](navigointilinjat:navigointilinjaid=264238)\\n[264242](navigointilinjat:navigointilinjaid=264242)",
+    "[193060](navigointilinjat:navigointilinjaid=193060)\\n[205873](navigointilinjat:navigointilinjaid=205873)\\n[205876](navigointilinjat:navigointilinjaid=205876)\\n[205879](navigointilinjat:navigointilinjaid=205879)\\n[205882](navigointilinjat:navigointilinjaid=205882)",
+    "[193294](navigointilinjat:navigointilinjaid=193294)\\n[193302](navigointilinjat:navigointilinjaid=193302)\\n[205888](navigointilinjat:navigointilinjaid=205888)\\n[205897](navigointilinjat:navigointilinjaid=205897)\\n[205902](navigointilinjat:navigointilinjaid=205902)",
+    "[195732](navigointilinjat:navigointilinjaid=195732)\\n[196796](navigointilinjat:navigointilinjaid=196796)\\n[122935](navigointilinjat:navigointilinjaid=122935)\\n[206128](navigointilinjat:navigointilinjaid=206128)\\n[206131](navigointilinjat:navigointilinjaid=206131)"
    ],
    "geometrianpvm": [
-    "2002-04-17T00:00:00Z",
-    "2003-07-08T00:00:00Z",
-    "2025-01-22T12:05:19Z",
-    "2002-03-19T00:00:00Z",
-    "2001-08-03T12:51:21Z",
-    "2001-08-03T12:51:06Z"
+    "2000-04-27T00:00:00Z",
+    "2022-10-11T15:33:45Z",
+    "2026-10-30T14:51:58Z",
+    "2004-05-17T00:00:00Z",
+    "2002-03-01T10:16:51Z",
+    "2002-03-11T15:52:47Z"
    ],
    "tyyppi": [
     "2",
+    "3",
     "1"
    ],
    "irrotus_pvm": [
-    "2026-11-11T00:28:48Z",
-    "2026-11-11T00:28:50Z",
-    "2026-11-11T00:28:52Z",
     "2026-11-11T00:28:43Z",
+    "2026-11-11T00:28:50Z",
     "2026-11-11T00:28:47Z",
-    "2026-11-11T00:28:45Z"
+    "2026-11-11T00:28:42Z",
+    "2026-11-11T00:28:52Z",
+    "2026-11-11T00:28:51Z"
    ],
    "vaylan_nimi": [
-    "[3255: Utö-Naantali väylä](vaylat:jnro=3255)",
-    "[2840: Sälsö-Kökar väylä](vaylat:jnro=2840)",
-    "[2850: Kökar-Norrharu väylä](vaylat:jnro=2850)",
-    "[2865: Smågaddarnan väylä](vaylat:jnro=2865)",
-    "[2785: Prästskärin rinnakkaisväylä](vaylat:jnro=2785)",
-    "[2780: Valö-Staholm-väylä](vaylat:jnro=2780)"
+    "[4455: Etelä-Suomen talviväylä, Porkkala-Helsinki](vaylat:jnro=4455)",
+    "[4865: Etelä-Suomen talviväylä I ](vaylat:jnro=4865)",
+    "[4410: Kantvikin väylä](vaylat:jnro=4410)",
+    "[4000: Utö-Hanko väylä (itäinen osa)](vaylat:jnro=4000)",
+    "[4060: Hanko - Bromarv](vaylat:jnro=4060)",
+    "[4075: Hangon väylä](vaylat:jnro=4075)"
    ],
    "latitude_asteina_start": [
-    "59°47.2886'",
-    "59°51.2448'",
-    "59°46.0583'",
-    "59°56.8742'",
-    "59°55.9946'",
-    "59°56.7511'"
+    "60°5.6446'",
+    "60°6.1829'",
+    "60°5.7477'",
+    "60°8.101'",
+    "60°7.2252'",
+    "59°59.0316'"
    ],
    "longitude_asteina_start": [
-    "21°21.587'",
-    "21°19.4367'",
-    "21°19.286'",
-    "20°52.6286'",
-    "20°52.0705'",
-    "20°56.162'"
+    "24°45.2337'",
+    "24°55.0882'",
+    "24°45.9416'",
+    "25°1.7687'",
+    "24°56.734'",
+    "24°18.1794'"
    ],
    "latitude_asteina_end": [
-    "59°42.8986'",
-    "59°45.7179'",
-    "59°51.993'",
-    "59°59.5595'",
-    "59°57.2321'",
-    "59°57.295'"
+    "60°3.0387'",
+    "60°4.5748'",
+    "60°5.3731'",
+    "60°5.5685'",
+    "60°7.1931'",
+    "59°47.1956'"
    ],
    "longitude_asteina_end": [
-    "21°20.1209'",
-    "21°21.0882'",
-    "21°21.1839'",
-    "20°48.5724'",
-    "20°54.377'",
-    "20°54.448'"
+    "24°40.3215'",
+    "24°43.2054'",
+    "24°53.8236'",
+    "24°54.3919'",
+    "25°2.8077'",
+    "24°3.6759'"
+   ],
+   "keskitlid": [
+    "5"
    ]
   }
  },
@@ -2411,48 +3048,64 @@
   "name": "vesivaylatiedot:tutkamajakat_uusi",
   "title": "Tutkamajakat",
   "layer": "tutkamajakat_uusi",
-  "count": 8,
+  "count": 26,
   "geom": {
-   "Point": 8
+   "Point": 26
   },
   "fields": {
    "id": [
     4,
-    15,
-    48,
-    49,
-    50,
-    56
+    5,
+    6,
+    7,
+    8,
+    11
    ],
    "tutkamajakkamalli": [
     "Ericon MK II X/S",
+    "PharosMarine Phalcon-2000  X/S",
+    "SeaBeacon 2 System 6",
+    "Kannad Hekleo Sx",
     "AEI Marconi  Seawatch 300, X"
    ],
    "tutkamajakkalajikoodi": [
     3,
-    2
+    2,
+    1
    ],
    "tutkamajakkalajifi": [
     "Muuttuvalähetteinen",
-    "Pyyhkivätaajuinen"
+    "Pyyhkivätaajuinen",
+    "Jatkuvalähetteinen"
    ],
    "tutkamajakkalajisv": [
     "Variabelsvarande",
-    "Frekvenssvepande"
+    "Frekvenssvepande",
+    "Direktsvarande"
    ],
    "tutkamajakkatunnus": [
-    "MORSE T:  _"
+    "MORSE T:  _",
+    "MORSE O:  _ _ _",
+    "MORSE M:  _ _",
+    "MORSE /:  _.._.",
+    "MORSE B:  _...",
+    "MORSE K:  _._"
    ],
    "asennuskorkeus": [
     15.0,
-    19.0,
-    18.0,
-    8.3,
-    20.0,
-    8.5
+    10.3,
+    16.7,
+    8.2,
+    10.0,
+    23.0
    ],
    "tutkamajakkatunnuspituus": [
-    "1.2"
+    "1.2",
+    "variable",
+    "3.2",
+    "11",
+    "2.4",
+    "1"
    ],
    "tutkamajakkataajuuss": [
     "K",
@@ -2460,54 +3113,62 @@
    ],
    "tutkamajakkakantamas": [
     10.0,
-    10.8,
-    10.6,
-    8.3,
-    8.4,
-    12.6
+    9.1,
+    10.3,
+    9.0,
+    11.6,
+    10.8
    ],
    "tutkamajakkataajuusx": [
-    "K"
+    "K",
+    "E"
    ],
    "tutkamajakkakantamax": [
     12.0,
-    12.8,
-    12.6,
-    10.3,
-    13.0,
-    10.4
+    11.1,
+    12.3,
+    11.0,
+    9.5,
+    13.6
    ],
    "tutkamajakkaperiodion": [
     18,
-    6
+    12,
+    6,
+    30,
+    15
    ],
    "tutkamajakkaperiodipois": [
     12,
-    84
+    18,
+    84,
+    0,
+    30,
+    20
    ],
    "jnro": [
     "2930",
-    "2650",
-    "3255",
-    "2455",
-    "2565",
-    "2450"
+    "4410",
+    "4075",
+    "4195",
+    "4980",
+    "4455"
    ],
    "turvalaitenumero": [
     3309,
-    6312,
-    3296,
-    3302,
-    6099,
-    6118
+    11537,
+    11476,
+    11495,
+    11587,
+    11696
    ],
    "irrotus_pvm": [
     "2026-11-11T00:11:04Z",
-    "2026-11-11T00:17:51Z",
-    "2026-11-11T00:24:54Z",
-    "2026-11-11T00:26:07Z",
-    "2026-11-11T00:27:03Z",
-    "2026-11-11T00:27:04Z"
+    "2026-11-11T00:12:48Z",
+    "2026-11-11T00:12:55Z",
+    "2026-11-11T00:12:57Z",
+    "2026-11-11T00:13:57Z",
+    "2026-11-11T00:15:55Z"
    ]
   }
  },
@@ -2516,34 +3177,35 @@
   "name": "vesivaylatiedot:vesivaylat_vl1",
   "title": "VL1: Kauppamerenkulun pääväylä",
   "layer": "vesivaylat_vl1",
-  "count": 14,
+  "count": 56,
   "geom": {
-   "MultiLineString": 14
+   "MultiLineString": 51,
+   "LineString": 5
   },
   "fields": {
    "jnro": [
     2325,
     2345,
+    2360,
     2385,
     2465,
-    2505,
-    2565
+    2505
    ],
    "nimifi": [
     "Lyökin väylä",
     "Uudenkaupungin väylä",
+    "Hepokarin väylä",
     "Isokarin länsiväylä",
     "Gisslan-Töllingarna-Eckerö-väylä",
-    "Långnäsin satamaväylä",
-    "Marhällan-Maarianhamina-väylät"
+    "Långnäsin satamaväylä"
    ],
    "nimisv": [
     "Lyökki farled",
     "Farleden till Nystad",
+    "Hepokari farled",
     "Enskärs västfarled",
     "Gisslan-Töllingarna-Eckerö-farled",
-    "Långnäs hamnfarled",
-    "Marhällan-Mariehamn-farleder"
+    "Långnäs hamnfarled"
    ],
    "luokitustyyppi": [
     "Väyläluokitus"
@@ -2558,7 +3220,12 @@
     "Handelstrafikens farled av 1-kl"
    ],
    "omistaja": [
-    "Väylävirasto"
+    "Väylävirasto",
+    "Naantalin kaupunki",
+    "Turun satama",
+    "Turun kaupunki",
+    "Masa Yards Oy",
+    "Helsingin Satama "
    ],
    "vaylalajikoodi": [
     1
@@ -2571,41 +3238,46 @@
    ],
    "valaistuskoodi": [
     1,
-    2
+    2,
+    0
    ],
    "valaistusfi": [
     "Valaistu",
-    "Valaisematon"
+    "Valaisematon",
+    "Tuntematon"
    ],
    "valaistussv": [
     "Belyst",
-    "Obelyst"
+    "Obelyst",
+    "Okänd"
    ],
    "merialuefi": [
     "Selkämeri",
     "Ahvenanmeri",
-    "Saaristomeri"
+    "Saaristomeri",
+    "Suomenlahti"
    ],
    "merialuesv": [
     "Bottenhavet",
     "Ålands hav",
-    "Skärgårdshavet"
+    "Skärgårdshavet",
+    "Finska viken"
    ],
    "alunseloste": [
     "Avomeri, Kajakulman LU-puoli",
     "Avomeri Isokarin luoteispuoli",
+    "Iso Haiduksen itäpuoli",
     "Avomeri",
     "På södra sidan av Töllingarna",
-    "Björkö/Stockgrund",
-    "På södra sidan av Nyhamn"
+    "Björkö/Stockgrund"
    ],
    "paatepisteenseloste": [
     "Lypertön länsipuoli",
     "Yara",
+    "Hepokari",
     "Isokarin eteläpuoli",
     "På västra sidan av Eckerö",
-    "Långnäsin satama",
-    "Mariehamn"
+    "Långnäsin satama"
    ],
    "irrotus_pvm": [
     "2026-11-11T00:28:57Z"
@@ -2613,42 +3285,42 @@
    "id": [
     2325,
     2345,
+    2360,
     2385,
     2465,
-    2505,
-    2565
+    2505
    ],
    "turvalaitteita_vaylalla": [
     "[Turvalaitteita väylällä 75 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 46 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 29 kpl](turvalaitteet:type=KIINTEÄ)",
     "[Turvalaitteita väylällä 81 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 53 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 28 kpl](turvalaitteet:type=KIINTEÄ)",
+    "[Turvalaitteita väylällä 26 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 22 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 4 kpl](turvalaitteet:type=KIINTEÄ)",
     "[Turvalaitteita väylällä 2 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 2 kpl](turvalaitteet:type=KELLUVA)\\n",
     "[Turvalaitteita väylällä 26 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 17 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 9 kpl](turvalaitteet:type=KIINTEÄ)",
-    "[Turvalaitteita väylällä 12 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 8 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 4 kpl](turvalaitteet:type=KIINTEÄ)",
-    "[Turvalaitteita väylällä 37 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 22 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 15 kpl](turvalaitteet:type=KIINTEÄ)"
+    "[Turvalaitteita väylällä 12 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 8 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 4 kpl](turvalaitteet:type=KIINTEÄ)"
    ],
    "vaylaalueita_vaylalla": [
     "[Väyläalueita väylällä 10 kpl](väyläalueet)",
     "[Väyläalueita väylällä 13 kpl](väyläalueet)",
+    "[Väyläalueita väylällä 5 kpl](väyläalueet)",
     "[Väyläalueita väylällä 1 kpl](väyläalueet)",
     "[Väyläalueita väylällä 6 kpl](väyläalueet)",
-    "[Väyläalueita väylällä 18 kpl](väyläalueet)",
-    "[Väyläalueita väylällä 2 kpl](väyläalueet)"
+    "[Väyläalueita väylällä 18 kpl](väyläalueet)"
    ],
    "navigointilinjoja_vaylalla": [
     "[Navigointilinjoja väylällä 55 kpl](navigointilinjat)",
     "[Navigointilinjoja väylällä 44 kpl](navigointilinjat)",
+    "[Navigointilinjoja väylällä 13 kpl](navigointilinjat)",
     "[Navigointilinjoja väylällä 4 kpl](navigointilinjat)",
     "[Navigointilinjoja väylällä 21 kpl](navigointilinjat)",
-    "[Navigointilinjoja väylällä 10 kpl](navigointilinjat)",
-    "[Navigointilinjoja väylällä 31 kpl](navigointilinjat)"
+    "[Navigointilinjoja väylällä 10 kpl](navigointilinjat)"
    ],
    "mitoitussyvays": [
     "12.5",
+    "8.5",
     "7.1",
     "6.8",
     "9.6",
-    "9.8",
-    "15.1"
+    "9.8"
    ]
   }
  },
@@ -2657,35 +3329,35 @@
   "name": "vesivaylatiedot:vesivaylat_vl2",
   "title": "VL2: Kauppamerenkulun 2-lk väylä",
   "layer": "vesivaylat_vl2",
-  "count": 14,
+  "count": 62,
   "geom": {
-   "MultiLineString": 13,
-   "LineString": 1
+   "MultiLineString": 52,
+   "LineString": 10
   },
   "fields": {
    "jnro": [
+    2350,
     2355,
     2460,
     2552,
     2555,
-    2575,
-    2580
+    2575
    ],
    "nimifi": [
+    "Häpöniemen väylä",
     "Kirstansalmen väylä",
     "Solovjeva-Signilskär-Eckerö-väylä",
     "Österkläpp - Druvan väylä",
     "Resningarna-Granö klubb-väylä",
-    "Rödhamn-Orrskär - Svinö väylä",
-    "Korsön yhdysväylä"
+    "Rödhamn-Orrskär - Svinö väylä"
    ],
    "nimisv": [
+    "Häpöniemi farled",
     "Kirstansalmi farled",
     "Solovjeva-Signilskär-Eckerö-farled",
     "Farleden Österkläpp - Druvan",
     "Resningarna-Granö klubb-farled",
-    "Rödhamn-Orrskär farled",
-    "Korsö förbindelsefarled"
+    "Rödhamn-Orrskär farled"
    ],
    "luokitustyyppi": [
     "Väyläluokitus"
@@ -2700,7 +3372,12 @@
     "Handelstrafikens farled av 2-kl"
    ],
    "omistaja": [
-    "Väylävirasto"
+    "Uudenkaupungin kaupunki",
+    "Väylävirasto",
+    "Naantalin kaupunki",
+    "Turun kaupunki",
+    "Partek Nordkalk Oyj Abp",
+    "Oy Keramia Ab"
    ],
    "vaylalajikoodi": [
     1
@@ -2726,68 +3403,73 @@
    "merialuefi": [
     "Selkämeri",
     "Ahvenanmeri",
-    "Saaristomeri"
+    "Saaristomeri",
+    "Suomenlahti"
    ],
    "merialuesv": [
     "Bottenhavet",
     "Ålands hav",
-    "Skärgårdshavet"
+    "Skärgårdshavet",
+    "Finska viken"
    ],
    "alunseloste": [
+    "Kemira",
     "Kalliokari",
     "Solovjeva",
     "På västra sidan av Resningarna",
     "Rödhamn",
-    "På västra sidan av Korsö",
-    "Färjsund"
+    "På västra sidan av Korsö"
    ],
    "paatepisteenseloste": [
+    "Janhua",
     "Ruuhikarin pohjoispuoli",
     "Eckerö",
     "På norra sidan av Granö klubb",
     "Svinö",
-    "På NV sidan av Nåtö",
-    "Mickelsö"
+    "På NV sidan av Nåtö"
    ],
    "irrotus_pvm": [
     "2026-11-11T00:28:57Z"
    ],
    "id": [
+    2350,
     2355,
     2460,
     2552,
     2555,
-    2575,
-    2580
+    2575
    ],
    "turvalaitteita_vaylalla": [
+    "[Turvalaitteita väylällä 7 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 7 kpl](turvalaitteet:type=KELLUVA)\\n",
     "[Turvalaitteita väylällä 8 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 7 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 1 kpl](turvalaitteet:type=KIINTEÄ)",
     "[Turvalaitteita väylällä 10 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 7 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 3 kpl](turvalaitteet:type=KIINTEÄ)",
     "[Turvalaitteita väylällä 2 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 2 kpl](turvalaitteet:type=KELLUVA)\\n",
     "[Turvalaitteita väylällä 12 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 10 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 2 kpl](turvalaitteet:type=KIINTEÄ)",
-    "[Turvalaitteita väylällä 35 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 18 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 17 kpl](turvalaitteet:type=KIINTEÄ)",
-    "[Turvalaitteita väylällä 3 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 3 kpl](turvalaitteet:type=KELLUVA)\\n"
+    "[Turvalaitteita väylällä 35 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 18 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 17 kpl](turvalaitteet:type=KIINTEÄ)"
    ],
    "vaylaalueita_vaylalla": [
+    "-",
     "[Väyläalueita väylällä 1 kpl](väyläalueet)",
     "[Väyläalueita väylällä 3 kpl](väyläalueet)",
     "[Väyläalueita väylällä 2 kpl](väyläalueet)",
     "[Väyläalueita väylällä 5 kpl](väyläalueet)",
-    "[Väyläalueita väylällä 10 kpl](väyläalueet)",
-    "[Väyläalueita väylällä 4 kpl](väyläalueet)"
+    "[Väyläalueita väylällä 10 kpl](väyläalueet)"
    ],
    "navigointilinjoja_vaylalla": [
+    "[Navigointilinjoja väylällä 4 kpl](navigointilinjat)",
     "[Navigointilinjoja väylällä 3 kpl](navigointilinjat)",
     "[Navigointilinjoja väylällä 10 kpl](navigointilinjat)",
     "[Navigointilinjoja väylällä 2 kpl](navigointilinjat)",
     "[Navigointilinjoja väylällä 9 kpl](navigointilinjat)",
-    "[Navigointilinjoja väylällä 16 kpl](navigointilinjat)",
-    "[Navigointilinjoja väylällä 5 kpl](navigointilinjat)"
+    "[Navigointilinjoja väylällä 16 kpl](navigointilinjat)"
    ],
    "mitoitussyvays": [
     "6",
     "4.8",
-    "6.8"
+    "6.8",
+    "7.3",
+    "6.1",
+    "8"
    ]
   }
  },
@@ -2796,35 +3478,27 @@
   "name": "vesivaylatiedot:vesivaylat_vl3",
   "title": "VL3: Hyötyliikenteen matalaväylä",
   "layer": "vesivaylat_vl3",
-  "count": 62,
+  "count": 191,
   "geom": {
-   "MultiLineString": 59,
-   "LineString": 3
+   "MultiLineString": 159,
+   "LineString": 32
   },
   "fields": {
    "jnro": [
+    2370,
+    2375,
     2390,
     2395,
     2400,
-    2405,
-    2475,
-    2480
+    2405
    ],
    "nimifi": [
+    "Uudenkaupungin keskuskalasataman väylä",
+    "Suukarin väylätukikohdan väylä",
     "Isokarin satamaväylä",
     "Varestuksen väylä",
     "Vähä Varestus-Hylkiletto-väylä",
-    "Humalkarin kalasataman väylä",
-    "Eckerön-Finbon-Sälskärin länsipuolen väylä",
-    "Sälskärin itäpuolen väylä"
-   ],
-   "nimisv": [
-    "Enskärs hamnfarled",
-    "Varestus farled",
-    "Vähä Varestus-Hylkiletto farled",
-    "Eckerö-Finbo-Sälskär västra farled",
-    "Sälskärs östra farled",
-    "Finbo västra farleder"
+    "Humalkarin kalasataman väylä"
    ],
    "luokitustyyppi": [
     "Väyläluokitus"
@@ -2839,8 +3513,12 @@
     "Lågdjupsfarled för nyttotrafik"
    ],
    "omistaja": [
+    "Uudenkaupungin kaupunki",
     "Väylävirasto",
-    "Ahvenanmaan maakuntahallitus"
+    "Ahvenanmaan maakuntahallitus",
+    "Hangon kaupunki",
+    "Raaseporin kaupunki",
+    "Espoon kaupunki"
    ],
    "vaylalajikoodi": [
     1
@@ -2852,80 +3530,90 @@
     "Havsfarled"
    ],
    "valaistuskoodi": [
-    1,
     2,
+    1,
     0
    ],
    "valaistusfi": [
-    "Valaistu",
     "Valaisematon",
+    "Valaistu",
     "Tuntematon"
    ],
    "valaistussv": [
-    "Belyst",
     "Obelyst",
+    "Belyst",
     "Okänd"
    ],
    "merialuefi": [
     "Selkämeri",
     "Ahvenanmeri",
-    "Saaristomeri"
+    "Saaristomeri",
+    "Suomenlahti"
    ],
    "merialuesv": [
     "Bottenhavet",
     "Ålands hav",
-    "Skärgårdshavet"
+    "Skärgårdshavet",
+    "Finska viken"
    ],
    "alunseloste": [
+    "Iso Vilissalon länsipuoli",
+    "Iso Vilissalon pohjoispuoli",
     "Isokarin satama",
     "Mustaklupu",
     "Vähä Varestuksen KO-puoli",
-    "Kuliluodon LO-puoli",
-    "På västra sidan av Eckerö",
-    "På SV sidan av Sälskär"
+    "Kuliluodon LO-puoli"
    ],
    "paatepisteenseloste": [
+    "Uudenkaupungin keskuskalasatama",
+    "Suukarin väylätukikohta",
     "Isokarin KA-puoli",
     "Humalainen",
     "Hylkiletton LO-puoli",
-    "Humalkari",
-    "Öppet hav, på NV sidan av Sälskär",
-    "Öppet hav"
+    "Humalkari"
    ],
    "irrotus_pvm": [
     "2026-11-11T00:28:57Z"
    ],
    "id": [
+    2370,
+    2375,
     2390,
     2395,
     2400,
-    2405,
-    2475,
-    2480
+    2405
    ],
    "turvalaitteita_vaylalla": [
+    "[Turvalaitteita väylällä 5 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 5 kpl](turvalaitteet:type=KELLUVA)\\n",
+    "[Turvalaitteita väylällä 2 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 2 kpl](turvalaitteet:type=KELLUVA)\\n",
     "[Turvalaitteita väylällä 10 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 8 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 2 kpl](turvalaitteet:type=KIINTEÄ)",
     "[Turvalaitteita väylällä 36 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 23 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 13 kpl](turvalaitteet:type=KIINTEÄ)",
     "[Turvalaitteita väylällä 9 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 6 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 3 kpl](turvalaitteet:type=KIINTEÄ)",
-    "[Turvalaitteita väylällä 7 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 7 kpl](turvalaitteet:type=KELLUVA)\\n",
-    "[Turvalaitteita väylällä 17 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 12 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 5 kpl](turvalaitteet:type=KIINTEÄ)",
-    "[Turvalaitteita väylällä 11 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 7 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 4 kpl](turvalaitteet:type=KIINTEÄ)"
+    "[Turvalaitteita väylällä 7 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 7 kpl](turvalaitteet:type=KELLUVA)\\n"
    ],
    "vaylaalueita_vaylalla": [
+    "[Väyläalueita väylällä 3 kpl](väyläalueet)",
     "-",
     "[Väyläalueita väylällä 2 kpl](väyläalueet)",
     "[Väyläalueita väylällä 1 kpl](väyläalueet)",
     "[Väyläalueita väylällä 8 kpl](väyläalueet)",
-    "[Väyläalueita väylällä 5 kpl](väyläalueet)",
-    "[Väyläalueita väylällä 3 kpl](väyläalueet)"
+    "[Väyläalueita väylällä 5 kpl](väyläalueet)"
    ],
    "navigointilinjoja_vaylalla": [
     "[Navigointilinjoja väylällä 2 kpl](navigointilinjat)",
+    "[Navigointilinjoja väylällä 3 kpl](navigointilinjat)",
     "[Navigointilinjoja väylällä 8 kpl](navigointilinjat)",
     "[Navigointilinjoja väylällä 4 kpl](navigointilinjat)",
     "[Navigointilinjoja väylällä 11 kpl](navigointilinjat)",
-    "[Navigointilinjoja väylällä 10 kpl](navigointilinjat)",
-    "[Navigointilinjoja väylällä 18 kpl](navigointilinjat)"
+    "[Navigointilinjoja väylällä 10 kpl](navigointilinjat)"
+   ],
+   "nimisv": [
+    "Enskärs hamnfarled",
+    "Varestus farled",
+    "Vähä Varestus-Hylkiletto farled",
+    "Eckerö-Finbo-Sälskär västra farled",
+    "Sälskärs östra farled",
+    "Finbo västra farleder"
    ],
    "mitoitussyvays": [
     "5.1",
@@ -2933,7 +3621,7 @@
     "4",
     "5",
     "4.3",
-    "6"
+    "2.2"
    ]
   }
  },
@@ -2942,32 +3630,27 @@
   "name": "vesivaylatiedot:vesivaylat_vl4",
   "title": "VL4: Veneilyn runkoväylä",
   "layer": "vesivaylat_vl4",
-  "count": 6,
+  "count": 26,
   "geom": {
-   "MultiLineString": 5,
+   "MultiLineString": 25,
    "LineString": 1
   },
   "fields": {
    "jnro": [
+    2310,
+    2335,
+    2380,
     2903,
     2905,
-    2920,
-    2945,
-    3185,
-    3990
+    2920
    ],
    "nimifi": [
+    "Pohjainen-Lyökki-Rihtniemi väylä",
+    "Sammo-Latuskeri väylä",
+    "Uudenkaupungin kaupunginlahden väylä",
     "Snöbådan-Näsby väylä",
     "Enklinge-Houtskari väylä",
-    "Husö-Berghamn-väylä",
-    "Lehmänkurkun väylä",
-    "Berghamnskobbe-Hönsnäs väylä",
-    "SMMP Veneilyn runkoväylä"
-   ],
-   "nimisv": [
-    "Farleden Snöbådan-Näsby",
-    "Enklinge-Houtskär farled",
-    "Husö-Berghamn-farled"
+    "Husö-Berghamn-väylä"
    ],
    "luokitustyyppi": [
     "Väyläluokitus"
@@ -2983,6 +3666,7 @@
    ],
    "omistaja": [
     "Väylävirasto",
+    "Uudenkaupungin kaupunki",
     "Ahvenanmaan maakuntahallitus"
    ],
    "vaylalajikoodi": [
@@ -2996,69 +3680,90 @@
    ],
    "valaistuskoodi": [
     2,
+    1,
     0
    ],
    "valaistusfi": [
     "Valaisematon",
+    "Valaistu",
     "Tuntematon"
    ],
    "valaistussv": [
     "Obelyst",
+    "Belyst",
     "Okänd"
    ],
    "merialuefi": [
-    "Saaristomeri"
+    "Selkämeri",
+    "Saaristomeri",
+    "Suomenlahti"
    ],
    "merialuesv": [
-    "Skärgårdshavet"
+    "Bottenhavet",
+    "Skärgårdshavet",
+    "Finska viken"
+   ],
+   "alunseloste": [
+    "Pohjaisen KO-puoli",
+    "Sammon KA-puoli",
+    "Iso Vilissalon pohjoispuoli",
+    "På NO sidan av Kumlinge",
+    "På norra sidan av Husö",
+    "Pukkiholman itäpuoli"
+   ],
+   "paatepisteenseloste": [
+    "Rihtniemen pohjoispuoli",
+    "Pohjaisen KO-puoli",
+    "Uudenkaupungin kaupunginlahti",
+    "Houtskari",
+    "Berghamn",
+    "Vähä-Varestus"
    ],
    "irrotus_pvm": [
     "2026-11-11T00:28:57Z"
    ],
    "id": [
+    2310,
+    2335,
+    2380,
     2903,
     2905,
-    2920,
-    2945,
-    3185,
-    3990
+    2920
    ],
    "turvalaitteita_vaylalla": [
+    "[Turvalaitteita väylällä 65 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 43 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 22 kpl](turvalaitteet:type=KIINTEÄ)",
+    "[Turvalaitteita väylällä 8 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 5 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 3 kpl](turvalaitteet:type=KIINTEÄ)",
+    "[Turvalaitteita väylällä 15 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 13 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 2 kpl](turvalaitteet:type=KIINTEÄ)",
     "[Turvalaitteita väylällä 29 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 22 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 7 kpl](turvalaitteet:type=KIINTEÄ)",
     "[Turvalaitteita väylällä 13 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 10 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 3 kpl](turvalaitteet:type=KIINTEÄ)",
-    "[Turvalaitteita väylällä 29 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 23 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 6 kpl](turvalaitteet:type=KIINTEÄ)",
-    "[Turvalaitteita väylällä 61 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 36 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 25 kpl](turvalaitteet:type=KIINTEÄ)",
-    "[Turvalaitteita väylällä 2 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 2 kpl](turvalaitteet:type=KELLUVA)\\n",
-    "[Turvalaitteita väylällä 32 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 25 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 7 kpl](turvalaitteet:type=KIINTEÄ)"
+    "[Turvalaitteita väylällä 29 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 23 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 6 kpl](turvalaitteet:type=KIINTEÄ)"
    ],
    "vaylaalueita_vaylalla": [
+    "[Väyläalueita väylällä 10 kpl](väyläalueet)",
+    "[Väyläalueita väylällä 2 kpl](väyläalueet)",
+    "[Väyläalueita väylällä 1 kpl](väyläalueet)",
     "[Väyläalueita väylällä 5 kpl](väyläalueet)",
     "[Väyläalueita väylällä 3 kpl](väyläalueet)",
-    "[Väyläalueita väylällä 4 kpl](väyläalueet)",
-    "[Väyläalueita väylällä 8 kpl](väyläalueet)",
-    "-",
-    "[Väyläalueita väylällä 99 kpl](väyläalueet)"
+    "[Väyläalueita väylällä 4 kpl](väyläalueet)"
    ],
    "navigointilinjoja_vaylalla": [
+    "[Navigointilinjoja väylällä 19 kpl](navigointilinjat)",
+    "[Navigointilinjoja väylällä 3 kpl](navigointilinjat)",
+    "[Navigointilinjoja väylällä 4 kpl](navigointilinjat)",
     "[Navigointilinjoja väylällä 5 kpl](navigointilinjat)",
     "[Navigointilinjoja väylällä 6 kpl](navigointilinjat)",
-    "[Navigointilinjoja väylällä 11 kpl](navigointilinjat)",
-    "[Navigointilinjoja väylällä 1 kpl](navigointilinjat)",
-    "[Navigointilinjoja väylällä 443 kpl](navigointilinjat)"
+    "[Navigointilinjoja väylällä 11 kpl](navigointilinjat)"
    ],
-   "alunseloste": [
-    "På NO sidan av Kumlinge",
-    "På norra sidan av Husö",
-    "Pukkiholman itäpuoli",
-    "Berghamnskobb",
-    "Västanfjärd"
+   "nimisv": [
+    "Farleden till Nystads stadsviken",
+    "Farleden Snöbådan-Näsby",
+    "Enklinge-Houtskär farled",
+    "Husö-Berghamn-farled",
+    "Korpoström-Krabbholm farled",
+    "Kasnäs-Högland -Attu farled"
    ],
-   "paatepisteenseloste": [
-    "Houtskari",
-    "Berghamn",
-    "Vähä-Varestus",
-    "Hönsnäs",
-    "Merikarvia"
+   "mitoitussyvays": [
+    "4.2"
    ]
   }
  },
@@ -3067,35 +3772,27 @@
   "name": "vesivaylatiedot:vesivaylat_vl5",
   "title": "VL5: Paikallisveneväylä",
   "layer": "vesivaylat_vl5",
-  "count": 34,
+  "count": 124,
   "geom": {
-   "MultiLineString": 29,
-   "LineString": 5
+   "MultiLineString": 91,
+   "LineString": 33
   },
   "fields": {
    "jnro": [
+    2340,
+    2365,
     2463,
     2470,
     2495,
-    2500,
-    2515,
-    2520
+    2500
    ],
    "nimifi": [
+    "Viisastenkari-Urpoinen veneväylä",
+    "Janhua-Hepokari väylä",
     "Käringsund",
     "Storbyn väylä",
     "Svartnö-Finbon ankkuripaikka-väylä",
-    "Finbon väylä",
-    "Utbådan-Marsund-Dånö-väylä",
-    "Isaksön veneväylä"
-   ],
-   "nimisv": [
-    "Käringsund",
-    "Storby farled",
-    "Svartnö-Finbo ankarplats-farled",
-    "Finbo farled",
-    "Utbådan-Marsund-Dånö-farled",
-    "Isaksö båtled"
+    "Finbon väylä"
    ],
    "luokitustyyppi": [
     "Väyläluokitus"
@@ -3110,8 +3807,12 @@
     "Båtfarled"
    ],
    "omistaja": [
+    "Väylävirasto",
+    "Uudenkaupungin kaupunki",
     "Ahvenanmaan maakuntahallitus",
-    "Väylävirasto"
+    "Naantalin kaupunki",
+    "Turun kaupunki",
+    "Kuntoutusyhtymä-Rehab-Group"
    ],
    "vaylalajikoodi": [
     1
@@ -3123,78 +3824,96 @@
     "Havsfarled"
    ],
    "valaistuskoodi": [
-    0,
     2,
+    0,
     1
    ],
    "valaistusfi": [
-    "Tuntematon",
     "Valaisematon",
+    "Tuntematon",
     "Valaistu"
    ],
    "valaistussv": [
-    "Okänd",
     "Obelyst",
+    "Okänd",
     "Belyst"
    ],
    "merialuefi": [
+    "Selkämeri",
     "Ahvenanmeri",
-    "Saaristomeri"
+    "Saaristomeri",
+    "Suomenlahti"
    ],
    "merialuesv": [
+    "Bottenhavet",
     "Ålands hav",
-    "Skärgårdshavet"
+    "Skärgårdshavet",
+    "Finska viken"
    ],
    "alunseloste": [
+    "Keskileton eteläpuoli",
+    "Seikonmaa",
     "Solovjeva Signilskär Eckerö väylältä",
     "På norra sidan av Töllingarna",
     "På NV sidan av Svartnö",
-    "På norra sidan av Truten",
-    "Öppet hav, på SV sidan av Hammaruddan",
-    "På NO sidan av Isaksö"
+    "På norra sidan av Truten"
    ],
    "paatepisteenseloste": [
+    "Urpoinen",
+    "Hepokari",
     "Käringsundiin",
     "På västra sidan av Eckerö",
     "På östra sidan av Finbo",
-    "Finbo",
-    "På NV sidan av Dånö",
-    "På SO sidan av Isaksö"
+    "Finbo"
    ],
    "irrotus_pvm": [
     "2026-11-11T00:28:57Z"
    ],
    "id": [
+    2340,
+    2365,
     2463,
     2470,
     2495,
-    2500,
-    2515,
-    2520
+    2500
    ],
    "turvalaitteita_vaylalla": [
+    "[Turvalaitteita väylällä 5 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 3 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 2 kpl](turvalaitteet:type=KIINTEÄ)",
+    "[Turvalaitteita väylällä 3 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 3 kpl](turvalaitteet:type=KELLUVA)\\n",
     "[Turvalaitteita väylällä 8 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 8 kpl](turvalaitteet:type=KELLUVA)\\n",
     "[Turvalaitteita väylällä 2 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 2 kpl](turvalaitteet:type=KELLUVA)\\n",
     "[Turvalaitteita väylällä 4 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 4 kpl](turvalaitteet:type=KELLUVA)\\n",
-    "[Turvalaitteita väylällä 53 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 49 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 4 kpl](turvalaitteet:type=KIINTEÄ)",
-    "[Turvalaitteita väylällä 1 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 1 kpl](turvalaitteet:type=KELLUVA)\\n",
-    "[Turvalaitteita väylällä 16 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 11 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 5 kpl](turvalaitteet:type=KIINTEÄ)"
+    "[Turvalaitteita väylällä 53 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 49 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 4 kpl](turvalaitteet:type=KIINTEÄ)"
    ],
    "vaylaalueita_vaylalla": [
+    "[Väyläalueita väylällä 4 kpl](väyläalueet)",
+    "-",
     "[Väyläalueita väylällä 2 kpl](väyläalueet)",
     "[Väyläalueita väylällä 17 kpl](väyläalueet)",
     "[Väyläalueita väylällä 1 kpl](väyläalueet)",
-    "[Väyläalueita väylällä 5 kpl](väyläalueet)",
-    "[Väyläalueita väylällä 3 kpl](väyläalueet)",
-    "[Väyläalueita väylällä 7 kpl](väyläalueet)"
+    "[Väyläalueita väylällä 5 kpl](väyläalueet)"
    ],
    "navigointilinjoja_vaylalla": [
-    "[Navigointilinjoja väylällä 2 kpl](navigointilinjat)",
     "[Navigointilinjoja väylällä 4 kpl](navigointilinjat)",
+    "[Navigointilinjoja väylällä 3 kpl](navigointilinjat)",
+    "[Navigointilinjoja väylällä 2 kpl](navigointilinjat)",
     "[Navigointilinjoja väylällä 8 kpl](navigointilinjat)",
     "[Navigointilinjoja väylällä 1 kpl](navigointilinjat)",
-    "[Navigointilinjoja väylällä 6 kpl](navigointilinjat)",
-    "[Navigointilinjoja väylällä 3 kpl](navigointilinjat)"
+    "[Navigointilinjoja väylällä 6 kpl](navigointilinjat)"
+   ],
+   "nimisv": [
+    "Käringsund",
+    "Storby farled",
+    "Svartnö-Finbo ankarplats-farled",
+    "Finbo farled",
+    "Utbådan-Marsund-Dånö-farled",
+    "Isaksö båtled"
+   ],
+   "mitoitussyvays": [
+    "5",
+    "3.5",
+    "1.2",
+    "1.9"
    ]
   }
  },
@@ -3203,32 +3922,27 @@
   "name": "vesivaylatiedot:vesivaylat_vl6",
   "title": "VL6: Venereitti",
   "layer": "vesivaylat_vl6",
-  "count": 7,
+  "count": 81,
   "geom": {
-   "LineString": 3,
-   "MultiLineString": 4
+   "LineString": 41,
+   "MultiLineString": 40
   },
   "fields": {
    "jnro": [
+    147,
+    2625,
+    2655,
     2815,
     2890,
-    3015,
-    3020,
-    3025,
-    3140
+    2987
    ],
    "nimifi": [
+    "Västanvikin venereitti",
+    "Idskär-Vikarbukten venereitti",
+    "Salojoen venereitti",
     "Bänö-Föglö-venereitti",
     "Åvan venereitti",
-    "Vidskär-Kustavi venereitti",
-    "Lootholman venereitti",
-    "Houtskari-Lypertö venereitti",
-    "Sördö-Velkar-venereitti"
-   ],
-   "nimisv": [
-    "Bänö-Föglö-båtrutt",
-    "Åva båtrutt",
-    "Vidskär-Gustavs båtrutt"
+    "Rouhunaukko - Paavastenkari venereitti"
    ],
    "luokitustyyppi": [
     "Väyläluokitus"
@@ -3243,78 +3957,110 @@
     "Båtrutt"
    ],
    "omistaja": [
-    "Ahvenanmaan maakuntahallitus",
+    "Kemiönsaaren kunta",
     "Väylävirasto",
+    "Salon kaupunki",
+    "Ahvenanmaan maakuntahallitus",
+    "Naantalin kaupunki",
     "Kustavin kunta"
    ],
    "vaylalajikoodi": [
-    1
-   ],
-   "vaylalajifi": [
-    "Meriväylä"
-   ],
-   "vaylalajisv": [
-    "Havsfarled"
-   ],
-   "valaistuskoodi": [
+    1,
     2
    ],
+   "vaylalajifi": [
+    "Meriväylä",
+    "Sisävesiväylä"
+   ],
+   "vaylalajisv": [
+    "Havsfarled",
+    "Insjöfarled"
+   ],
+   "valaistuskoodi": [
+    2,
+    1
+   ],
    "valaistusfi": [
-    "Valaisematon"
+    "Valaisematon",
+    "Valaistu"
    ],
    "valaistussv": [
-    "Obelyst"
+    "Obelyst",
+    "Belyst"
    ],
    "merialuefi": [
-    "Saaristomeri"
+    "Saaristomeri",
+    "Suomenlahti",
+    "Lohjanjärvi",
+    "Kokemäenjoen vesistö"
    ],
    "merialuesv": [
-    "Skärgårdshavet"
+    "Skärgårdshavet",
+    "Finska viken",
+    "Lojo sjön",
+    "Kumo älv vattendrag"
    ],
    "alunseloste": [
+    "Flisholmen",
+    "Utö - Hanko väylän (läntinen osa) linjalta Idskärin kohdalta etelään",
+    "Salojoen suu",
     "Bänö",
     "På SV sidan av Åva",
-    "Iniön aukko",
-    "Kaksoiskarin I-puoli.",
-    "Svinön itäpuoli.",
-    "Sördön LU-puoli."
+    "Rouhinaukko"
    ],
    "paatepisteenseloste": [
+    "Västanfjärd",
+    "Hiittisten vanha maantielaituri Vikarbukten",
+    "Vilhonkadun silta",
     "Föglö",
     "På västra sidan av Långö",
-    "Kustavi",
-    "Lootholman venesatama.",
-    "Lypertön itäpuoli.",
-    "Velkarin eteläpuoli."
+    "Paavastenkari"
    ],
    "irrotus_pvm": [
     "2026-11-11T00:28:57Z"
    ],
    "id": [
+    147,
+    2625,
+    2655,
     2815,
     2890,
-    3015,
-    3020,
-    3025,
-    3140
+    2987
    ],
    "turvalaitteita_vaylalla": [
+    "[Turvalaitteita väylällä 9 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 9 kpl](turvalaitteet:type=KELLUVA)\\n",
     "[Turvalaitteita väylällä 2 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 2 kpl](turvalaitteet:type=KELLUVA)\\n",
+    "[Turvalaitteita väylällä 5 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 3 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 2 kpl](turvalaitteet:type=KIINTEÄ)",
     "-",
-    "[Turvalaitteita väylällä 14 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 14 kpl](turvalaitteet:type=KELLUVA)\\n",
-    "[Turvalaitteita väylällä 1 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 1 kpl](turvalaitteet:type=KELLUVA)\\n"
+    "[Turvalaitteita väylällä 6 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 6 kpl](turvalaitteet:type=KELLUVA)\\n",
+    "[Turvalaitteita väylällä 14 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 14 kpl](turvalaitteet:type=KELLUVA)\\n"
    ],
    "vaylaalueita_vaylalla": [
-    "[Väyläalueita väylällä 3 kpl](väyläalueet)",
+    "[Väyläalueita väylällä 7 kpl](väyläalueet)",
     "[Väyläalueita väylällä 2 kpl](väyläalueet)",
+    "[Väyläalueita väylällä 19 kpl](väyläalueet)",
+    "[Väyläalueita väylällä 3 kpl](väyläalueet)",
     "[Väyläalueita väylällä 4 kpl](väyläalueet)",
     "-"
    ],
    "navigointilinjoja_vaylalla": [
     "[Navigointilinjoja väylällä 1 kpl](navigointilinjat)",
     "[Navigointilinjoja väylällä 2 kpl](navigointilinjat)",
+    "[Navigointilinjoja väylällä 19 kpl](navigointilinjat)",
     "[Navigointilinjoja väylällä 9 kpl](navigointilinjat)",
-    "[Navigointilinjoja väylällä 4 kpl](navigointilinjat)"
+    "[Navigointilinjoja väylällä 4 kpl](navigointilinjat)",
+    "[Navigointilinjoja väylällä 3 kpl](navigointilinjat)"
+   ],
+   "nimisv": [
+    "Idskär-Vikarbukten båtrutt",
+    "Salo åns båtrutt",
+    "Bänö-Föglö-båtrutt",
+    "Åva båtrutt",
+    "Vidskär-Gustavs båtrutt",
+    "Stenskär-Borstö båtrutt"
+   ],
+   "mitoitussyvays": [
+    "1.2"
    ]
   }
  },
@@ -3323,72 +4069,72 @@
   "name": "vesivaylatiedot:valosektorit_uusi",
   "title": "Valosektorit",
   "layer": "valosektorit_uusi",
-  "count": 979,
+  "count": 2846,
   "geom": {
-   "Point": 979
+   "Point": 2846
   },
   "fields": {
    "id": [
-    64,
-    65,
-    66,
-    67,
-    68,
-    69
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
    ],
    "tlnumero": [
-    43355,
-    43383,
-    6147,
-    6148,
-    7046,
-    34063
+    11540,
+    11515,
+    11632,
+    11334,
+    11516,
+    60919
    ],
    "loisto": [
-    101412,
-    107081,
-    101731,
-    155799,
-    128424,
-    105138
+    129198,
+    92333,
+    180023,
+    179952,
+    129185,
+    209211
    ],
    "alkukulma": [
-    0.0,
-    315.0,
-    87.0,
-    121.0,
-    165.0,
-    225.0
+    63.0,
+    101.0,
+    172.0,
+    192.0,
+    255.0,
+    329.0
    ],
    "loppukulma": [
-    360.0,
-    323.0,
-    121.0,
-    165.0,
-    225.0,
-    325.0
+    101.0,
+    172.0,
+    192.0,
+    255.0,
+    329.0,
+    63.0
    ],
    "vari": [
-    "v",
-    "vi",
     "p",
+    "vi",
+    "v",
     "k"
    ],
    "irrotus_pvm": [
-    "2026-11-11T00:03:41Z",
-    "2026-11-11T00:10:41Z",
-    "2026-11-11T00:10:57Z",
-    "2026-11-11T00:10:58Z",
-    "2026-11-11T00:11:02Z",
-    "2026-11-11T00:11:04Z"
+    "2026-11-11T00:01:06Z",
+    "2026-11-11T00:01:07Z",
+    "2026-11-11T00:01:11Z",
+    "2026-11-11T00:01:13Z",
+    "2026-11-11T00:03:26Z",
+    "2026-11-11T00:03:41Z"
    ],
    "jnro": [
+    "4005",
     "2505",
-    "3210",
-    "2400",
-    "2865",
-    "2910",
-    "2930"
+    "5151",
+    "4268",
+    "4055",
+    "3650"
    ]
   }
  },
@@ -3397,141 +4143,184 @@
   "name": "vesivaylatiedot:vesiliikennemerkit_uusi",
   "title": "Vesiliikennemerkit",
   "layer": "vesiliikennemerkit_uusi",
-  "count": 18,
+  "count": 923,
   "geom": {
-   "Point": 18
+   "Point": 923
   },
   "fields": {
    "id": [
-    187,
-    188,
-    4803,
-    4807,
-    4808,
-    4997
+    40,
+    41,
+    51,
+    53,
+    55,
+    57
    ],
    "nimifi": [
-    "Enklinge-Houtskari väylä",
-    "Norrholm",
-    "Apteekkarin väylä",
-    "Boxö",
-    "Boxö ön",
-    "?"
+    "Sandholmen-Finnholmarna",
+    "Kitön venereitti",
+    "Sipoo 5",
+    "Sipoo 6",
+    "Sipoo 7",
+    "Sipoo 8"
    ],
    "nimisv": [
-    "Enklinge-Houtskär farled",
-    "Norrholm",
-    "Apotekarens farled",
-    "Boxö",
-    "Boxö ön",
-    "Berghamn-Lembersö-farled"
+    "Sandholmen-Finnholmarna",
+    "Kitös båtrutt",
+    "Taulun 61 pari",
+    "Rajoitusmerkin 59 pari",
+    "Pari tauluille 65 ja 69",
+    "Pari tauluille 63 ja 69"
    ],
    "vlmlajityyppi": [
-    6,
-    31,
     11,
-    32
+    6,
+    13,
+    15,
+    31,
+    1
    ],
    "vlmtyyppi": [
+    2,
     1,
     4,
-    2
+    3
+   ],
+   "rajoitusarvo": [
+    11.0,
+    15.0,
+    9.0,
+    20.0,
+    10.0,
+    5.0
    ],
    "sijaintifi": [
-    "Houtskarin Roslax näsin kaakkoisniemessä",
-    "Houtskarin Näsbyn laiturilla",
-    "Norrholm",
-    "Inre Julholmskläppen saaren pohjoispuolella",
-    "Lilla Bergskär, Lemland",
-    "Grundsunda, Vårdö"
+    "Tullandet'in pohjoispuolella",
+    "Sipoon Kalkkirannasta n. 1,2 km itään Majholmenin koilliskulmassa",
+    "Sipoon Kalkkirannasta n. 4,8 km itään Kitön koilliskulmassa",
+    "Kitön itäisimmän niemen koillispuolella, sillan e-puol.",
+    "Sipoon Eriksnäsin länsireunalla Sipoonjoen suulla",
+    "Sipoon Gumbostrandista n. 300m etelään pienellä luodolla"
+   ],
+   "sijaintisv": [
+    "Pellingi 2,4 m väylällä",
+    "Pellingin 2,4 m väylä",
+    "1,2 m väylän p. päässä",
+    "2,0 m väylä",
+    "2,0 m väylällä",
+    "1,2 m venereitillä"
    ],
    "vaylalaji": [
-    "M"
+    "M",
+    "S"
    ],
    "paatos": [
-    "SMMP 224/653/98, 7.2.2001",
-    "VÄYLÄ/7689/06.02.01/2019",
-    "LIVI/7910/06.02.02./2016",
-    "TRAFICOM/193933/05.01.26.01/2020",
-    "Omistaja: Vind AX Ab\r\nÅMH-Pn 4/15",
-    "Ålands landskpdregering, besut 12.1.2021 Nr 6 11. / Andreas Carlsson"
+    "6116/8.12.1986",
+    "TRAFICOM/98525/05.01.26.02/2021",
+    "Ei päätöstä",
+    "0198L0859-26",
+    "59/653/99",
+    "59/653/100"
+   ],
+   "vaikutusalue": [
+    "AV",
+    "V",
+    "A"
    ],
    "patatyyppi": [
+    53,
+    52,
     61,
-    63,
-    65,
-    52
+    0,
+    51,
+    63
    ],
    "pakotyyppi": [
+    5,
+    4,
     0,
-    5
+    3,
+    6
    ],
    "tklnumero": [
-    60,
-    56,
+    55,
+    54,
     63,
-    54
+    60,
+    61,
+    52
    ],
    "mittauspaiva": [
-    "2002-01-04T00:00:00Z",
-    "2019-08-28T00:00:00Z"
+    "1999-07-30T00:00:00Z",
+    "1998-10-27T00:00:00Z",
+    "2000-10-19T00:00:00Z",
+    "1998-10-19T00:00:00Z",
+    "1998-10-13T00:00:00Z",
+    "2000-10-13T00:00:00Z"
    ],
    "jnro": [
-    "2905",
-    "2805",
-    "3200"
+    "5240",
+    "5065",
+    "4975",
+    "4976",
+    "4870",
+    "5160"
    ],
    "irrotus_pvm": [
-    "2026-11-11T00:02:41Z",
-    "2026-11-11T00:02:14Z",
-    "2026-11-11T00:01:51Z",
-    "2026-11-11T00:03:03Z",
-    "2026-11-11T00:02:31Z",
-    "2026-11-11T00:01:23Z"
+    "2026-11-11T00:02:57Z",
+    "2026-11-11T00:02:43Z",
+    "2026-11-11T00:02:30Z",
+    "2026-11-11T00:02:55Z",
+    "2026-11-11T00:02:33Z",
+    "2026-11-11T00:01:22Z"
    ],
    "vaylan_nimi": [
-    "[2905: Enklinge-Houtskari väylä](vaylat:jnro=2905)",
-    "[2805: Apteekkarin väylä](vaylat:jnro=2805)",
-    "[3200: Berghamn-Lembersö-väylä](vaylat:jnro=3200)"
+    "[5240: Sandholmen-Finnholmarna](vaylat:jnro=5240)",
+    "[5065: Kitön venereitti](vaylat:jnro=5065)",
+    "[4975: Sipoonselkä-Östersundom](vaylat:jnro=4975)",
+    "[4976: Bölsfjärdenin väylä](vaylat:jnro=4976)",
+    "[4870: Pirttisaaren kanavan venereitti](vaylat:jnro=4870)",
+    "[5160: Tolkkinen-Porvoo](vaylat:jnro=5160)"
    ],
    "omistaja": [
     "Väylävirasto",
-    "Caruna Oy",
-    "Ålands Elandelslag ",
-    "Vind Ax Ab",
-    "Vårdö kommun"
+    "Sipoon kunta",
+    "Helsingin kaupunki",
+    "Porvoon kaupunki",
+    "Paraisten kaupunki",
+    "Tuntematon"
    ],
    "latitude_asteina": [
-    "60°13.8324'",
-    "60°13.6337'",
-    "60°24.5996'",
-    "60°3.7933'",
-    "60°3.8574'",
-    "60°22.8959'"
+    "60°14.1387'",
+    "60°14.2334'",
+    "60°15.1748'",
+    "60°15.1532'",
+    "60°14.9028'",
+    "60°15.9635'"
    ],
    "longitude_asteina": [
-    "21°23.1174'",
-    "21°22.9473'",
-    "21°20.3791'",
-    "20°22.8792'",
-    "20°23.4227'",
-    "20°5.5835'"
+    "25°54.4448'",
+    "25°55.2823'",
+    "25°24.7031'",
+    "25°28.7791'",
+    "25°29.5326'",
+    "25°20.8896'"
    ],
-   "sijaintisv": [
-    "Norrholm",
-    "I Apotekarfafleden, utanför Yttre och Inre Julholmskläppen",
-    "Boxö",
-    "Boxö ön",
-    "Degerberg",
-    "Lilla Bergskär, Lemland"
+   "lisakilventeksti1": [
+    "1100 m",
+    "300 m ",
+    "Aallokon aiheuttamiskielto, ankkurointikielto, 1000 m",
+    "1150m",
+    "Aallokon aiheuttamiskielto",
+    "KABEL ( 800*2400 )"
    ],
-   "rajoitusarvo": [
-    24.0,
-    15.0
-   ],
-   "vaikutusalue": [
-    "A",
-    "V"
+   "lisakilventeksti2": [
+    "aallokon aiheuttamisen kielto",
+    "Nuoli vasemmalle",
+    "Paineviemäri",
+    "Laiturin käyttö on sallittu tilapäisesti yhteysalusliikennettä häiritsemättä. Tillfällig använding av bryggan är tillåten så länge förbindelsetrafiken inte stöts.",
+    "Pisto- ja lastauslaiturin käyttö on sallittu tilapäisesti yhteysalusliikennettä häiritsemättä. Tillfällig använding av piren och lastningsbryggan är tillåten så länge förbindelsetrafiken inte stöts.",
+    "2700 m"
    ]
   }
  },
@@ -3540,85 +4329,126 @@
   "name": "vesivaylatiedot:vesivaylien_muut_rajoitusalueet",
   "title": "Vesiväylien muut kielto- ja rajoitusalueet",
   "layer": "vesivaylien_muut_rajoitusalueet",
-  "count": 5,
+  "count": 259,
   "geom": {
-   "Polygon": 5
+   "Polygon": 248,
+   "MultiPolygon": 11
   },
   "fields": {
    "id": [
-    103910,
-    242095,
-    242240,
-    262376,
-    263221
+    103895,
+    103897,
+    103898,
+    103902,
+    103903,
+    103904
    ],
    "rajoitustyyppi": [
+    "Nopeusrajoitus, Aallokon aiheuttamisen kielto",
     "Aallokon aiheuttamisen kielto",
-    "Nopeusrajoitus, Aallokon aiheuttamisen kielto"
+    "Vesiskootterilla ajo kielletty",
+    "Ankkurin käyttökielto",
+    "Pysäköimiskielto",
+    "Aluksen kulku moottorivoimaa käyttäen kielletty"
    ],
    "rajoitustyypit": [
+    "01, 02",
     "02",
-    "01, 02"
+    "04",
+    "06",
+    "07",
+    "05"
    ],
    "suuruus": [
+    "10",
+    "9",
     "0",
-    "5",
-    "22",
-    "15"
+    "15",
+    "11",
+    "46"
+   ],
+   "pituus": [
+    "1184",
+    "160",
+    "1149",
+    "274",
+    "853",
+    "377"
    ],
    "poikkeus": [
+    "kielto ja rajoitus ei koske virka-, sairaankuljetus- ja pelastustehtävissä tai muussa vastaavasta välttämättömästä syystä sekä puolustuslaitoksen toiminnassa tarpeellista moottorikäyttöisen ajoneuvon käyttöä",
+    "Kielto ja rajoitus ei koske virka-, sairaankuljetus- ja pelastustehtävissä tai muussa vastaavasta välttämättömästä syystä sekä puolustuslaitoksen toiminnassa tarpeellista moottorikäyttöisen ajoneuvon käyttöä",
     "Voimassa 16.5.-15.9. Kielto ja rajoitus ei koske virka-, sairaankuljetus- ja pelastustehtävissä tai muussa vastaavasta välttämättömästä syystä sekä puolustuslaitoksen toiminnassa tarpeellista moottorikäyttöisen ajoneuvon käyttöä.",
-    "aallokonmuodostaminen kielletty --- kielto ja rajoitus ei koske virka, sairaankuljetus- ja pelastustehtävissä tai muussa vastaavasta välttämättömästä syystä sekä puolustuslaitoksen toiminnassa tarpeellista moottorikäyttöisen ajoneuvon käyttöä",
-    "nopeusrajoitus, aallokonmuodostaminen kielletty --- kielto ei koske virka-, sairaankuljetus- ja pelastustoiminnan suorittamiseksi tai muusta vastaavasta syystä välttämätöntä vesikulkuneuvolla liikkumista, sama koskee puolustusvoimain toimintaa",
-    "Nopeusrajoitus ja aallokon aiheuttamisen kielto ei koske virka-,\nsairaankuljetus- ja pelastustoimen suorittamiseksi tai muusta\nvastaavasta syystä välttämätöntä vesikulkuneuvolla liikkumista eikä\npuolustusvoimien toimintaa."
+    "Aallokon aiheuttamiskielto ei koske virka-, sairaankuljetus- ja pelastustoimen suorittamiseksi tai muusta vastaavasta syystä välttämätöntä vesikulkuneuvolla liikkumista eikä puolustusvoimien toimintaa.",
+    "Rajoitus ei koske virka-,sair.kuljetus- ja pelastustoimeien suorittamiseksi ja muusta muusta vastaavasta syystä välttämätöntä vesikulkuneuvolla liikkumista eikä puolustusvoimien toiminataa.",
+    "Kielto ja rajoitus ei koske virka-, sairaankuljetus- ja pelastustehtävissä tai muussa vastaavasta välttämättömästä syystä"
+   ],
+   "lisatieto": [
+    "Nopeusrajoitus päätöksen diaarinumero on 1/1042/2012 päivämäärällä 30.6.2012.",
+    "Päätös 60/1042/2011 määrää lisäksi aallokonaiheuttamisen kiellon.",
+    "alueella Uudenmaan ymp.keskuksen asettama nopeusrajoitus 10 km/h",
+    "myös aallonaiheuttamiskielto",
+    "TRAFICOM/68881/05.01.26.02/2019, 7.10.2019",
+    "Lounais-Suomen ympäristökeskuksen päätös"
    ],
    "paatostila": [
+    "Määräaikainen",
     "Toistaiseksi"
    ],
    "alkupaivamaara": [
-    "2001-07-02Z",
-    "1996-04-01Z",
-    "2015-12-01Z",
-    "2019-06-15Z"
+    "2001-05-01Z",
+    "1998-07-15Z",
+    "1999-06-14Z",
+    "2004-05-15Z",
+    "1999-07-16Z",
+    "1999-06-01Z"
+   ],
+   "loppupaivamaara": [
+    "2026-04-01Z"
    ],
    "diaarinumero": [
-    "224/653/98",
-    "0295L0011-26",
-    "VARELY/596/07.01/2013",
-    "TRAFICOM/231571/05.01.26.00/2022",
-    "TRAFICOM/2346/05.01.26.02/2019"
+    "246/653/2000, 1/1042/2012",
+    "162/610/97, 60/1042/2011",
+    "108/653/97",
+    "165/653/2003",
+    "344/653/97",
+    "215/653/97"
    ],
    "tietolahde": [
+    "Muu päätösasiakirja",
     "SYKE",
-    "Traficom",
-    "Muu päätösasiakirja"
+    "Muu väyläpäätösaineisto",
+    "Muu kartta-aineisto",
+    "Muu merikartta-aineisto",
+    "Tuntematon"
    ],
    "jnro": [
-    "2905",
-    "2830",
-    "3200"
+    "4215",
+    "4995",
+    "4890",
+    "4870",
+    "4563",
+    "4505"
    ],
    "nimisijainti": [
-    "Hålax",
-    "Lanskeri-Pohjantiistanklopin välinen salmi",
-    "Ahvenanmaa",
-    "Röst ja Roskär saarten välisessä salmessa"
+    "Snacknäs-Rågrundet",
+    "Stora Fårholmen - Lilla Fårholmen",
+    "Karpiselkä",
+    "Nokasundet",
+    "Suomenojan venesatama",
+    "Svartholmen itäpuoli"
    ],
    "irrotus_pvm": [
     "2026-11-11T00:27:36Z",
     "2026-11-11T00:27:37Z"
    ],
    "vaylan_nimi": [
-    "[2905: Enklinge-Houtskari väylä](vaylat:jnro=2905)",
-    "[2830: Degerby-Kökar-väylä](vaylat:jnro=2830)",
-    "[3200: Berghamn-Lembersö-väylä](vaylat:jnro=3200)"
-   ],
-   "lisatieto": [
-    "Voimassaolojakso: koko vuoden"
-   ],
-   "pituus": [
-    "1200",
-    "0"
+    "[4215: Torsön väylä](vaylat:jnro=4215)",
+    "[4995: Kalkkiranta-Bodö yhteysliikenneväylä](vaylat:jnro=4995)",
+    "[4890: Reposalmen venereitti](vaylat:jnro=4890)",
+    "[4870: Pirttisaaren kanavan venereitti](vaylat:jnro=4870)",
+    "[4563: Kivenlahden väylä](vaylat:jnro=4563)",
+    "[4505: Grimsholm-Stora Herrö](vaylat:jnro=4505)"
    ]
   }
  },
@@ -3627,98 +4457,125 @@
   "name": "vesivaylatiedot:vesivaylien_nopeusrajoitusalueet",
   "title": "Vesiväylien nopeusrajoitusalueet",
   "layer": "vesivaylien_nopeusrajoitusalueet",
-  "count": 6,
+  "count": 326,
   "geom": {
-   "Polygon": 6
+   "Polygon": 317,
+   "MultiPolygon": 9
   },
   "fields": {
    "id": [
-    144029,
-    235115,
-    242130,
-    242240,
-    262376,
-    263221
+    103894,
+    103895,
+    103897,
+    103899,
+    103900,
+    103901
    ],
    "rajoitustyyppi": [
     "Nopeusrajoitus",
-    "Nopeusrajoitus, Aallokon aiheuttamisen kielto"
+    "Nopeusrajoitus, Aallokon aiheuttamisen kielto",
+    "Nopeusrajoitus, Vesiskootterilla ajo kielletty",
+    "Nopeusrajoitus, Aluksen kulku moottorivoimaa käyttäen kielletty",
+    "Nopeusrajoitus, Vesiskootterilla ajo kielletty, Vesihiihtokielto"
    ],
    "rajoitustyypit": [
     "01",
-    "01, 02"
+    "01, 02",
+    "01, 04",
+    "01, 05",
+    "01, 04, 12"
    ],
    "suuruus": [
-    "17",
-    "24",
     "10",
-    "5",
-    "22",
-    "15"
+    "9",
+    "28",
+    "15",
+    "20",
+    "22"
    ],
    "pituus": [
-    "2549",
-    "500",
-    "1200",
-    "0"
+    "576",
+    "1184",
+    "160",
+    "1932",
+    "1482",
+    "453"
    ],
    "poikkeus": [
-    "rajoitus ei koske virka-, sairaankuljetus- ja pelastustehtävissä tai muussa vastaavasta välttämättömästä syystä sekä puolustuslaitoksen toiminnassa tarpeellista moottorikäyttöisen vesikulkuneuvon käyttöä",
-    "Nopeusrajoitus ei koske vika-, sairaankuljetus- ja pelastustoimen suorittamiseksi tai muusta vastaavasta syystä välttämätöntä vesikulkuneuvolla liikkumista.",
-    "nopeusrajoitus --- kielto ja rajoitus ei koske virka, sairaankuljetus- ja pelastustehtävissä tai muussa vastaavasta välttämättömästä syystä sekä puolustuslaitoksen toiminnassa tarpeellista moottorikäyttöisen ajoneuvon käyttöä",
-    "nopeusrajoitus, aallokonmuodostaminen kielletty --- kielto ei koske virka-, sairaankuljetus- ja pelastustoiminnan suorittamiseksi tai muusta vastaavasta syystä välttämätöntä vesikulkuneuvolla liikkumista, sama koskee puolustusvoimain toimintaa",
-    "Nopeusrajoitus ja aallokon aiheuttamisen kielto ei koske virka-,\nsairaankuljetus- ja pelastustoimen suorittamiseksi tai muusta\nvastaavasta syystä välttämätöntä vesikulkuneuvolla liikkumista eikä\npuolustusvoimien toimintaa."
+    "kielto ja rajoitus ei koske virka-, sairaankuljetus- ja pelastustehtävissä tai muussa vastaavasta välttämättömästä syystä sekä puolustuslaitoksen toiminnassa tarpeellista moottorikäyttöisen ajoneuvon käyttöä",
+    "Kielto ja rajoitus ei koske virka-, sairaankuljetus- ja pelastustehtävissä tai muussa vastaavasta välttämättömästä syystä sekä puolustuslaitoksen toiminnassa tarpeellista moottorikäyttöisen ajoneuvon käyttöä",
+    "Rajoitus ei koske alle 19 nettorekisteritonnia olevia vesikulkuneuvoja. Rajoitus ei myöskään koske virka-, sairaankuljetus- ja pelastustehtävissä tai muussa vastaavasta välttämättömästä syystä sekä puolustuslaitoksen toiminnassa tarpeellista moottorikäyttöisen ajoneuvon käyttöä.",
+    "kielto ja rajoitus ei koske virka-, sairaankuljetus- ja pelastustehtävissä tai",
+    "Nopeusrajoitus ei koske virka-, sairaankuljetus- ja pelastustoimen suorittamiseksi tai muusta vastaavasta syystä välttämätöntä vesikulkuneuvolla liikkumista eikä puolustusvoimien toimintaa.",
+    "Nopeusrajoitus ei koske virka-, sairaankuljetus- ja pelastustoimen suorittamiseksi tai muusta vastaavasta syystä välttämätöntä vesikulkuneuvolla liikumista eikä puolustusvoimien toimintaa"
    ],
    "paatostila": [
-    "Toistaiseksi"
+    "Toistaiseksi",
+    "Määräaikainen"
    ],
    "alkupaivamaara": [
-    "2008-03-15Z",
-    "2017-02-01Z",
-    "1992-06-15Z",
-    "2015-12-01Z",
-    "2019-06-15Z"
+    "2000-05-01Z",
+    "2001-05-01Z",
+    "1998-07-15Z",
+    "2004-05-15Z",
+    "1986-04-14Z",
+    "1997-12-09Z"
    ],
    "diaarinumero": [
-    "1427/614/2006",
-    "LIVI/7910/06.02.02./2016",
-    "07210 365 91 127",
-    "VARELY/596/07.01/2013",
-    "TRAFICOM/231571/05.01.26.00/2022",
-    "TRAFICOM/2346/05.01.26.02/2019"
+    "185/653/99",
+    "246/653/2000, 1/1042/2012",
+    "162/610/97, 60/1042/2011",
+    "68/653/98",
+    "165/653/2003",
+    "2097C"
    ],
    "tietolahde": [
     "Muu päätösasiakirja",
     "SYKE",
-    "Traficom"
+    "Muu väyläpäätösaineisto",
+    "Muu merikartta-aineisto",
+    "Muu kartta-aineisto",
+    "Muu väyläsuunnitelma"
    ],
    "jnro": [
-    "2565",
-    "2805",
-    "3020",
-    "2830",
-    "3200"
-   ],
-   "irrotus_pvm": [
-    "2026-11-11T00:27:37Z",
-    "2026-11-11T00:27:36Z"
-   ],
-   "vaylan_nimi": [
-    "[2565: Marhällan-Maarianhamina-väylät](vaylat:jnro=2565)",
-    "[2805: Apteekkarin väylä](vaylat:jnro=2805)",
-    "[3020: Lootholman venereitti](vaylat:jnro=3020)",
-    "[2830: Degerby-Kökar-väylä](vaylat:jnro=2830)",
-    "[3200: Berghamn-Lembersö-väylä](vaylat:jnro=3200)"
+    "4465",
+    "4215",
+    "4995",
+    "4460",
+    "4440\\n4445",
+    "4540"
    ],
    "nimisijainti": [
-    "Apteekkarin väylä",
-    "Lootholma",
-    "Lanskeri-Pohjantiistanklopin välinen salmi",
-    "Ahvenanmaa",
-    "Röst ja Roskär saarten välisessä salmessa"
+    "Dragesviken",
+    "Snacknäs-Rågrundet",
+    "Stora Fårholmen - Lilla Fårholmen",
+    "Hästö-Tallholmen",
+    "Tullsundet",
+    "Karhusalmi"
+   ],
+   "irrotus_pvm": [
+    "2026-11-11T00:27:36Z",
+    "2026-11-11T00:27:37Z"
+   ],
+   "vaylan_nimi": [
+    "[4465: Dragesvikenin veneväylä](vaylat:jnro=4465)",
+    "[4215: Torsön väylä](vaylat:jnro=4215)",
+    "[4995: Kalkkiranta-Bodö yhteysliikenneväylä](vaylat:jnro=4995)",
+    "[4460: Puutarhaväylä](vaylat:jnro=4460)",
+    "[4440: Stora Träskön-Kyrkogårdsön](vaylat:jnro=4440)\\n[4445: Porkkalan merivartioaseman väylä](vaylat:jnro=4445)",
+    "[4540: Soukanniemi-Miessaarenselkä](vaylat:jnro=4540)"
    ],
    "lisatieto": [
-    "Voimassaolojakso: koko vuoden"
+    "Nopeusrajoitus päätöksen diaarinumero on 1/1042/2012 päivämäärällä 30.6.2012.",
+    "Päätös 60/1042/2011 määrää lisäksi aallokonaiheuttamisen kiellon.",
+    "Rajoitus ei koske alle 19 nettorekisteritonnia olevia vesikulkuneuvoja",
+    "Rajoitusta laajennettu 20.4.2006.",
+    "myös aallonaiheuttamiskielto",
+    "Rajoitus ei koske huvialuksia"
+   ],
+   "loppupaivamaara": [
+    "2026-04-01Z",
+    "2026-05-31Z"
    ]
   }
  },
@@ -3727,49 +4584,88 @@
   "name": "vesivaylatiedot:vesivaylien_turvalaiteviat_kauppamerenkulku",
   "title": "Vesiväylien turvalaiteviat kauppamerenkulunväylät",
   "layer": "vesivaylien_turvalaiteviat_kauppamerenkulku",
-  "count": 2,
+  "count": 16,
   "geom": {
-   "Point": 2
+   "Point": 16
   },
   "fields": {
    "vikaid": [
+    "-2139920993",
+    "-2139921113",
     "-2139921139",
-    "-2139921152"
+    "-2139921145",
+    "-2139921152",
+    "-2139921365"
    ],
    "vikatyyppikoodi": [
+    "1022541001",
     "1022541008",
-    "1022541006"
+    "1022541002",
+    "1022541006",
+    "1022541007",
+    "1022541004"
    ],
    "turvalaitenumero": [
-    "6673"
+    "67843",
+    "20128",
+    "6673",
+    "3624",
+    "11515",
+    "21168"
    ],
    "turvalaitenimifi": [
-    "Strömmingsgrundet"
+    "Vuo 4",
+    "Tupalahti",
+    "Strömmingsgrundet",
+    "Järngrynnan",
+    "Haru Bredgrund",
+    "Katajaluoto"
    ],
    "turvalaitenimisv": [
-    "Strömmingsgrundet"
+    "Vuo 4",
+    "Tupalahti",
+    "Strömmingsgrundet",
+    "Järngrynnan",
+    "Haru Bredgrund",
+    "Katajaluoto"
    ],
    "vikatyyppifi": [
+    "Valo pimeä",
     "Turvalaitetyö",
-    "Rikkoutunut"
+    "Valo virheellinen",
+    "Rikkoutunut",
+    "Näkymäeste",
+    "Tuhoutunut/kadonnut"
    ],
    "vikatyyppisv": [
+    "Ljuset slocknat",
     "Underhåll",
-    "Söndrig"
+    "Felaktigt ljus",
+    "Söndrig",
+    "Synlighetshinder",
+    "Förstörd/försvunnen"
    ],
    "vikatyyppien": [
+    "Light unlit",
     "Under maintenance",
-    "Damaged"
+    "Light unreliable",
+    "Damaged",
+    "Not visible",
+    "Destroyed/Missing"
    ],
    "kirjausaika": [
+    "2026-11-10T20:23:09",
+    "2026-10-21T17:00:00",
     "2026-10-19T09:26:19",
-    "2026-10-16T18:03:18"
+    "2026-10-17T14:20:19",
+    "2026-10-16T18:03:18",
+    "2026-08-31T20:21:10"
    ],
    "vaylaluokitus": [
     "kauppamerenkulku"
    ],
    "irrotuspvm": [
-    "2026-11-11T23:03:32.623Z"
+    "2026-11-12T00:32:32.585Z"
    ]
   }
  },
@@ -3778,49 +4674,65 @@
   "name": "vesivaylatiedot:vesivaylien_turvalaiteviat_matalavaylat",
   "title": "Vesiväylien turvalaiteviat matalaväylät",
   "layer": "vesivaylien_turvalaiteviat_matalavaylat",
-  "count": 2,
+  "count": 5,
   "geom": {
-   "Point": 2
+   "Point": 5
   },
   "fields": {
    "vikaid": [
     "-2139921003",
-    "-2139921857"
+    "-2139921083",
+    "-2139921296",
+    "-2139921857",
+    "-2139927215"
    ],
    "vikatyyppikoodi": [
     "1022541008",
-    "1022541006"
+    "1022541006",
+    "1022541005"
    ],
    "turvalaitenumero": [
-    "28464"
+    "28464",
+    "12379",
+    "21045"
    ],
    "turvalaitenimifi": [
-    "Nötholmsgrund"
+    "Nötholmsgrund",
+    "Hanasaari itäinen",
+    "Klippan"
    ],
    "turvalaitenimisv": [
-    "Nötholmsgrund"
+    "Nötholmsgrund",
+    "Hanasaari itäinen",
+    "Klippan"
    ],
    "vikatyyppifi": [
     "Turvalaitetyö",
-    "Rikkoutunut"
+    "Rikkoutunut",
+    "Virheelliset sektorit"
    ],
    "vikatyyppisv": [
     "Underhåll",
-    "Söndrig"
+    "Söndrig",
+    "Felaktiga sektorer"
    ],
    "vikatyyppien": [
     "Under maintenance",
-    "Damaged"
+    "Damaged",
+    "Sector light sector obscured"
    ],
    "kirjausaika": [
     "2026-11-09T18:09:53",
-    "2026-05-30T14:03:56"
+    "2026-10-29T19:04:34",
+    "2026-09-18T17:01:03",
+    "2026-05-30T14:03:56",
+    "2024-07-22T10:41:11"
    ],
    "vaylaluokitus": [
     "matalavaylat"
    ],
    "irrotuspvm": [
-    "2026-11-11T23:03:32.623Z"
+    "2026-11-12T00:32:32.585Z"
    ]
   }
  },
@@ -3829,160 +4741,172 @@
   "name": "vesivaylatiedot:vaylat_uusi",
   "title": "Vesiväylät",
   "layer": "vaylat_uusi",
-  "count": 137,
+  "count": 540,
   "geom": {
-   "MultiLineString": 124,
-   "LineString": 13
+   "LineString": 122,
+   "MultiLineString": 418
   },
   "fields": {
    "jnro": [
+    147,
+    2310,
     2325,
-    2345,
-    2355,
-    2385,
-    2390,
-    2395
+    2335,
+    2340,
+    2345
    ],
    "nimifi": [
+    "Västanvikin venereitti",
+    "Pohjainen-Lyökki-Rihtniemi väylä",
     "Lyökin väylä",
-    "Uudenkaupungin väylä",
-    "Kirstansalmen väylä",
-    "Isokarin länsiväylä",
-    "Isokarin satamaväylä",
-    "Varestuksen väylä"
-   ],
-   "nimisv": [
-    "Lyökki farled",
-    "Farleden till Nystad",
-    "Kirstansalmi farled",
-    "Enskärs västfarled",
-    "Enskärs hamnfarled",
-    "Varestus farled"
+    "Sammo-Latuskeri väylä",
+    "Viisastenkari-Urpoinen veneväylä",
+    "Uudenkaupungin väylä"
    ],
    "luokitustyyppi": [
     "Väyläluokitus"
    ],
    "vaylaluokkakoodi": [
-    1,
-    2,
-    3,
-    5,
     6,
-    4
+    4,
+    1,
+    5,
+    2,
+    3
    ],
    "vaylaluokkafi": [
-    "VL1: Kauppamerenkulun pääväylä",
-    "VL2: Kauppamerenkulun 2-lk väylä",
-    "VL3: Hyötyliikenteen matalaväylä",
-    "VL5: Paikallisveneväylä",
     "VL6: Venereitti",
-    "VL4: Veneilyn runkoväylä"
+    "VL4: Veneilyn runkoväylä",
+    "VL1: Kauppamerenkulun pääväylä",
+    "VL5: Paikallisveneväylä",
+    "VL2: Kauppamerenkulun 2-lk väylä",
+    "VL3: Hyötyliikenteen matalaväylä"
    ],
    "vaylaluokkasv": [
-    "Handelstrafikens farled av 1-kl",
-    "Handelstrafikens farled av 2-kl",
-    "Lågdjupsfarled för nyttotrafik",
-    "Båtfarled",
     "Båtrutt",
-    "Stamfarled för båttrafik"
+    "Stamfarled för båttrafik",
+    "Handelstrafikens farled av 1-kl",
+    "Båtfarled",
+    "Handelstrafikens farled av 2-kl",
+    "Lågdjupsfarled för nyttotrafik"
    ],
    "omistaja": [
+    "Kemiönsaaren kunta",
     "Väylävirasto",
+    "Uudenkaupungin kaupunki",
     "Ahvenanmaan maakuntahallitus",
-    "Kustavin kunta"
+    "Salon kaupunki",
+    "Naantalin kaupunki"
    ],
    "vaylalajikoodi": [
-    1
+    1,
+    2
    ],
    "vaylalajifi": [
-    "Meriväylä"
+    "Meriväylä",
+    "Sisävesiväylä"
    ],
    "vaylalajisv": [
-    "Havsfarled"
+    "Havsfarled",
+    "Insjöfarled"
    ],
    "valaistuskoodi": [
-    1,
     2,
+    1,
     0
    ],
    "valaistusfi": [
-    "Valaistu",
     "Valaisematon",
+    "Valaistu",
     "Tuntematon"
    ],
    "valaistussv": [
-    "Belyst",
     "Obelyst",
+    "Belyst",
     "Okänd"
    ],
    "merialuefi": [
+    "Saaristomeri",
     "Selkämeri",
     "Ahvenanmeri",
-    "Saaristomeri"
+    "Suomenlahti",
+    "Lohjanjärvi",
+    "Kokemäenjoen vesistö"
    ],
    "merialuesv": [
+    "Skärgårdshavet",
     "Bottenhavet",
     "Ålands hav",
-    "Skärgårdshavet"
+    "Finska viken",
+    "Lojo sjön",
+    "Kumo älv vattendrag"
    ],
    "alunseloste": [
+    "Flisholmen",
+    "Pohjaisen KO-puoli",
     "Avomeri, Kajakulman LU-puoli",
-    "Avomeri Isokarin luoteispuoli",
-    "Kalliokari",
-    "Avomeri",
-    "Isokarin satama",
-    "Mustaklupu"
+    "Sammon KA-puoli",
+    "Keskileton eteläpuoli",
+    "Avomeri Isokarin luoteispuoli"
    ],
    "paatepisteenseloste": [
+    "Västanfjärd",
+    "Rihtniemen pohjoispuoli",
     "Lypertön länsipuoli",
-    "Yara",
-    "Ruuhikarin pohjoispuoli",
-    "Isokarin eteläpuoli",
-    "Isokarin KA-puoli",
-    "Humalainen"
+    "Pohjaisen KO-puoli",
+    "Urpoinen",
+    "Yara"
    ],
    "irrotus_pvm": [
     "2026-11-11T00:28:57Z"
    ],
    "id": [
+    147,
+    2310,
     2325,
-    2345,
-    2355,
-    2385,
-    2390,
-    2395
+    2335,
+    2340,
+    2345
    ],
    "turvalaitteita_vaylalla": [
+    "[Turvalaitteita väylällä 9 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 9 kpl](turvalaitteet:type=KELLUVA)\\n",
+    "[Turvalaitteita väylällä 65 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 43 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 22 kpl](turvalaitteet:type=KIINTEÄ)",
     "[Turvalaitteita väylällä 75 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 46 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 29 kpl](turvalaitteet:type=KIINTEÄ)",
-    "[Turvalaitteita väylällä 81 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 53 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 28 kpl](turvalaitteet:type=KIINTEÄ)",
-    "[Turvalaitteita väylällä 8 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 7 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 1 kpl](turvalaitteet:type=KIINTEÄ)",
-    "[Turvalaitteita väylällä 2 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 2 kpl](turvalaitteet:type=KELLUVA)\\n",
-    "[Turvalaitteita väylällä 10 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 8 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 2 kpl](turvalaitteet:type=KIINTEÄ)",
-    "[Turvalaitteita väylällä 36 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 23 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 13 kpl](turvalaitteet:type=KIINTEÄ)"
+    "[Turvalaitteita väylällä 8 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 5 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 3 kpl](turvalaitteet:type=KIINTEÄ)",
+    "[Turvalaitteita väylällä 5 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 3 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 2 kpl](turvalaitteet:type=KIINTEÄ)",
+    "[Turvalaitteita väylällä 81 kpl](turvalaitteet)\\n[Kelluvia turvalaitteita 53 kpl](turvalaitteet:type=KELLUVA)\\n[Kiinteitä turvalaitteita 28 kpl](turvalaitteet:type=KIINTEÄ)"
    ],
    "vaylaalueita_vaylalla": [
+    "[Väyläalueita väylällä 7 kpl](väyläalueet)",
     "[Väyläalueita väylällä 10 kpl](väyläalueet)",
-    "[Väyläalueita väylällä 13 kpl](väyläalueet)",
-    "[Väyläalueita väylällä 1 kpl](väyläalueet)",
-    "-",
     "[Väyläalueita väylällä 2 kpl](väyläalueet)",
-    "[Väyläalueita väylällä 3 kpl](väyläalueet)"
+    "[Väyläalueita väylällä 4 kpl](väyläalueet)",
+    "[Väyläalueita väylällä 13 kpl](väyläalueet)",
+    "-"
    ],
    "navigointilinjoja_vaylalla": [
+    "[Navigointilinjoja väylällä 1 kpl](navigointilinjat)",
+    "[Navigointilinjoja väylällä 19 kpl](navigointilinjat)",
     "[Navigointilinjoja väylällä 55 kpl](navigointilinjat)",
-    "[Navigointilinjoja väylällä 44 kpl](navigointilinjat)",
     "[Navigointilinjoja väylällä 3 kpl](navigointilinjat)",
     "[Navigointilinjoja väylällä 4 kpl](navigointilinjat)",
-    "[Navigointilinjoja väylällä 2 kpl](navigointilinjat)",
-    "[Navigointilinjoja väylällä 8 kpl](navigointilinjat)"
+    "[Navigointilinjoja väylällä 44 kpl](navigointilinjat)"
+   ],
+   "nimisv": [
+    "Lyökki farled",
+    "Farleden till Nystad",
+    "Häpöniemi farled",
+    "Kirstansalmi farled",
+    "Hepokari farled",
+    "Farleden till Nystads stadsviken"
    ],
    "mitoitussyvays": [
     "12.5",
+    "8.5",
     "5.1",
     "7.1",
     "6",
-    "4.8",
-    "4"
+    "4.8"
    ]
   }
  },
@@ -3991,118 +4915,130 @@
   "name": "vesivaylatiedot:vaylaalueet_uusi",
   "title": "Väyläalueet",
   "layer": "vaylaalueet_uusi",
-  "count": 500,
+  "count": 1844,
   "geom": {
-   "MultiPolygon": 500
+   "MultiPolygon": 1844
   },
   "fields": {
    "id": [
-    77919,
-    100363,
-    105030,
-    108403,
-    112512,
-    113228
+    72188,
+    72403,
+    73256,
+    73980,
+    75244,
+    77308
    ],
    "tyyppi": [
     "Navigointialue",
-    "Satama-allas",
-    "Varmistettu lisäalue"
+    "Varmistettu lisäalue",
+    "Kääntöallas",
+    "Ankkurointialue",
+    "Ohitus- ja kohtaamisalue",
+    "Satama-allas"
    ],
    "tyyppikoodi": [
     1,
-    4,
-    11
+    11,
+    5,
+    2,
+    3,
+    4
+   ],
+   "liikenteentyyppi": [
+    "Liikennöintikaista",
+    "Risteävä liikenne",
+    "Liikenneympyrä"
    ],
    "mitoitussyvays": [
+    2.4,
     3.0,
-    5.8,
-    10.0,
-    3.5,
-    7.0,
-    8.2
+    7.9,
+    5.0,
+    0.0,
+    1.5
    ],
    "haraussyvyys": [
-    3.8,
-    7.0,
-    12.0,
-    5.5,
-    8.5,
-    10.5
+    3.4,
+    3.6,
+    9.5,
+    4.0,
+    3.0,
+    6.6
    ],
    "vertaustaso": [
     "MW2000",
+    "MW1990",
+    "MW1995",
+    "MW2002",
     "MW2005",
-    "MW2001",
-    "MW2010",
-    "MW2023",
-    "MW2017"
+    "MW2001"
    ],
    "omistaja": [
     "Väylävirasto",
-    "Ahvenanmaan maakuntahallitus",
-    "Maarianhaminan kaupunki",
-    "Maarianhaminan satama Oy"
+    "Uudenkaupungin kaupunki",
+    "Raision kaupunki",
+    "Helsingin Satama ",
+    "Naantalin kaupunki",
+    "Kemiönsaaren kunta"
    ],
    "merkintalaji": [
     "Kardinaali",
-    "Lateraali"
+    "Lateraali",
+    "Tuntematon"
    ],
    "merkintalajikoodi": [
     2,
-    1
+    1,
+    0
    ],
    "suunta": [
-    35,
-    114,
-    162,
     18,
-    228,
-    115
+    244,
+    31,
+    321,
+    23,
+    282
    ],
    "liikennointisuunta": [
     "Kaksisuuntainen liikenne",
     "Yksisuuntainen liikenne"
    ],
    "vahvistuspaivamaara": [
-    "2001-12-10T00:00:00Z",
-    "2003-03-24T00:00:00Z",
     "2024-02-07T00:00:00Z",
-    "2024-04-03T00:00:00Z",
-    "2008-12-31T00:00:00Z",
-    "2013-09-18T00:00:00Z"
+    "2022-02-22T00:00:00Z",
+    "2025-04-07T00:00:00Z",
+    "2024-12-19T00:00:00Z",
+    "1995-10-09T00:00:00Z",
+    "2026-01-13T00:00:00Z"
    ],
    "diaarinumero": [
-    "61/611/2000",
     "TRAFICOM/35487/05.01.26.00/2024",
-    "TRAFICOM/109423/05.01.26.00/2024",
-    "2886/76/2008",
-    "4329/1042/2013",
-    "VÄYLÄ/1082/06.02.02/2022"
+    "VÄYLÄ/8112/06.02.02/2021",
+    "TRAFICOM/184277/05.01.26.00/2025",
+    "TRAFICOM/592242/05.01.26.00/2024",
+    "398/611/95",
+    "TRAFICOM/861637/05.01.26.00/2025"
    ],
    "jnro": [
-    "3162",
-    "2915",
-    "3010",
-    "3120\\n3990",
-    "2775",
-    "2940"
+    "3070",
+    "2380",
+    "4075",
+    "3550",
+    "3355",
+    "4190"
    ],
    "vaylan_nimi": [
-    "[3162: Fiskö - Mossala väylä](vaylat:jnro=3162)",
-    "[2915: Torsholma-Berghamn väylä](vaylat:jnro=2915)",
-    "[3010: Isokari-Lövskär väylä](vaylat:jnro=3010)",
-    "[3120: Heponiemi-Jumo-Keistiö yhteysliikenneväylä](vaylat:jnro=3120)\\n[3990: SMMP Veneilyn runkoväylä](vaylat:jnro=3990)",
-    "[2775: Ledskärin rinnakkaisväylä](vaylat:jnro=2775)",
-    "[2940: Nyhamn-Rödskär väylä](vaylat:jnro=2940)"
+    "[3070: Pakinaisten yhteysliikenneväylä](vaylat:jnro=3070)",
+    "[2380: Uudenkaupungin kaupunginlahden väylä](vaylat:jnro=2380)",
+    "[4075: Hangon väylä](vaylat:jnro=4075)",
+    "[3550: Lillmälö-Askgrund väylä](vaylat:jnro=3550)",
+    "[3355: Raisionlahden väylä](vaylat:jnro=3355)",
+    "[4190: Kalvön-Stengrundskobb](vaylat:jnro=4190)"
    ],
    "irrotus_pvm": [
+    "2026-11-11T00:27:38Z",
     "2026-11-11T00:27:39Z",
-    "2026-11-11T00:27:40Z",
-    "2026-11-11T00:27:38Z"
-   ],
-   "liikenteentyyppi": [
-    "Liikennöintikaista"
+    "2026-11-11T00:27:40Z"
    ]
   }
  },
@@ -4111,18 +5047,18 @@
   "name": "vesivaylatiedot:navigointilinjat_vaylavirasto",
   "title": "Väyläviraston navigointilinjat",
   "layer": "navigointilinjat_vaylavirasto",
-  "count": 1103,
+  "count": 3805,
   "geom": {
-   "LineString": 1103
+   "LineString": 3805
   },
   "fields": {
    "navigointilinjaid": [
-    10806,
-    10812,
-    10814,
-    10816,
-    10818,
-    11489
+    2767,
+    2779,
+    3497,
+    3507,
+    3549,
+    3563
    ],
    "tyyppi": [
     "Suora linja",
@@ -4137,106 +5073,107 @@
     3
    ],
    "laatulk": [
-    3,
+    2,
     1,
-    2
+    3,
+    0
    ],
    "omistaja": [
     "Väylävirasto"
    ],
    "mitoitussyvays": [
-    8.0,
-    3.0,
-    4.6,
-    5.0,
-    2.4,
-    3.5
-   ],
-   "suunta": [
-    115.7,
-    152.2,
-    138.4,
-    177.8,
-    211.4,
-    43.3
-   ],
-   "tosisuunta": [
-    116.0,
-    152.5,
-    138.7,
-    178.1,
-    211.3,
-    43.4
-   ],
-   "pituus": [
-    670,
-    2655,
-    433,
-    473,
-    388,
-    241
-   ],
-   "jnro": [
-    "3245",
-    "2850",
-    "2865",
-    "3185",
-    "3110",
-    "2395\\n3990"
-   ],
-   "irrotus_pvm": [
-    "2026-11-11T00:28:59Z",
-    "2026-11-11T00:28:57Z",
-    "2026-11-11T00:29:00Z",
-    "2026-11-11T00:28:58Z"
-   ],
-   "vaylan_nimi": [
-    "[3245: Utön tuloväylä](vaylat:jnro=3245)",
-    "[2850: Kökar-Norrharu väylä](vaylat:jnro=2850)",
-    "[2865: Smågaddarnan väylä](vaylat:jnro=2865)",
-    "[3185: Berghamnskobbe-Hönsnäs väylä](vaylat:jnro=3185)",
-    "[3110: Torsholma-Iniö-Laupunen yhteysliikenneväylä](vaylat:jnro=3110)",
-    "[2395: Varestuksen väylä](vaylat:jnro=2395)\\n[3990: SMMP Veneilyn runkoväylä](vaylat:jnro=3990)"
+    9.0,
+    9.6,
+    12.0,
+    9.4,
+    4.5,
+    7.3
    ],
    "haraussyvyys": [
-    4.5,
-    4.4,
-    3.8,
-    4.2,
-    3.4,
-    9.5
+    11.0,
+    11.4,
+    15.0,
+    14.5,
+    13.2,
+    11.5
+   ],
+   "suunta": [
+    298.4,
+    19.1,
+    348.1,
+    307.7,
+    315.7,
+    356.5
+   ],
+   "tosisuunta": [
+    298.1,
+    19.4,
+    348.3,
+    308.0,
+    315.9,
+    356.7
+   ],
+   "pituus": [
+    14934,
+    451,
+    221,
+    320,
+    2122,
+    465
    ],
    "vertaustaso": [
-    "MW2014",
     "MW2000",
-    "MW2005",
     "MW2001",
-    "MW2017",
-    "MW2006"
+    "MW1992",
+    "MW2005",
+    "MW1990",
+    "MW2014"
    ],
    "diaarinumero": [
-    "TRAFICOM/35487/05.01.26.00/2024",
-    "VÄYLÄ/8112/06.02.02/2021",
-    "VÄYLÄ/8999/06.02.02/2020",
-    "33/76/2000",
-    "61/611/2000",
-    "2886/76/2008"
+    "TRAFICOM/274211/05.01.26.00/2026",
+    "TRAFICOM/139591/05.01.26.00/2026",
+    "TRAFICOM/861637/05.01.26.00/2025",
+    "TRAFICOM/184277/05.01.26.00/2025",
+    "TRAFICOM/76914/05.01.26.00/2026",
+    "81/76/98"
    ],
    "vahvistuspaivamaara": [
-    "2024-02-07T00:00:00Z",
-    "2022-02-22T00:00:00Z",
-    "2024-02-12T00:00:00Z",
-    "2021-10-14T00:00:00Z",
-    "2000-03-13T00:00:00Z",
-    "2003-03-24T00:00:00Z"
+    "2026-05-19T00:00:00Z",
+    "2026-03-19T00:00:00Z",
+    "2026-01-12T00:00:00Z",
+    "2025-04-07T00:00:00Z",
+    "2026-01-13T00:00:00Z",
+    "2026-03-03T00:00:00Z"
+   ],
+   "jnro": [
+    "5135",
+    "4730",
+    "4195",
+    "4185",
+    "5010",
+    "4950"
+   ],
+   "irrotus_pvm": [
+    "2026-11-11T00:28:58Z",
+    "2026-11-11T00:28:57Z",
+    "2026-11-11T00:28:59Z",
+    "2026-11-11T00:29:00Z"
+   ],
+   "vaylan_nimi": [
+    "[5135: Kalbådagrundin pohjoisenpuolen väylä](vaylat:jnro=5135)",
+    "[4730: Harmajan väylä](vaylat:jnro=4730)",
+    "[4195: Lappohjan väylä](vaylat:jnro=4195)",
+    "[4185: Lappohjan sataman väylä](vaylat:jnro=4185)",
+    "[5010: Onaksen väylä](vaylat:jnro=5010)",
+    "[4950: Sitterskärin väylä](vaylat:jnro=4950)"
    ],
    "sade": [
+    450,
+    720,
+    1250,
     1000,
-    690,
-    1515,
-    1080,
-    500,
-    2000
+    1500,
+    540
    ]
   }
  },
@@ -4245,74 +5182,74 @@
   "name": "vesivaylatiedot:turvalaitteet_vaylavirasto",
   "title": "Väyläviraston turvalaitteet",
   "layer": "turvalaitteet_vaylavirasto",
-  "count": 1683,
+  "count": 6526,
   "geom": {
-   "MultiPoint": 1683
+   "MultiPoint": 6526
   },
   "fields": {
    "id": [
     4,
-    41,
-    43,
-    61,
-    62,
-    90
+    5,
+    6,
+    7,
+    8,
+    10
    ],
    "turvalaitenumero": [
     "3309",
-    "3296",
-    "3302",
-    "6118",
-    "6345",
-    "43355"
+    "11537",
+    "11476",
+    "11495",
+    "11587",
+    "11436"
    ],
    "nimifi": [
     "Kalkskärskobb",
-    "Lillharun",
-    "Söderkobb",
-    "Korsö alempi",
-    "Flötjan",
-    "Silja"
+    "Oxhornen alempi",
+    "Lilla Tärnskär",
+    "Längden",
+    "Ytter Tjärhällen",
+    "Harmaja"
    ],
    "sijaintifi": [
     "Kalkskärskobbenin luodolla.",
-    "Lillharunin luodolla Utön ulkopuolella.",
-    "Söderkobbin luodolla.",
-    "Västra-Korsön LO-niemellä.",
-    "Flötjanin kallioluodolla.",
-    "N. 420 m Långnäsuddista kaakkoon."
+    "Oxhornenin kallioluodolla.",
+    "Tärnskärin saariryhmän eteläisimmällä kallioluodolla.",
+    "Längdenin luodolla.",
+    "Ytter Tjärhällenin keskellä.",
+    "Harmajan kallioluodolla."
    ],
    "sijaintisv": [
     "På skäret Kalkskärskobb.",
-    "På klippan Lillharun utanför Utö.",
-    "På grundet Söderkobb.",
-    "På SV-udden av Västra-Korsö.",
-    "På klippan Flötjan.",
-    "Ca 420 m SO om Långnäsudd."
+    "På klippan Oxhornen.",
+    "På den sydligaste klippan av Tärnskär.",
+    "På skäret Längden.",
+    "På mitten av Ytter Tjärhällen.",
+    "På skäret Gråhara."
    ],
    "turvalaitetyyppifi": [
     "Sektoriloisto",
-    "Merimajakka",
-    "Poiju",
     "Linjamerkki",
-    "Viitta",
-    "Apuloisto"
+    "Apuloisto",
+    "Merimajakka",
+    "Tutkamerkki",
+    "Poiju"
    ],
    "turvalaitetyyppisv": [
     "Sektorfyr",
-    "Havsfyr",
-    "Boj",
     "Linjemärke",
-    "Remmare",
-    "Hjälpfyr"
+    "Hjälpfyr",
+    "Havsfyr",
+    "Radarmärke",
+    "Boj"
    ],
    "mittauspaivamaara": [
     "2003-06-17T00:00:00Z",
-    "1986-06-01T00:00:00Z",
-    "1998-07-08T00:00:00Z",
-    "1997-06-06T00:00:00Z",
-    "1999-05-27T00:00:00Z",
-    "1997-07-22T00:00:00Z"
+    "1996-09-11T00:00:00Z",
+    "2013-11-26T00:00:00Z",
+    "1995-06-01T00:00:00Z",
+    "2000-07-09T00:00:00Z",
+    "1986-06-01T00:00:00Z"
    ],
    "alityyppi": [
     "KIINTEÄ",
@@ -4326,9 +5263,9 @@
     99,
     6,
     4,
-    1,
-    2,
-    5
+    3,
+    5,
+    1
    ],
    "toimintatilakoodi": [
     1,
@@ -4337,51 +5274,51 @@
    ],
    "rakennusvuodet": [
     "1953, 1986, 1990, 1997",
-    "1946, 1973, 1983, 1987, 2021",
-    "1957, 1986",
-    "1890 1985 1988",
-    "1958, 1986, 2024",
-    "1999"
+    "1963, 1983, 1991, 1999",
+    "1948, 1973, 1985",
+    "1965, 1973, 1987, 1992",
+    "1955, 1976, 1992",
+    "1883, 1960, 1969"
    ],
    "paivitypaivamaara": [
     "2026-10-30T14:51:51Z",
-    "2026-10-30T14:51:54Z",
-    "2026-10-30T14:51:52Z",
-    "2026-10-30T15:16:14Z",
-    "2026-10-30T14:51:49Z",
-    "2016-08-29T16:36:01Z"
+    "2026-10-30T14:51:56Z",
+    "2026-10-02T13:24:57Z",
+    "2026-10-30T14:51:55Z",
+    "2026-10-30T15:16:52Z",
+    "2026-10-30T14:52:01Z"
    ],
    "vahvistuspvm": [
     "1987-01-07T00:00:00Z",
+    "2007-09-14T00:00:00Z",
     "1983-12-07T00:00:00Z",
+    "1996-02-12T00:00:00Z",
     "1999-06-28T00:00:00Z",
-    "1777-07-07T00:00:00Z",
-    "1997-10-03T00:00:00Z",
-    "2000-12-22T00:00:00Z"
+    "1777-07-07T00:00:00Z"
    ],
    "paikannustapatyyppi": [
     52,
     51,
-    58,
+    65,
     53,
-    63,
-    61
+    58,
+    63
    ],
    "paikannuskohtatyyppi": [
     1,
-    2,
-    0,
     5,
-    3,
-    4
+    4,
+    0,
+    2,
+    3
    ],
    "tarkkuusluokkakoodi": [
     "51",
-    "55",
-    "58",
-    "57",
     "52",
-    "54"
+    "55",
+    "54",
+    "58",
+    "57"
    ],
    "huippumerkki": [
     "E",
@@ -4392,7 +5329,8 @@
     "1",
     "4",
     "3",
-    "6"
+    "6",
+    "2"
    ],
    "fasadivalo": [
     "0",
@@ -4400,22 +5338,24 @@
    ],
    "jnro": [
     "2930\\n3255",
-    "3255",
-    "2565",
-    "2450",
-    "2505",
-    "2505\\n2735"
+    "4410",
+    "4075",
+    "4195",
+    "4980\\n4865",
+    "4455\\n4730"
    ],
    "symboli": [
     "2",
-    "1",
-    "Q",
-    "M",
     "s",
-    "k"
+    "t",
+    "1",
+    "u",
+    "Q"
    ],
    "aisfi": [
-    "Ei"
+    "Ei",
+    "Synteettinen",
+    "Virtuaalinen"
    ],
    "kaukohallinta": [
     "0",
@@ -4426,93 +5366,102 @@
    ],
    "valosektorien_tiedot": [
     "Alkukulma: 81, Loppukulma: 145, Väri: vi\\nAlkukulma: 145, Loppukulma: 155, Väri: v\\nAlkukulma: 155, Loppukulma: 185, Väri: p\\nAlkukulma: 185, Loppukulma: 222, Väri: vi\\nAlkukulma: 222, Loppukulma: 226.5, Väri: v\\nAlkukulma: 226.5, Loppukulma: 289, Väri: p\\nAlkukulma: 289, Loppukulma: 310, Väri: vi\\nAlkukulma: 310, Loppukulma: 313.5, Väri: v\\nAlkukulma: 313.5, Loppukulma: 81, Väri: p",
-    "Alkukulma: 45, Loppukulma: 101, Väri: p\\nAlkukulma: 101, Loppukulma: 148, Väri: vi\\nAlkukulma: 148, Loppukulma: 155, Väri: v\\nAlkukulma: 155, Loppukulma: 172, Väri: p\\nAlkukulma: 262, Loppukulma: 340, Väri: vi\\nAlkukulma: 340, Loppukulma: 45, Väri: v",
-    "Alkukulma: 39, Loppukulma: 133, Väri: vi\\nAlkukulma: 133, Loppukulma: 136, Väri: v\\nAlkukulma: 136, Loppukulma: 160, Väri: p\\nAlkukulma: 293, Loppukulma: 318.5, Väri: vi\\nAlkukulma: 318.5, Loppukulma: 321, Väri: v\\nAlkukulma: 321, Loppukulma: 39, Väri: p",
-    "Alkukulma: 2, Loppukulma: 11, Väri: v\\nAlkukulma: 11, Loppukulma: 32.5, Väri: p\\nAlkukulma: 32.5, Loppukulma: 64, Väri: vi\\nAlkukulma: 64, Loppukulma: 72.5, Väri: v\\nAlkukulma: 72.5, Loppukulma: 179.5, Väri: p\\nAlkukulma: 318, Loppukulma: 2, Väri: vi",
+    "Alkukulma: 29.5, Loppukulma: 33.5, Väri: v",
     "Alkukulma: 0, Loppukulma: 360, Väri: v",
-    "Alkukulma: 315, Loppukulma: 323, Väri: v"
+    "Alkukulma: 14, Loppukulma: 56, Väri: p\\nAlkukulma: 128, Loppukulma: 200, Väri: vi\\nAlkukulma: 200, Loppukulma: 206, Väri: v\\nAlkukulma: 206, Loppukulma: 220, Väri: p\\nAlkukulma: 220, Loppukulma: 358, Väri: vi\\nAlkukulma: 358, Loppukulma: 14, Väri: v",
+    "Alkukulma: 115.5, Loppukulma: 123.5, Väri: v",
+    "Alkukulma: 4.5, Loppukulma: 10.5, Väri: v\\nAlkukulma: 10.5, Loppukulma: 168, Väri: p\\nAlkukulma: 168, Loppukulma: 187, Väri: vi\\nAlkukulma: 187, Loppukulma: 193, Väri: v\\nAlkukulma: 193, Loppukulma: 212, Väri: p\\nAlkukulma: 212, Loppukulma: 250, Väri: v\\nAlkukulma: 250, Loppukulma: 260, Väri: p\\nAlkukulma: 260, Loppukulma: 312, Väri: v\\nAlkukulma: 312, Loppukulma: 4.5, Väri: vi"
    ],
    "loistojen_tiedot": [
     "Loiston laji: Yövalo, Korkeus vedestä: 22.1, Korkeus maasta: 16.2, Tehollinen valovoima: 1442, Kiinteä valovoima: 1730, Tahdistus: E",
-    "Loiston laji: Yövalo, Korkeus vedestä: 16.9, Korkeus maasta: 9.6, Tehollinen valovoima: 471, Kiinteä valovoima: 750, Tahdistus: E",
-    "Loiston laji: Yövalo, Korkeus vedestä: 8.3, Korkeus maasta: 6.3, Tehollinen valovoima: 162, Kiinteä valovoima: 270, Tahdistus: E",
-    "Loiston laji: Yövalo, Korkeus vedestä: 7, Korkeus maasta: 2.1, Tehollinen valovoima: 1000, Kiinteä valovoima: 1200, Tahdistus: E",
-    "Loiston laji: Yövalo, Korkeus vedestä: 26, Korkeus maasta: 22, Tehollinen valovoima: 1649, Kiinteä valovoima: , Tahdistus: E",
-    "Loiston laji: Yövalo, Korkeus vedestä: 4.2, Korkeus maasta: , Tehollinen valovoima: 7, Kiinteä valovoima: 16, Tahdistus: E"
+    "Loiston laji: Yövalo, Korkeus vedestä: 13.2, Korkeus maasta: , Tehollinen valovoima: 2931, Kiinteä valovoima: , Tahdistus: E",
+    "Loiston laji: Yövalo, Korkeus vedestä: 11.71, Korkeus maasta: 3.8, Tehollinen valovoima: 260, Kiinteä valovoima: , Tahdistus: E",
+    "Loiston laji: Yövalo, Korkeus vedestä: 17, Korkeus maasta: , Tehollinen valovoima: 495, Kiinteä valovoima: 561, Tahdistus: E",
+    "Loiston laji: Yövalo, Korkeus vedestä: 8.9, Korkeus maasta: 6.4, Tehollinen valovoima: 930, Kiinteä valovoima: , Tahdistus: E",
+    "Loiston laji: Yövalo, Korkeus vedestä: 23.8, Korkeus maasta: , Tehollinen valovoima: 72000, Kiinteä valovoima: , Tahdistus: E"
    ],
    "tutkamajakoiden_tiedot": [
     "Malli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE T:  _, Asennuskorkeus: 15, Tunnuspituus: 1.2, Taajuus S: K, Kantama S: 10, Taajuus X: K, Kantama X: 12, Periodi (on): 18, Periodi (off): 12\\nMalli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE T:  _, Asennuskorkeus: 15, Tunnuspituus: 1.2, Taajuus S: K, Kantama S: 10, Taajuus X: K, Kantama X: 12, Periodi (on): 18, Periodi (off): 12",
-    "Malli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE T:  _, Asennuskorkeus: 18, Tunnuspituus: 1.2, Taajuus S: K, Kantama S: 10.6, Taajuus X: K, Kantama X: 12.6, Periodi (on): 18, Periodi (off): 12",
-    "Malli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE T:  _, Asennuskorkeus: 8.3, Tunnuspituus: 1.2, Taajuus S: K, Kantama S: 8.3, Taajuus X: K, Kantama X: 10.3, Periodi (on): 18, Periodi (off): 12",
-    "Malli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE T:  _, Asennuskorkeus: 8.5, Tunnuspituus: 1.2, Taajuus S: K, Kantama S: 8.4, Taajuus X: K, Kantama X: 10.4, Periodi (on): 18, Periodi (off): 12",
-    "Malli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE T:  _, Asennuskorkeus: 28, Tunnuspituus: 1.2, Taajuus S: K, Kantama S: 12.6, Taajuus X: K, Kantama X: 14.6, Periodi (on): 18, Periodi (off): 12",
-    "-"
+    "Malli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE O:  _ _ _, Asennuskorkeus: 15, Tunnuspituus: 1.2, Taajuus S: K, Kantama S: 10, Taajuus X: K, Kantama X: 12, Periodi (on): 18, Periodi (off): 12",
+    "Malli: PharosMarine Phalcon-2000  X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE T:  _, Asennuskorkeus: 10.3, Tunnuspituus: variable, Taajuus S: K, Kantama S: 9.1, Taajuus X: K, Kantama X: 11.1, Periodi (on): 12, Periodi (off): 18",
+    "Malli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE M:  _ _, Asennuskorkeus: 16.7, Tunnuspituus: 1.2, Taajuus S: K, Kantama S: 10.3, Taajuus X: K, Kantama X: 12.3, Periodi (on): 18, Periodi (off): 12",
+    "Malli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE T:  _, Asennuskorkeus: 8.2, Tunnuspituus: 1.2, Taajuus S: K, Kantama S: 9, Taajuus X: K, Kantama X: 11, Periodi (on): 18, Periodi (off): 12\\nMalli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE T:  _, Asennuskorkeus: 8.2, Tunnuspituus: 1.2, Taajuus S: K, Kantama S: 9, Taajuus X: K, Kantama X: 11, Periodi (on): 18, Periodi (off): 12",
+    "Malli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE /:  _.._., Asennuskorkeus: 23, Tunnuspituus: 3.2, Taajuus S: K, Kantama S: 11.6, Taajuus X: K, Kantama X: 13.6, Periodi (on): 30, Periodi (off): 0\\nMalli: Ericon MK II X/S, Laji: Muuttuvalähetteinen, Tunnus: MORSE /:  _.._., Asennuskorkeus: 23, Tunnuspituus: 3.2, Taajuus S: K, Kantama S: 11.6, Taajuus X: K, Kantama X: 13.6, Periodi (on): 30, Periodi (off): 0"
    ],
    "paivatunnusten_tiedot": [
     "Väri: Punainen/valkoinen, Väritys: Vaakavyöt ylhäältä lukien, Muoto: Suorakaide, Pintamateriaali: 1, Kummelin tunnus: , Korkeus (m): 7.2, Leveys (m): 4.1, Korkeus maasta (m): 7.8, Korkeus vedestä: 13.7\\nVäri: Punainen/valkoinen, Väritys: Vaakavyöt ylhäältä lukien, Muoto: Suorakaide, Pintamateriaali: 1, Kummelin tunnus: , Korkeus (m): 7.2, Leveys (m): 4.1, Korkeus maasta (m): 7.8, Korkeus vedestä: 13.7",
-    "Väri: Valkoinen/musta, Väritys: Yläosa/alaosa, Muoto: Pyöreä, Pintamateriaali: 5, Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): 12.3, Korkeus vedestä: 19.3",
-    "Väri: Valkoinen/punainen/valkoinen, Väritys: Vaakavyöt ylhäältä lukien, Muoto: Lieriömäinen, Pintamateriaali: 5, Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): 8.7, Korkeus vedestä: 10.7",
-    "Väri: Keltainen/punainen/keltainen, Väritys: Pystyraidat, Muoto: Suorakaide, Pintamateriaali: 1, Kummelin tunnus: , Korkeus (m): 3.2, Leveys (m): 2.6, Korkeus maasta (m): 3.7, Korkeus vedestä: 6.4",
-    "Väri: Oranssi/valkoinen/oranssi, Väritys: Vaakavyöt ylhäältä lukien, Muoto: Majakkatorni, Pintamateriaali: 5, Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): 21.6, Korkeus vedestä: 25.6",
-    "Väri: Musta/keltainen/musta, Väritys: Vaakavyöt ylhäältä lukien, Muoto: Sukkulamainen, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): , Korkeus vedestä: 4"
+    "Väri: Punainen/keltainen/punainen, Väritys: Pystyraidat, Muoto: Suorakaide, Pintamateriaali: 1, Kummelin tunnus: , Korkeus (m): 7.6, Leveys (m): 6, Korkeus maasta (m): , Korkeus vedestä: ",
+    "Väri: Musta, Väritys: Yksivärinen, Muoto: Suorakaide, Pintamateriaali: 5, Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): , Korkeus vedestä: 10.16",
+    "Väri: Punainen/valkoinen/punainen, Väritys: Vaakavyöt ylhäältä lukien, Muoto: Majakkatorni, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): , Korkeus vedestä: ",
+    "Väri: Punainen/keltainen/punainen, Väritys: Pystyraidat, Muoto: Suorakaide, Pintamateriaali: 10, Kummelin tunnus: , Korkeus (m): 4.5, Leveys (m): 3, Korkeus maasta (m): 6.1, Korkeus vedestä: 8.58\\nVäri: Punainen/keltainen/punainen, Väritys: Pystyraidat, Muoto: Suorakaide, Pintamateriaali: 10, Kummelin tunnus: , Korkeus (m): 4.5, Leveys (m): 3, Korkeus maasta (m): 6.1, Korkeus vedestä: 8.58",
+    "Väri: Punainen/valkoinen/punainen, Väritys: Vaakavyöt ylhäältä lukien, Muoto: Majakkatorni, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): , Korkeus vedestä: \\nVäri: Punainen/valkoinen/punainen, Väritys: Vaakavyöt ylhäältä lukien, Muoto: Majakkatorni, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): , Korkeus vedestä: "
    ],
    "irrotus_pvm": [
     "2026-11-11T00:11:04Z",
-    "2026-11-11T00:24:54Z",
-    "2026-11-11T00:27:03Z",
-    "2026-11-11T00:27:04Z",
-    "2026-11-11T00:03:41Z",
-    "2026-11-11T00:10:57Z"
+    "2026-11-11T00:12:48Z",
+    "2026-11-11T00:12:55Z",
+    "2026-11-11T00:12:57Z",
+    "2026-11-11T00:13:57Z",
+    "2026-11-11T00:15:55Z"
    ],
    "vaylan_nimi": [
     "[2930: Gustaf Dalen-Kalkskär-väylä](vaylat:jnro=2930)\\n[3255: Utö-Naantali väylä](vaylat:jnro=3255)",
-    "[3255: Utö-Naantali väylä](vaylat:jnro=3255)",
-    "[2565: Marhällan-Maarianhamina-väylät](vaylat:jnro=2565)",
-    "[2450: Ahvenanmeri (avomeri)](vaylat:jnro=2450)",
-    "[2505: Långnäsin satamaväylä](vaylat:jnro=2505)",
-    "[2505: Långnäsin satamaväylä](vaylat:jnro=2505)\\n[2735: Stockgrund-Fagervik väylä](vaylat:jnro=2735)"
+    "[4410: Kantvikin väylä](vaylat:jnro=4410)",
+    "[4075: Hangon väylä](vaylat:jnro=4075)",
+    "[4195: Lappohjan väylä](vaylat:jnro=4195)",
+    "[4980: Västra Balkan-Ytter Tjärhällen](vaylat:jnro=4980)\\n[4865: Etelä-Suomen talviväylä I ](vaylat:jnro=4865)",
+    "[4455: Etelä-Suomen talviväylä, Porkkala-Helsinki](vaylat:jnro=4455)\\n[4730: Harmajan väylä](vaylat:jnro=4730)"
    ],
    "omistajafi": [
     "Väylävirasto"
    ],
    "asennuskorkeus": [
     15,
-    18,
-    8.3,
-    8.5,
-    28
+    10.3,
+    16.7,
+    8.2,
+    23,
+    29
    ],
    "latitude_asteina": [
     "60°0.3126'",
-    "59°43.6609'",
-    "59°56.0303'",
-    "60°2.3613'",
-    "59°48.4983'",
-    "60°6.6136'"
+    "59°57.6339'",
+    "59°45.1943'",
+    "59°46.6497'",
+    "60°8.2407'",
+    "60°6.3011'"
    ],
    "longitude_asteina": [
     "21°4.6624'",
-    "21°24.0431'",
-    "21°14.0151'",
-    "19°53.8253'",
-    "19°46.9234'",
-    "20°18.477'"
+    "24°16.4568'",
+    "22°57.8037'",
+    "23°14.8685'",
+    "25°18.679'",
+    "24°58.5339'"
    ],
    "nimisv": [
-    "Lillharun",
-    "Söderkobb",
-    "Korsö nedre",
-    "Flötjan",
-    "Silja",
-    "Viking"
+    "Oxhornen nedre",
+    "Lilla Tärnskär",
+    "Längden",
+    "Ytter Tjärhällen",
+    "Gråhara",
+    "Bogskär"
    ],
    "rakennetietokoodi": [
+    "8",
+    "20",
     "1",
     "5",
     "2",
-    "4",
-    "20",
-    "7"
+    "4"
+   ],
+   "mmsi": [
+    992304003,
+    992306505,
+    992306504,
+    992306506,
+    992306508,
+    992306507
    ]
   }
  },
@@ -4521,111 +5470,208 @@
   "name": "vesivaylatiedot:vaylaalueet_vaylavirasto",
   "title": "Väyläviraston väyläalueet",
   "layer": "vaylaalueet_vaylavirasto",
-  "count": 346,
+  "count": 1417,
   "geom": {
-   "MultiPolygon": 346
+   "MultiPolygon": 1417
   },
   "fields": {
    "id": [
-    77919,
-    100363,
-    105030,
-    108403,
-    112512,
-    113228
+    72188,
+    73256,
+    73980,
+    77308,
+    77316,
+    77354
    ],
    "tyyppi": [
-    "Navigointialue"
+    "Navigointialue",
+    "Ankkurointialue",
+    "Varmistettu lisäalue",
+    "Ohitus- ja kohtaamisalue",
+    "Satama-allas"
    ],
    "tyyppikoodi": [
-    1
+    1,
+    2,
+    11,
+    3,
+    4
+   ],
+   "liikenteentyyppi": [
+    "Liikennöintikaista"
    ],
    "mitoitussyvays": [
+    2.4,
+    7.9,
     3.0,
-    5.8,
-    10.0,
-    3.5,
-    7.0,
-    8.2
+    5.0,
+    1.5,
+    2.6
    ],
    "haraussyvyys": [
-    3.8,
-    7.0,
-    12.0,
-    5.5,
-    8.5,
-    10.5
+    3.4,
+    9.5,
+    4.0,
+    3.0,
+    6.6,
+    6.0
    ],
    "vertaustaso": [
     "MW2000",
+    "MW1990",
+    "MW2002",
     "MW2005",
     "MW2001",
-    "MW2010",
-    "MW2023",
-    "MW2017"
+    "MW2020"
    ],
    "omistaja": [
     "Väylävirasto"
    ],
    "merkintalaji": [
     "Kardinaali",
-    "Lateraali"
+    "Lateraali",
+    "Tuntematon"
    ],
    "merkintalajikoodi": [
     2,
-    1
+    1,
+    0
    ],
    "suunta": [
-    35,
-    114,
-    162,
     18,
-    228,
-    115
+    31,
+    321,
+    282,
+    39,
+    295
    ],
    "liikennointisuunta": [
     "Kaksisuuntainen liikenne",
     "Yksisuuntainen liikenne"
    ],
    "vahvistuspaivamaara": [
-    "2001-12-10T00:00:00Z",
-    "2003-03-24T00:00:00Z",
     "2024-02-07T00:00:00Z",
-    "2024-04-03T00:00:00Z",
-    "2008-12-31T00:00:00Z",
-    "2013-09-18T00:00:00Z"
+    "2025-04-07T00:00:00Z",
+    "2024-12-19T00:00:00Z",
+    "2026-01-13T00:00:00Z",
+    "2025-04-09T00:00:00Z",
+    "2001-12-10T00:00:00Z"
    ],
    "diaarinumero": [
-    "61/611/2000",
     "TRAFICOM/35487/05.01.26.00/2024",
-    "TRAFICOM/109423/05.01.26.00/2024",
-    "2886/76/2008",
-    "4329/1042/2013",
-    "VÄYLÄ/1082/06.02.02/2022"
+    "TRAFICOM/184277/05.01.26.00/2025",
+    "TRAFICOM/592242/05.01.26.00/2024",
+    "TRAFICOM/861637/05.01.26.00/2025",
+    " TRAFICOM/184277/05.01.26.00/2025",
+    "61/611/2000"
    ],
    "jnro": [
-    "3162",
-    "2915",
-    "3010",
-    "3120\\n3990",
-    "2775",
-    "2940"
+    "3070",
+    "4075",
+    "3550",
+    "4190",
+    "4200",
+    "4210"
    ],
    "vaylan_nimi": [
-    "[3162: Fiskö - Mossala väylä](vaylat:jnro=3162)",
-    "[2915: Torsholma-Berghamn väylä](vaylat:jnro=2915)",
-    "[3010: Isokari-Lövskär väylä](vaylat:jnro=3010)",
-    "[3120: Heponiemi-Jumo-Keistiö yhteysliikenneväylä](vaylat:jnro=3120)\\n[3990: SMMP Veneilyn runkoväylä](vaylat:jnro=3990)",
-    "[2775: Ledskärin rinnakkaisväylä](vaylat:jnro=2775)",
-    "[2940: Nyhamn-Rödskär väylä](vaylat:jnro=2940)"
+    "[3070: Pakinaisten yhteysliikenneväylä](vaylat:jnro=3070)",
+    "[4075: Hangon väylä](vaylat:jnro=4075)",
+    "[3550: Lillmälö-Askgrund väylä](vaylat:jnro=3550)",
+    "[4190: Kalvön-Stengrundskobb](vaylat:jnro=4190)",
+    "[4200: Tvärminne-Söderklobben](vaylat:jnro=4200)",
+    "[4210: Skomakarskär-Granskär](vaylat:jnro=4210)"
    ],
    "irrotus_pvm": [
+    "2026-11-11T00:27:38Z",
     "2026-11-11T00:27:39Z",
-    "2026-11-11T00:27:40Z",
-    "2026-11-11T00:27:38Z"
+    "2026-11-11T00:27:40Z"
+   ]
+  }
+ },
+ {
+  "service": "vayla",
+  "name": "hanketiedot:vesivaylahankkeet",
+  "title": "vesivaylahankkeet",
+  "layer": "vesivaylahankkeet",
+  "count": 2,
+  "geom": {
+   "Point": 1,
+   "LineString": 1
+  },
+  "fields": {
+   "id": [
+    2,
+    3
    ],
-   "liikenteentyyppi": [
-    "Liikennöintikaista"
+   "nimi": [
+    "Koverharin meriväylän syventäminen",
+    "Inkoon meriväylän parantaminen"
+   ],
+   "tilaajaorganisaatio": [
+    "Väylävirasto"
+   ],
+   "aloitus": [
+    "2024",
+    "2025"
+   ],
+   "lopetus": [
+    "2028",
+    "2027"
+   ],
+   "kuvaus": [
+    "Koverharin satamaan johtavan väylän syventäminen 14,0 m mitoitussyvyyden vaatimusten mukaisesti. Liittyvänä hankkeena Koverharin sataman väyläosuuden syventäminen ja uuden reunalaiturin rakentaminen, joista vastaa Hangon Satama Oy.",
+    "Inkoon satamaan johtavan meriväylän parantaminen LNG-terminaalin täydennyskuljetusten turvallisuuden parantamiseksi"
+   ],
+   "linkki": [
+    "https://vayla.fi/koverharin-merivaylan-syventaminen"
+   ],
+   "irrotus_pvm": [
+    "2026-11-10T00:00:00Z"
+   ]
+  }
+ },
+ {
+  "service": "vayla",
+  "name": "hanketiedot:vesivaylasuunnitelmat",
+  "title": "vesivaylasuunnitelmat",
+  "layer": "vesivaylasuunnitelmat",
+  "count": 1,
+  "geom": {
+   "Point": 1
+  },
+  "fields": {
+   "id": [
+    2
+   ],
+   "nimi": [
+    "Inkoon meriväylän geometrian parantaminen"
+   ],
+   "tila": [
+    "Aktiivinen"
+   ],
+   "vaihe": [
+    "Yleissuunnitelma/Yleissuunnitelma + YVA"
+   ],
+   "tilaaja": [
+    "Väylävirasto"
+   ],
+   "kuvaus": [
+    "Inkoon meriväylän geometrian parantaminen"
+   ],
+   "suunnittelu_alkaa": [
+    "2023-01-01T09:02:58Z"
+   ],
+   "suunnittelu_loppuu": [
+    "2026-12-31T09:03:01Z"
+   ],
+   "hankesivu": [
+    "https://vayla.fi/suunnittelu-rakentaminen/hankkeiden-suunnittelu/hankkeiden-suunnittelun-vaiheet"
+   ],
+   "irrotus_pvm": [
+    "2026-11-10T00:00:00Z"
+   ],
+   "oid": [
+    "1.2.246.578.5.1.2704209922.611477828"
    ]
   }
  }
