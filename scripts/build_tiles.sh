@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Bygger data/chart-aland.pmtiles av de förberedda kartlagren. Skippar filen om den blir för stor för GitHub.
+# Bygger data/chart-aland.pmtiles av de förberedda kartlagren. Filerna laddas upp till Cloudflare R2 (se chart.yml).
 set -euo pipefail
 shopt -s nullglob
 python3 scripts/prepare_layers.py
@@ -20,7 +20,7 @@ if [ ${#largs[@]} -gt 0 ]; then
     --name "Kummel djupkurvor Åland" --attribution "Traficom, CC BY 4.0. Ej för navigering." "${largs[@]}" 2>&1 | { grep -v "%" || true; } | tail -3
   lsize=$(stat -c %s build/lines-aland.pmtiles)
   echo "- Djupkurvor och branter: $((lsize/1024/1024)) MB" >> data/chart-log.md
-  if [ "$lsize" -lt 95000000 ]; then cp build/lines-aland.pmtiles data/; fi
+  cp build/lines-aland.pmtiles data/   # laddas upp till Cloudflare R2, ingen storleksgräns
 fi
 files=(build/layers/*.geojsonl)
 if [ ${#files[@]} -eq 0 ]; then echo "Inga lager att bygga"; exit 1; fi
@@ -35,4 +35,4 @@ tippecanoe -o build/chart-aland.pmtiles --force -P -j "$(zfilter $names)" \
   "${args[@]}" 2>&1 | grep -v "%" | tail -20
 size=$(stat -c %s build/chart-aland.pmtiles)
 echo "- Tiles byggda: $((size/1024/1024)) MB" >> data/chart-log.md
-if [ "$size" -lt 95000000 ]; then cp build/chart-aland.pmtiles data/; else echo "- För stor för repot, sparas inte" >> data/chart-log.md; fi
+cp build/chart-aland.pmtiles data/   # laddas upp till Cloudflare R2, ingen storleksgräns

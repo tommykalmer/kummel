@@ -23,7 +23,10 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 120
+    env:
+      # Åland, Åboland och Nyland till Pellinge
+      CHART_BBOX: "19.0,59.65,25.95,60.75"
     steps:
       - uses: actions/checkout@v4
 
@@ -46,12 +49,30 @@ jobs:
       - name: Bygg vektortiles
         run: bash scripts/build_tiles.sh
 
+      - name: Ladda upp till Cloudflare R2 (kartor.kummel.app)
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+        run: |
+          EP="https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"
+          up() { aws s3 cp "$1" "s3://kummel-kartor/$2" --endpoint-url "$EP" --content-type "$3" --cache-control "public, max-age=600" --only-show-errors; echo "uppladdad: $2 ($(du -h "$1" | cut -f1))"; }
+          up data/chart-aland.pmtiles chart.pmtiles application/octet-stream
+          up data/lines-aland.pmtiles lines.pmtiles application/octet-stream
+          [ -f data/rocks-aland.pmtiles ] && up data/rocks-aland.pmtiles rocks.pmtiles application/octet-stream
+          up data/marks.geojson marks.geojson application/json
+          up data/fairways.json fairways.json application/json
+          sleep 5
+          curl -sI -H "Origin: https://www.kummel.app" -H "Range: bytes=0-15" https://kartor.kummel.app/chart.pmtiles | tee -a $GITHUB_STEP_SUMMARY
+
       - name: Spara i repot
-        if: always()
+        if: success()
         run: |
           git config user.name "kummel-bot"
           git config user.email "kummel-bot@users.noreply.github.com"
-          git add data/
+          git add data/fairways.json data/chart-layers.json data/chart-log.md   # kartfilerna ligger i Cloudflare R2
           if git diff --cached --quiet; then echo "Inga ändringar"; exit 0; fi
           git commit -m "Uppdatera sjökortsdata ($(date -u +%Y-%m-%d))"
           git pull --rebase origin main
