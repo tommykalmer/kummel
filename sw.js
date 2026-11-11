@@ -1,5 +1,5 @@
 /* Kummel service worker – app shell offline + cache of chart tiles you have viewed */
-const SHELL = "kummel-shell-v93";
+const SHELL = "kummel-shell-v94";
 const TILES = "kummel-tiles-v1";
 const OFFLINE = "kummel-offline-v1";   // nedladdad offlinekarta, rensas aldrig automatiskt
 const MAX_TILES = 6000;

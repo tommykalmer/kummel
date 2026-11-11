@@ -2051,6 +2051,32 @@ function cpa(a, b) {
   const t = dv2 < 1e-6 ? 0 : Math.max(0, -((bx - ax) * dvx + (by - ay) * dvy) / dv2);
   return { nm: Math.hypot(bx + dvx * t, by + dvy * t), min: t * 60 };
 }
+/* fartygsbild: fri bild från Wikimedia Commons via Wikidata (IMO-nummer P458 eller MMSI P587), med fotograf och licens */
+const shipPhotos = {}, shipPhotoP = {};   // färdiga resultat (null = ingen bild) och pågående uppslag
+const stripTags = h => { const d = document.createElement("div"); d.innerHTML = h || ""; return (d.textContent || "").replace(/\s+/g, " ").trim(); };
+async function fetchJson(url, ms = 8000) { const c = new AbortController(), t = setTimeout(() => c.abort(), ms); try { const r = await fetch(url, { signal: c.signal }); if (!r.ok) throw 0; return await r.json(); } finally { clearTimeout(t); } }
+function loadShipPhoto(imo, mmsi) {
+  const key = imo ? "imo" + imo : "m" + mmsi;
+  if (key in shipPhotos) return Promise.resolve(shipPhotos[key]);
+  if (shipPhotoP[key]) return shipPhotoP[key];
+  const conds = [imo && `{ ?s wdt:P458 "${String(imo).replace(/\D/g, "")}" }`, mmsi && `{ ?s wdt:P587 "${String(mmsi).replace(/\D/g, "")}" }`].filter(Boolean).join(" UNION ");
+  const q = `SELECT ?img WHERE { ${conds} ?s wdt:P18 ?img } LIMIT 1`;
+  return (shipPhotoP[key] = (async () => {
+    try {
+      const j = await fetchJson("https://query.wikidata.org/sparql?format=json&query=" + encodeURIComponent(q));
+      const img = j?.results?.bindings?.[0]?.img?.value; if (!img) return (shipPhotos[key] = null);
+      const file = decodeURIComponent(img.split("/Special:FilePath/")[1] || "").replace(/_/g, " "); if (!file) return (shipPhotos[key] = null);
+      const c = await fetchJson("https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&prop=imageinfo&iiprop=url|extmetadata&iiurlwidth=640&titles=" + encodeURIComponent("File:" + file));
+      const ii = Object.values(c?.query?.pages || {})[0]?.imageinfo?.[0]; if (!ii?.thumburl) return (shipPhotos[key] = null);
+      const md = ii.extmetadata || {};
+      return (shipPhotos[key] = { src: ii.thumburl, page: ii.descriptionurl, by: stripTags(md.Artist?.value).slice(0, 60) || "okänd fotograf", lic: stripTags(md.LicenseShortName?.value) || "fri licens" });
+    } catch (e) { return null; }   // nätfel: inget sparas, försök igen nästa gång
+    finally { delete shipPhotoP[key]; }
+  })());
+}
+function shipPhotoHtml(p) {
+  return p ? `<figure class="ship-photo"><img src="${esc(p.src)}" alt="Foto av fartyget" loading="lazy"><figcaption>Foto: ${esc(p.by)} · ${esc(p.lic)} · <a href="${esc(p.page)}" target="_blank" rel="noopener">Wikimedia Commons</a></figcaption></figure>` : "";
+}
 function openShip(mmsi, refresh) {
   const s = aisShips.find(x => x.mmsi === mmsi); if (!s) return;
   const m = aisMeta[mmsi] || {}, age = Math.round((Date.now() - s.t) / 60000);
@@ -2059,8 +2085,10 @@ function openShip(mmsi, refresh) {
     const d = distNm(gps, s), c = cpa(gps, s);
     near = `<div class="callout ${c.nm < .3 && c.min < 20 ? "bad" : "ok"}">Avstånd ${d.toFixed(2)} nm, bäring ${String(Math.round(bearing(gps, s))).padStart(3, "0")}°.${s.sog > .5 || gps.sog > .5 ? (c.min < 1 ? " Avståndet ökar." : ` Närmaste passage <b>${c.nm.toFixed(2)} nm</b> om ${Math.round(c.min)} min.`) : ""}</div>`;
   }
+  const pkey = m.imo ? "imo" + m.imo : "m" + mmsi;
   const html = `
-    <div class="muted">${CATNAME[SHIPCAT(m.shipType)]}${m.callSign ? " · " + esc(m.callSign) : ""} · MMSI ${mmsi}</div>
+    <div id="shipphoto">${shipPhotoHtml(shipPhotos[pkey])}</div>
+    <div class="muted">${CATNAME[SHIPCAT(m.shipType)]}${m.callSign ? " · " + esc(m.callSign) : ""} · MMSI ${mmsi}${m.imo ? " · IMO " + esc(String(m.imo)) : ""}</div>
     <div class="wx-stats">
       <div><b>${s.sog.toFixed(1)}</b><span>Fart kn</span></div>
       <div><b>${String(Math.round(s.cog)).padStart(3, "0")}°</b><span>Kurs</span></div>
@@ -2069,9 +2097,11 @@ function openShip(mmsi, refresh) {
     ${near}
     ${s.nav != null && NAVSTAT[s.nav] ? `<div>${NAVSTAT[s.nav]}</div>` : ""}
     ${m.destination ? `<div>Destination: <b>${esc(m.destination)}</b></div>` : ""}
+    <div class="row"><a class="btn" href="https://www.marinetraffic.com/en/ais/details/ships/mmsi:${mmsi}" target="_blank" rel="noopener">Visa på MarineTraffic ↗</a></div>
     <div class="muted">Position för ${age < 1 ? "mindre än en minut" : age + " min"} sedan. Källa: Digitraffic (Fintraffic).</div>`;
   if (refresh && sheetView === "ais:" + mmsi) { $("#sh-body").innerHTML = html; return; }
   openSheet((m.name || "Fartyg").trim(), html, "ais:" + mmsi);
+  if (!(pkey in shipPhotos)) loadShipPhoto(m.imo, mmsi).then(p => { const el = $("#shipphoto"); if (p && el && sheetView === "ais:" + mmsi) { el.innerHTML = shipPhotoHtml(p); track("ship_photo", {}); } });
 }
 ["ais", "ais-bg"].forEach(l => map.on("click", l, e => { if (e.defaultPrevented) return; e.preventDefault(); openShip(+e.features[0].properties.mmsi); }));
 map.on("mouseenter", "ais", () => map.getCanvas().style.cursor = "pointer");
