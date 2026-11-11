@@ -94,7 +94,11 @@ function toast(msg, ms = 2600) {
 /* ---------- map ---------- */
 const protocol = new pmtiles.Protocol();
 maplibregl.addProtocol("pmtiles", protocol.tile);
-const CHART_URL = "pmtiles://" + new URL("data/chart-aland.pmtiles", location.href).href;
+/* kartfilerna ligger i Cloudflare R2 (kartor.kummel.app); tilesBase i config.js, annars data/ i repot */
+const TILES_BASE = (window.KUMMEL_CONFIG && KUMMEL_CONFIG.tilesBase) || "data/";
+const TILE_FILE = TILES_BASE === "data/" ? { chart: "chart-aland.pmtiles", rocks: "rocks-aland.pmtiles", lines: "lines-aland.pmtiles", marks: "marks.geojson", fairways: "fairways.json" } : { chart: "chart.pmtiles", rocks: "rocks.pmtiles", lines: "lines.pmtiles", marks: "marks.geojson", fairways: "fairways.json" };
+const tileUrl = k => new URL(TILES_BASE + TILE_FILE[k], location.href).href;
+const CHART_URL = "pmtiles://" + tileUrl("chart");
 
 const EMPTY = { type: "FeatureCollection", features: [] };
 /* Lantmäteriverket i Finland (Maanmittauslaitos): flygbild och fastighetsgränser, kräver egen gratis API-nyckel */
@@ -117,9 +121,9 @@ function baseStyle() {
       ...mmlSources(),
       ...KummelChart.rasterSources(),
       ofm: { type: "vector", url: "https://tiles.openfreemap.org/planet", attribution: "OpenFreeMap © OpenStreetMap" },
-      marks: { type: "geojson", data: "data/marks.geojson" },
-      rocks: { type: "vector", url: "pmtiles://" + new URL("data/rocks-aland.pmtiles", location.href).href, attribution: "Stenar: Maanmittauslaitos" },
-      lines: { type: "vector", url: "pmtiles://" + new URL("data/lines-aland.pmtiles", location.href).href },
+      marks: { type: "geojson", data: tileUrl("marks") },
+      rocks: { type: "vector", url: "pmtiles://" + tileUrl("rocks"), attribution: "Stenar: Maanmittauslaitos" },
+      lines: { type: "vector", url: "pmtiles://" + tileUrl("lines") },
       chart: { type: "vector", url: CHART_URL, attribution: "Källa: Traficom (CC BY 4.0). Ej för navigering." }
     },
     layers: [
@@ -961,12 +965,12 @@ async function openShare(id, justSaved) {
     <div class="share-prev" id="sh-prev"><span class="muted">Skapar bild …</span></div>
     <label class="f">Plats på bilden<select id="sh-where">
       <option value="none" ${sel === "none" ? "selected" : ""}>Visa ingen plats</option>
-      <option value="aland" ${sel === "aland" ? "selected" : ""}>Bara "Ålands skärgård"</option>
+      <option value="aland" ${sel === "aland" ? "selected" : ""}>Bara "${regionName(c)}"</option>
       <option value="exact" ${sel === "exact" ? "selected" : ""}>Exakt position (avslöjar platsen)</option></select></label>
     <div class="row"><button class="btn pri" id="sh-go">Dela</button><button class="btn" id="sh-save">Spara i Bilder</button><button class="btn" id="sh-back">Tillbaka</button></div>
     <div class="muted">${justSaved ? "Fångsten är sparad i din fångstlogg. " : ""}Bilden skapas i telefonen. Inget laddas upp av Kummel.</div>`, "share");
   let cv = null;
-  const where = () => ({ none: "", aland: "Ålands skärgård", exact: fmtPosTxt(c) })[$("#sh-where").value];
+  const where = () => ({ none: "", aland: regionName(c), exact: fmtPosTxt(c) })[$("#sh-where").value];
   const draw = async () => {
     cv = await catchCard(c, where()); const p = $("#sh-prev"); if (!p) return;
     p.innerHTML = ""; const im = new Image(); im.src = cv.toDataURL("image/jpeg", .8); p.appendChild(im);
@@ -1280,7 +1284,7 @@ function renderRoute() {
 let FW = null;
 async function loadFairways() {
   if (FW) return FW;
-  const j = await (await fetch("data/fairways.json")).json();
+  const j = await (await fetch(tileUrl("fairways"))).json();
   const N = j.nodes.length, adj = Array.from({ length: N }, () => []);
   const pt = n => ({ lat: j.nodes[n][1], lng: j.nodes[n][0] });
   for (const [x, y, d] of j.edges) { const w = distNm(pt(x), pt(y)); adj[x].push(y, w, d); adj[y].push(x, w, d); }
@@ -2077,6 +2081,8 @@ function loadShipPhoto(imo, mmsi) {
 function shipPhotoHtml(p) {
   return p ? `<figure class="ship-photo"><img src="${esc(p.src)}" alt="Foto av fartyget" loading="lazy"><figcaption>Foto: ${esc(p.by)} · ${esc(p.lic)} · <a href="${esc(p.page)}" target="_blank" rel="noopener">Wikimedia Commons</a></figcaption></figure>` : "";
 }
+// grovt område för delade bilder (avslöjar inte platsen)
+const regionName = p => p.lng < 21.1 ? "Ålands skärgård" : p.lng < 22.75 ? "Åbolands skärgård" : "Nylands skärgård";
 function openShip(mmsi, refresh) {
   const s = aisShips.find(x => x.mmsi === mmsi); if (!s) return;
   const m = aisMeta[mmsi] || {}, age = Math.round((Date.now() - s.t) / 60000);
@@ -2475,13 +2481,13 @@ function openData() {
 }
 function shareApp() {
   track("share_app");
-  const d = { title: "Kummel", text: "Kummel – sjökort, sjöväder och fiske för Ålands skärgård. Gratis i webbläsaren:", url: SITE_URL };
+  const d = { title: "Kummel", text: "Kummel – sjökort, sjöväder och fiske för Åland, Åboland och Nyland. Gratis i webbläsaren:", url: SITE_URL };
   if (navigator.share) navigator.share(d).catch(() => {});
   else { try { navigator.clipboard.writeText(SITE_URL); toast("Adressen är kopierad: " + SITE, 2500); } catch (e) { toast(SITE, 3000); } }
 }
 function openAbout() {
   openSheet("Om Kummel", `
-    <div class="home-line">${ALAND_FLAG}<div><b>Kummel</b> är sjökortet för Ålands skärgård: djup, sjömärken, grynnor, sjöväder, rutter med ankomsttid och fiske. Byggt av båtfolk för de egna vattnen: hela Åland, från Ålands hav i väster till Brändö, Kökar och skärgården mot Åboland i öster.</div></div>
+    <div class="home-line">${ALAND_FLAG}<div><b>Kummel</b> är sjökortet för Åland, Åbolands skärgård och Nylands kust: djup, sjömärken, grynnor, sjöväder, rutter med ankomsttid och fiske. Byggt av båtfolk för de egna vattnen: hela Åland, från Ålands hav i väster till Brändö, Kökar och skärgården mot Åboland i öster.</div></div>
     <div class="card"><h3>${SITE}</h3><div class="muted">Här finns Kummel alltid. Tipsa gärna båt- och fiskevänner.</div>
       <div class="row"><button class="btn pri" id="ab-share">Dela Kummel</button><a class="btn" href="/om/" target="_blank" rel="noopener">Om Kummel på webben</a></div></div>
     <div class="card"><h3>Officiella källor</h3><div class="muted">Djup och sjökort: Traficom. Farleder, sjömärken, fyrar och vattentrafikmärken: Väylävirasto. Stenar, grund och flygbild: Lantmäteriverket. Vattenstånd och vattentemperatur: Meteorologiska institutet. Fartyg (AIS): Digitraffic. Väderprognos: Open-Meteo. Bakgrundskarta: OpenStreetMap. Sjökortet uppdateras varje vecka.</div></div>
@@ -2598,13 +2604,13 @@ $("#aa-off").onclick = () => { anchorAlarm(false); anchorOut = 0; anchorMuteUnti
 $("#anchorbar").onclick = openAnchor;
 
 /* ---------- offlinekarta ----------
-   Hela sjökortet (djup, sjömärken, stenar) för Åland sparas som filer i webbläsarens cache, plus
+   Hela sjökortet (djup, sjömärken, stenar) för hela området sparas som filer i webbläsarens cache, plus
    landkartan för området man ser. Service workern läser sjökortsfilen ur cachen med range-anrop. */
 const OFFLINE = "kummel-offline-v1";
-const OFF_BIG = ["data/chart-aland.pmtiles", "data/rocks-aland.pmtiles", "data/lines-aland.pmtiles"];
-const OFF_SMALL = ["data/fairways.json", "data/marks.geojson"].concat(
+const OFF_BIG = [tileUrl("chart"), tileUrl("rocks"), tileUrl("lines")];
+const OFF_SMALL = [tileUrl("fairways"), tileUrl("marks")].concat(
   ["Noto Sans Regular", "Noto Sans Medium", "Noto Sans Italic"].flatMap(f => ["0-255", "256-511", "8192-8447"].map(r => `fonts/${f}/${r}.pbf`)));
-const ALAND = { w: 19.0, s: 59.65, e: 21.35, n: 60.65 };
+const ALAND = { w: 19.0, s: 59.65, e: 25.95, n: 60.75 };   // hela kartområdet: Åland, Åboland och Nyland till Pellinge
 const abs = p => new URL(p, location.href).href;
 function tileRange(b, z) {
   const n = 2 ** z, X = lng => Math.floor((lng + 180) / 360 * n);
@@ -2614,8 +2620,8 @@ function tileRange(b, z) {
 function landTiles(view) {
   const out = [];
   const push = (b, z0, z1) => { for (let z = z0; z <= z1; z++) { const r = tileRange(b, z); for (let x = r.x0; x <= r.x1; x++) for (let y = r.y0; y <= r.y1; y++) out.push([z, x, y]); } };
-  push(ALAND, 5, 11);
-  push(view, 12, 14);
+  push(ALAND, 5, 9);
+  push(view, 10, 14);
   const seen = new Set(); return out.filter(t => { const k = t.join("/"); if (seen.has(k)) return false; seen.add(k); return true; });
 }
 function viewBox() { const b = map.getBounds(); return { w: b.getWest(), s: b.getSouth(), e: b.getEast(), n: b.getNorth() }; }
@@ -2673,6 +2679,18 @@ async function downloadOffline(withChart) {
     toast("Nedladdningen misslyckades: " + (e.message || e), 4000);
   } finally { offBusy = false; if (sheetView === "offline") openOffline(); }
 }
+// sjökortet flyttade till kartor.kummel.app och utökades: gamla offlinefiler tas bort och användaren ombeds ladda ner på nytt
+(async () => {
+  try {
+    if (!S.offline || !("caches" in window)) return;
+    const c = await caches.open(OFFLINE), keys = await c.keys();
+    const old = keys.filter(k => /\/data\/(chart-aland|rocks-aland|lines-aland)\.pmtiles$|\/data\/(marks\.geojson|fairways\.json)$/.test(k.url));
+    if (!old.length) return;
+    for (const k of old) await c.delete(k);
+    S.offline.bytes = 0; S.offline.needsChart = 1; save();
+    setTimeout(() => toast("Sjökortet täcker nu även Åboland och Nyland. Ladda ner offlinekartan på nytt under Meny → Offlinekarta.", 6000), 4000);
+  } catch (e) {}
+})();
 async function deleteOffline() {
   try { await caches.delete(OFFLINE); } catch (e) {}
   S.offline = null; save();
@@ -2685,7 +2703,7 @@ async function openOffline() {
   let est = "";
   try { const e = await navigator.storage.estimate(); est = `Använt för Kummel: ${mb(e.usage)}.`; } catch (e) {}
   openSheet("Offlinekarta", `
-    <div>Spara sjökortet så att kartan fungerar utan täckning ute i skärgården. Sjökortet (djup, sjömärken, stenar och grund) sparas för hela Åland, landkartan i detalj för området du ser nu.</div>
+    <div>Spara sjökortet så att kartan fungerar utan täckning ute i skärgården. Sjökortet (djup, sjömärken, stenar och grund) sparas för hela området från Åland till Borgå, cirka 160 MB. Landkartan sparas i detalj för området du ser nu. Ladda ner över wifi.</div>
     ${o ? `<div class="card"><h3>Sparad ${new Date(o.date).toLocaleDateString("sv-FI")}</h3><div class="muted">${mb(o.bytes)} · ${o.areas.length} område${o.areas.length === 1 ? "" : "n"} med detaljerad landkarta</div></div>` : ""}
     ${tooBig ? `<div class="callout">Zooma in lite för att spara landkartan för området. Det du ser är för stort (${n} kartbitar).</div>` : ""}
     <progress id="off-prog" max="1" value="0" hidden style="width:100%"></progress>
@@ -2755,7 +2773,9 @@ const WL_STATIONS = [
   { id: 134252, name: "Degerby, Föglö", lat: 60.0317, lng: 20.3848 },
   { id: 134225, name: "Ruissalo, Åbo", lat: 60.4285, lng: 22.1009 },
   { id: 134253, name: "Hangö", lat: 59.8226, lng: 22.9766 },
-  { id: 134224, name: "Raumo", lat: 61.1335, lng: 21.4255 }
+  { id: 134224, name: "Raumo", lat: 61.1335, lng: 21.4255 },
+  { id: 132310, name: "Helsingfors, Brunnsparken", lat: 60.1536, lng: 24.9563 },
+  { id: 100669, name: "Borgå, Emsalö", lat: 60.2048, lng: 25.6253 }
 ];
 let wlKey = "";
 async function fmiSeries(url) {
@@ -3005,7 +3025,7 @@ function openTour() {
 function openWelcome() {
   const must = !termsOk(), b = boat();
   openSheet("Välkommen till Kummel", `
-    <div class="home-line">${ALAND_FLAG}<div>Sjökort, sjöväder och rutter för hela Åland och skärgården mot Åboland, från Eckerö i väster till Brändö och Kökar i öster.</div></div>
+    <div class="home-line">${ALAND_FLAG}<div>Sjökort, sjöväder och rutter för Åland, Åbolands skärgård och Nylands kust, från Eckerö i väster till Pellinge utanför Borgå i öster.</div></div>
     <div class="warnbox"><b>Kummel är inte ett sjökort för navigering.</b> Appen är ett hjälpmedel för planering och överblick, inte certifierad för navigering. Djup, sjömärken, ruttförslag, ankomsttider och väder kan vara felaktiga, ofullständiga eller inaktuella. Använd alltid officiella, uppdaterade sjökort och gott sjömanskap. Du som förare ansvarar själv för navigeringen och för båtens säkerhet. Kummel tillhandahålls av AsterIQ Ab (Mariehamn, FO-nummer 3553529-1) gratis och i befintligt skick, utan garantier.</div>
     <div class="card"><h3>Din båt</h3>
       <div class="muted">Med djupgåendet markeras vatten som är för grunt för just din båt.</div>

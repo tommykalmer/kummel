@@ -1,7 +1,7 @@
 {
-  "name": "Kummel – sjökort för Ålands skärgård",
+  "name": "Kummel – sjökort för Åland, Åboland och Nyland",
   "short_name": "Kummel",
-  "description": "Sjökort, sjöväder, rutter och fiske för Ålands skärgård. www.kummel.app",
+  "description": "Sjökort, sjöväder, rutter och fiske för Åland, Åboland och Nyland. www.kummel.app",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

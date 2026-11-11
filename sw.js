@@ -1,9 +1,9 @@
 /* Kummel service worker – app shell offline + cache of chart tiles you have viewed */
-const SHELL = "kummel-shell-v94";
+const SHELL = "kummel-shell-v95";
 const TILES = "kummel-tiles-v1";
 const OFFLINE = "kummel-offline-v1";   // nedladdad offlinekarta, rensas aldrig automatiskt
 const MAX_TILES = 6000;
-const SHELL_FILES = ["./", "./index.html", "./app.js", "./chartstyle.js", "./config.js", "./data/marks.geojson", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-180.png",
+const SHELL_FILES = ["./", "./index.html", "./app.js", "./chartstyle.js", "./config.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-180.png",
   "https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js",
   "https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.css",
   "https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"];
@@ -53,6 +53,11 @@ self.addEventListener("fetch", e => {
     return;
   }
   if (e.request.headers.has("range")) return;
+  // övriga kartfiler i Cloudflare R2 (sjömärken, farleder): nätet först, offlinekopian om man saknar täckning
+  if (url.hostname === "kartor.kummel.app") {
+    e.respondWith(fetch(e.request).then(res => { if (res.ok) { const cl = res.clone(); caches.open(SHELL).then(c => c.put(e.request, cl)); } return res; }).catch(() => caches.match(e.request, { ignoreVary: true })));
+    return;
+  }
   if (TILE_HOSTS.some(h => url.hostname.endsWith(h)) && (/\/\d+\/\d+\/\d+/.test(url.pathname) || url.pathname.includes("/fonts/") || url.search.includes("GetTile"))) {
     // cache-first for map tiles (opaque responses are fine for <img>)
     e.respondWith(caches.open(TILES).then(async c => {
