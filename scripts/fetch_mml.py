@@ -5,7 +5,7 @@ och skriver data/rocks.geojson. Nyckeln läses ur config.js.
   k = 1 vattensten under ytan (38511), 2 i ytan (38512), 3 över ytan (38513),
   stenigt område (38600) och grund (38700) som ytor.
 """
-import json, re, time, urllib.parse, urllib.request
+import json, os, re, time, urllib.parse, urllib.request
 BBOX = tuple(float(x) for x in os.environ.get("CHART_BBOX", "19.0,59.65,21.35,60.65").split(","))
 BASE = "https://avoin-paikkatieto.maanmittauslaitos.fi/maastotiedot/features/v1"
 key = re.search(r'mmlKey:\s*"([^"]+)"', open("config.js").read()).group(1)
