@@ -22,7 +22,7 @@ const DEFAULT_STATE = {
 };
 /* Ålands flagga, liten, för Om Kummel och välkomstrutan */
 const ALAND_FLAG = `<svg class="flag" viewBox="0 0 26 17" aria-label="Ålands flagga"><rect width="26" height="17" fill="#0053a5"/><rect x="7" width="5" height="17" fill="#ffce00"/><rect y="6" width="26" height="5" fill="#ffce00"/><rect x="8.5" width="2" height="17" fill="#d21034"/><rect y="7.5" width="26" height="2" fill="#d21034"/></svg>`;
-const MAKER = "AsterIQ Ab", MAKER_TOWN = "Mariehamn", MAKER_ID = "3553529-1";   // FO-nummer
+const MAKER = "AsterIQ Ab", MAKER_TOWN = "Mariehamn", MAKER_ID = "3553529-1", CONTACT = "kontakt@kummel.app";   // FO-nummer
 const SITE = "www.kummel.app", SITE_URL = "https://www.kummel.app/";   // appens adress, visas på delade bilder m.m.
 let draftCatch = null;
 let wl = null;   // vattenstånd {cm, at, station, km, obs:[{t,v}], fc:[{t,v}]}   // fångst som inte är sparad än (Fisk! utan att trycka Spara)
@@ -2455,6 +2455,7 @@ function openAbout() {
     <div class="card"><h3>${SITE}</h3><div class="muted">Här finns Kummel alltid. Tipsa gärna båt- och fiskevänner.</div>
       <div class="row"><button class="btn pri" id="ab-share">Dela Kummel</button><a class="btn" href="/om/" target="_blank" rel="noopener">Om Kummel på webben</a></div></div>
     <div class="card"><h3>Officiella källor</h3><div class="muted">Djup och sjökort: Traficom. Farleder, sjömärken, fyrar och vattentrafikmärken: Väylävirasto. Stenar, grund och flygbild: Lantmäteriverket. Vattenstånd och vattentemperatur: Meteorologiska institutet. Fartyg (AIS): Digitraffic. Väderprognos: Open-Meteo. Bakgrundskarta: OpenStreetMap. Sjökortet uppdateras varje vecka.</div></div>
+    <div class="card"><h3>Kontakt</h3><div class="muted">Frågor, idéer eller fel i kartan? Mejla <a href="mailto:${CONTACT}">${CONTACT}</a>. Skriv gärna var felet finns, så rättar vi eller rapporterar vidare till rätt myndighet.</div></div>
     <div class="card"><h3>Integritet</h3><div class="muted">Dina platser, rutter, fångster och foton sparas bara i den här enheten. För att hämta väder, vattenstånd och kartor skickas kartans position till respektive tjänst, men aldrig till oss. ${GA_ID ? "Om du tillåter det räknar Kummel anonymt vilka funktioner som används (Google Analytics), utan positioner eller fångster." : ""}</div>
       ${GA_ID ? `<label class="row"><input type="checkbox" id="ab-stats" ${S.stats === 1 ? "checked" : ""}> Tillåt anonym statistik</label>` : ""}</div>
     <div class="card"><h3>Tips</h3><div class="muted">Håll fingret på kartan för att spara en plats. Vrid kartan med två fingrar. Tryck på positionsknappen två gånger för kurs upp. Ställ in båtens djupgående under Meny → Båtar, så markeras grunt vatten för just din båt. Lägg till Kummel på hemskärmen så öppnas den som en app.</div></div>
