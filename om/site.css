@@ -118,3 +118,14 @@ footer nav{display:flex;flex-direction:column;gap:6px}
 .brands{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px}
 .brands span{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font:600 15px/1.2 var(--f-head);color:var(--ink);letter-spacing:.02em}
 .muted-s{font-size:15px;color:var(--muted)}
+
+/* samtycke till statistik */
+.consent{position:fixed;left:16px;right:16px;bottom:16px;z-index:50;max-width:620px;margin:0 auto;background:var(--ink);color:#fff;border-radius:16px;padding:16px 18px;box-shadow:0 20px 50px rgba(0,0,0,.35);display:flex;gap:16px;align-items:center;flex-wrap:wrap;font-size:15px}
+.consent b{display:block;font:700 18px/1.2 var(--f-head);margin-bottom:2px}
+.consent span{color:#c9d8e2}
+.consent > div:first-child{flex:1 1 300px}
+.consent-b{display:flex;gap:8px}
+.consent .btn{padding:10px 16px;font-size:15px}
+.consent .btn.sec{color:#fff}
+.nav a.btn,.nav a.btn:hover{color:var(--ink)}
+.consent{border:1px solid rgba(255,255,255,.18)}
