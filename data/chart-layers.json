@@ -902,12 +902,12 @@
     "3559"
    ],
    "irrotus_pvm": [
-    "2026-11-09T00:35:58Z",
-    "2026-11-09T00:35:56Z",
-    "2026-11-09T00:35:51Z",
-    "2026-11-09T00:36:00Z",
-    "2026-11-09T00:39:45Z",
-    "2026-11-09T00:39:48Z"
+    "2026-11-11T00:21:15Z",
+    "2026-11-11T00:21:13Z",
+    "2026-11-11T00:21:08Z",
+    "2026-11-11T00:21:18Z",
+    "2026-11-11T00:24:57Z",
+    "2026-11-11T00:24:59Z"
    ],
    "jnro": [
     "3010",
@@ -988,7 +988,7 @@
     "113142"
    ],
    "irrotus_pvm": [
-    "2026-11-09T00:18:33Z"
+    "2026-11-11T00:03:20Z"
    ]
   }
  },
@@ -1215,12 +1215,12 @@
     "Väri: Keltainen/punainen/keltainen, Väritys: Pystyraidat, Muoto: Suorakaide, Pintamateriaali: 1, Kummelin tunnus: , Korkeus (m): 3.2, Leveys (m): 2.6, Korkeus maasta (m): 3.7, Korkeus vedestä: 6.4"
    ],
    "irrotus_pvm": [
-    "2026-11-09T00:26:00Z",
-    "2026-11-09T00:32:35Z",
-    "2026-11-09T00:39:42Z",
-    "2026-11-09T00:40:54Z",
-    "2026-11-09T00:41:49Z",
-    "2026-11-09T00:41:51Z"
+    "2026-11-11T00:11:04Z",
+    "2026-11-11T00:17:51Z",
+    "2026-11-11T00:24:54Z",
+    "2026-11-11T00:26:07Z",
+    "2026-11-11T00:27:03Z",
+    "2026-11-11T00:27:04Z"
    ],
    "vaylan_nimi": [
     "[2930: Gustaf Dalen-Kalkskär-väylä](vaylat:jnro=2930)\\n[3255: Utö-Naantali väylä](vaylat:jnro=3255)",
@@ -1377,10 +1377,10 @@
     "2675"
    ],
    "irrotus_pvm": [
-    "2026-11-09T00:43:42Z",
-    "2026-11-09T00:43:43Z",
-    "2026-11-09T00:43:40Z",
-    "2026-11-09T00:43:41Z"
+    "2026-11-11T00:28:59Z",
+    "2026-11-11T00:29:00Z",
+    "2026-11-11T00:28:57Z",
+    "2026-11-11T00:28:58Z"
    ],
    "vaylan_nimi": [
     "[3020: Lootholman venereitti](vaylat:jnro=3020)",
@@ -1618,12 +1618,12 @@
     "Väri: Punainen, Väritys: Yksivärinen, Muoto: Neliömäinen, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): 3, Leveys (m): 2, Korkeus maasta (m): 3, Korkeus vedestä: 20\\nVäri: Punainen, Väritys: Yksivärinen, Muoto: Neliömäinen, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): 3, Leveys (m): 2, Korkeus maasta (m): 3, Korkeus vedestä: 20"
    ],
    "irrotus_pvm": [
-    "2026-11-09T00:32:35Z",
-    "2026-11-09T00:40:54Z",
-    "2026-11-09T00:25:37Z",
-    "2026-11-09T00:26:08Z",
-    "2026-11-09T00:26:12Z",
-    "2026-11-09T00:32:46Z"
+    "2026-11-11T00:17:51Z",
+    "2026-11-11T00:26:07Z",
+    "2026-11-11T00:10:41Z",
+    "2026-11-11T00:11:13Z",
+    "2026-11-11T00:11:17Z",
+    "2026-11-11T00:18:03Z"
    ],
    "vaylan_nimi": [
     "[2650: Saaristomeri (avomeri)](vaylat:jnro=2650)",
@@ -1804,8 +1804,9 @@
     "[2690: Ledskär-Maarianhamina-väylä](vaylat:jnro=2690)"
    ],
    "irrotus_pvm": [
-    "2026-11-09T00:42:24Z",
-    "2026-11-09T00:42:23Z"
+    "2026-11-11T00:27:40Z",
+    "2026-11-11T00:27:38Z",
+    "2026-11-11T00:27:39Z"
    ],
    "liikenteentyyppi": [
     "Liikennöintikaista"
@@ -1895,10 +1896,10 @@
     "2395\\n3990"
    ],
    "irrotus_pvm": [
-    "2026-11-09T00:43:42Z",
-    "2026-11-09T00:43:40Z",
-    "2026-11-09T00:43:43Z",
-    "2026-11-09T00:43:41Z"
+    "2026-11-11T00:28:59Z",
+    "2026-11-11T00:28:57Z",
+    "2026-11-11T00:29:00Z",
+    "2026-11-11T00:28:58Z"
    ],
    "vaylan_nimi": [
     "[3245: Utön tuloväylä](vaylat:jnro=3245)",
@@ -2049,12 +2050,12 @@
     43350
    ],
    "irrotus_pvm": [
-    "2026-11-09T00:18:54Z",
-    "2026-11-09T00:18:55Z",
-    "2026-11-09T00:20:02Z",
-    "2026-11-09T00:21:38Z",
-    "2026-11-09T00:23:58Z",
-    "2026-11-09T00:25:37Z"
+    "2026-11-11T00:03:41Z",
+    "2026-11-11T00:04:51Z",
+    "2026-11-11T00:06:34Z",
+    "2026-11-11T00:09:00Z",
+    "2026-11-11T00:10:41Z",
+    "2026-11-11T00:10:42Z"
    ],
    "paivamerkkipintamateriaalikoodi": [
     6,
@@ -2191,8 +2192,8 @@
     "Röst ja Roskär saarten välisessä salmessa"
    ],
    "irrotus_pvm": [
-    "2026-11-09T00:42:21Z",
-    "2026-11-09T00:42:22Z"
+    "2026-11-11T00:27:36Z",
+    "2026-11-11T00:27:37Z"
    ],
    "vaylan_nimi": [
     "[2905: Enklinge-Houtskari väylä](vaylat:jnro=2905)",
@@ -2264,11 +2265,11 @@
     "Ka, Mo"
    ],
    "irrotus_pvm": [
-    "2026-11-09T00:18:38Z",
-    "2026-11-09T00:18:35Z",
-    "2026-11-09T00:18:37Z",
-    "2026-11-09T00:18:36Z",
-    "2026-11-09T00:18:34Z"
+    "2026-11-11T00:03:25Z",
+    "2026-11-11T00:03:22Z",
+    "2026-11-11T00:03:23Z",
+    "2026-11-11T00:03:24Z",
+    "2026-11-11T00:03:21Z"
    ],
    "ruoppausmenetelma": [
     "2",
@@ -2356,12 +2357,12 @@
     "1"
    ],
    "irrotus_pvm": [
-    "2026-11-09T00:43:30Z",
-    "2026-11-09T00:43:33Z",
-    "2026-11-09T00:43:34Z",
-    "2026-11-09T00:43:26Z",
-    "2026-11-09T00:43:31Z",
-    "2026-11-09T00:43:27Z"
+    "2026-11-11T00:28:48Z",
+    "2026-11-11T00:28:50Z",
+    "2026-11-11T00:28:52Z",
+    "2026-11-11T00:28:43Z",
+    "2026-11-11T00:28:47Z",
+    "2026-11-11T00:28:45Z"
    ],
    "vaylan_nimi": [
     "[3255: Utö-Naantali väylä](vaylat:jnro=3255)",
@@ -2501,12 +2502,12 @@
     6118
    ],
    "irrotus_pvm": [
-    "2026-11-09T00:26:00Z",
-    "2026-11-09T00:32:35Z",
-    "2026-11-09T00:39:42Z",
-    "2026-11-09T00:40:54Z",
-    "2026-11-09T00:41:49Z",
-    "2026-11-09T00:41:51Z"
+    "2026-11-11T00:11:04Z",
+    "2026-11-11T00:17:51Z",
+    "2026-11-11T00:24:54Z",
+    "2026-11-11T00:26:07Z",
+    "2026-11-11T00:27:03Z",
+    "2026-11-11T00:27:04Z"
    ]
   }
  },
@@ -2607,8 +2608,7 @@
     "Mariehamn"
    ],
    "irrotus_pvm": [
-    "2026-11-09T08:35:43Z",
-    "2026-11-09T08:35:42Z"
+    "2026-11-11T00:28:57Z"
    ],
    "id": [
     2325,
@@ -2750,8 +2750,7 @@
     "Mickelsö"
    ],
    "irrotus_pvm": [
-    "2026-11-09T08:35:43Z",
-    "2026-11-09T08:35:42Z"
+    "2026-11-11T00:28:57Z"
    ],
    "id": [
     2355,
@@ -2894,8 +2893,7 @@
     "Öppet hav"
    ],
    "irrotus_pvm": [
-    "2026-11-09T08:35:43Z",
-    "2026-11-09T08:35:42Z"
+    "2026-11-11T00:28:57Z"
    ],
    "id": [
     2390,
@@ -3015,8 +3013,7 @@
     "Skärgårdshavet"
    ],
    "irrotus_pvm": [
-    "2026-11-09T08:35:43Z",
-    "2026-11-09T08:35:42Z"
+    "2026-11-11T00:28:57Z"
    ],
    "id": [
     2903,
@@ -3165,8 +3162,7 @@
     "På SO sidan av Isaksö"
    ],
    "irrotus_pvm": [
-    "2026-11-09T08:35:43Z",
-    "2026-11-09T08:35:42Z"
+    "2026-11-11T00:28:57Z"
    ],
    "id": [
     2463,
@@ -3292,8 +3288,7 @@
     "Velkarin eteläpuoli."
    ],
    "irrotus_pvm": [
-    "2026-11-09T08:35:42Z",
-    "2026-11-09T08:35:43Z"
+    "2026-11-11T00:28:57Z"
    ],
    "id": [
     2815,
@@ -3380,12 +3375,12 @@
     "k"
    ],
    "irrotus_pvm": [
-    "2026-11-09T00:18:54Z",
-    "2026-11-09T00:18:55Z",
-    "2026-11-09T00:25:37Z",
-    "2026-11-09T00:25:53Z",
-    "2026-11-09T00:25:54Z",
-    "2026-11-09T00:25:58Z"
+    "2026-11-11T00:03:41Z",
+    "2026-11-11T00:10:41Z",
+    "2026-11-11T00:10:57Z",
+    "2026-11-11T00:10:58Z",
+    "2026-11-11T00:11:02Z",
+    "2026-11-11T00:11:04Z"
    ],
    "jnro": [
     "2505",
@@ -3487,12 +3482,12 @@
     "3200"
    ],
    "irrotus_pvm": [
-    "2026-11-09T00:17:53Z",
-    "2026-11-09T00:17:25Z",
-    "2026-11-09T00:17:02Z",
-    "2026-11-09T00:18:15Z",
-    "2026-11-09T00:17:43Z",
-    "2026-11-09T00:16:34Z"
+    "2026-11-11T00:02:41Z",
+    "2026-11-11T00:02:14Z",
+    "2026-11-11T00:01:51Z",
+    "2026-11-11T00:03:03Z",
+    "2026-11-11T00:02:31Z",
+    "2026-11-11T00:01:23Z"
    ],
    "vaylan_nimi": [
     "[2905: Enklinge-Houtskari väylä](vaylat:jnro=2905)",
@@ -3610,8 +3605,8 @@
     "Röst ja Roskär saarten välisessä salmessa"
    ],
    "irrotus_pvm": [
-    "2026-11-09T00:42:21Z",
-    "2026-11-09T00:42:22Z"
+    "2026-11-11T00:27:36Z",
+    "2026-11-11T00:27:37Z"
    ],
    "vaylan_nimi": [
     "[2905: Enklinge-Houtskari väylä](vaylat:jnro=2905)",
@@ -3705,8 +3700,8 @@
     "3200"
    ],
    "irrotus_pvm": [
-    "2026-11-09T00:42:22Z",
-    "2026-11-09T00:42:21Z"
+    "2026-11-11T00:27:37Z",
+    "2026-11-11T00:27:36Z"
    ],
    "vaylan_nimi": [
     "[2565: Marhällan-Maarianhamina-väylät](vaylat:jnro=2565)",
@@ -3732,55 +3727,41 @@
   "name": "vesivaylatiedot:vesivaylien_turvalaiteviat_kauppamerenkulku",
   "title": "Vesiväylien turvalaiteviat kauppamerenkulunväylät",
   "layer": "vesivaylien_turvalaiteviat_kauppamerenkulku",
-  "count": 4,
+  "count": 2,
   "geom": {
-   "Point": 4
+   "Point": 2
   },
   "fields": {
    "vikaid": [
-    "-2139921011",
-    "-2139921014",
     "-2139921139",
     "-2139921152"
    ],
    "vikatyyppikoodi": [
-    "1022541001",
     "1022541008",
     "1022541006"
    ],
    "turvalaitenumero": [
-    "7046",
-    "6837",
     "6673"
    ],
    "turvalaitenimifi": [
-    "Långnäs",
-    "Stånggrund",
     "Strömmingsgrundet"
    ],
    "turvalaitenimisv": [
-    "Långnäs",
-    "Stånggrund",
     "Strömmingsgrundet"
    ],
    "vikatyyppifi": [
-    "Valo pimeä",
     "Turvalaitetyö",
     "Rikkoutunut"
    ],
    "vikatyyppisv": [
-    "Ljuset slocknat",
     "Underhåll",
     "Söndrig"
    ],
    "vikatyyppien": [
-    "Light unlit",
     "Under maintenance",
     "Damaged"
    ],
    "kirjausaika": [
-    "2026-11-07T05:02:53",
-    "2026-11-07T04:44:42",
     "2026-10-19T09:26:19",
     "2026-10-16T18:03:18"
    ],
@@ -3788,7 +3769,7 @@
     "kauppamerenkulku"
    ],
    "irrotuspvm": [
-    "2026-11-09T13:36:32.567Z"
+    "2026-11-11T23:03:32.623Z"
    ]
   }
  },
@@ -3797,57 +3778,49 @@
   "name": "vesivaylatiedot:vesivaylien_turvalaiteviat_matalavaylat",
   "title": "Vesiväylien turvalaiteviat matalaväylät",
   "layer": "vesivaylien_turvalaiteviat_matalavaylat",
-  "count": 3,
+  "count": 2,
   "geom": {
-   "Point": 3
+   "Point": 2
   },
   "fields": {
    "vikaid": [
-    "-2139921006",
-    "-2139921574",
+    "-2139921003",
     "-2139921857"
    ],
    "vikatyyppikoodi": [
-    "1022541001",
+    "1022541008",
     "1022541006"
    ],
    "turvalaitenumero": [
-    "6301",
-    "28861",
     "28464"
    ],
    "turvalaitenimifi": [
-    "Tulludden alempi",
-    "Västergrund ylempi",
     "Nötholmsgrund"
    ],
    "turvalaitenimisv": [
-    "Tulludden nedre",
-    "Västergrund övre",
     "Nötholmsgrund"
    ],
    "vikatyyppifi": [
-    "Valo pimeä",
+    "Turvalaitetyö",
     "Rikkoutunut"
    ],
    "vikatyyppisv": [
-    "Ljuset slocknat",
+    "Underhåll",
     "Söndrig"
    ],
    "vikatyyppien": [
-    "Light unlit",
+    "Under maintenance",
     "Damaged"
    ],
    "kirjausaika": [
-    "2026-11-08T06:40:53",
-    "2026-07-26T22:34:46",
+    "2026-11-09T18:09:53",
     "2026-05-30T14:03:56"
    ],
    "vaylaluokitus": [
     "matalavaylat"
    ],
    "irrotuspvm": [
-    "2026-11-09T13:36:32.567Z"
+    "2026-11-11T23:03:32.623Z"
    ]
   }
  },
@@ -3969,8 +3942,7 @@
     "Humalainen"
    ],
    "irrotus_pvm": [
-    "2026-11-09T08:35:43Z",
-    "2026-11-09T08:35:42Z"
+    "2026-11-11T00:28:57Z"
    ],
    "id": [
     2325,
@@ -4125,8 +4097,9 @@
     "[2940: Nyhamn-Rödskär väylä](vaylat:jnro=2940)"
    ],
    "irrotus_pvm": [
-    "2026-11-09T00:42:24Z",
-    "2026-11-09T00:42:23Z"
+    "2026-11-11T00:27:39Z",
+    "2026-11-11T00:27:40Z",
+    "2026-11-11T00:27:38Z"
    ],
    "liikenteentyyppi": [
     "Liikennöintikaista"
@@ -4212,10 +4185,10 @@
     "2395\\n3990"
    ],
    "irrotus_pvm": [
-    "2026-11-09T00:43:42Z",
-    "2026-11-09T00:43:40Z",
-    "2026-11-09T00:43:43Z",
-    "2026-11-09T00:43:41Z"
+    "2026-11-11T00:28:59Z",
+    "2026-11-11T00:28:57Z",
+    "2026-11-11T00:29:00Z",
+    "2026-11-11T00:28:58Z"
    ],
    "vaylan_nimi": [
     "[3245: Utön tuloväylä](vaylat:jnro=3245)",
@@ -4484,12 +4457,12 @@
     "Väri: Musta/keltainen/musta, Väritys: Vaakavyöt ylhäältä lukien, Muoto: Sukkulamainen, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): , Korkeus vedestä: 4"
    ],
    "irrotus_pvm": [
-    "2026-11-09T00:26:00Z",
-    "2026-11-09T00:39:42Z",
-    "2026-11-09T00:41:49Z",
-    "2026-11-09T00:41:51Z",
-    "2026-11-09T00:18:54Z",
-    "2026-11-09T00:18:55Z"
+    "2026-11-11T00:11:04Z",
+    "2026-11-11T00:24:54Z",
+    "2026-11-11T00:27:03Z",
+    "2026-11-11T00:27:04Z",
+    "2026-11-11T00:03:41Z",
+    "2026-11-11T00:10:57Z"
    ],
    "vaylan_nimi": [
     "[2930: Gustaf Dalen-Kalkskär-väylä](vaylat:jnro=2930)\\n[3255: Utö-Naantali väylä](vaylat:jnro=3255)",
@@ -4647,8 +4620,9 @@
     "[2940: Nyhamn-Rödskär väylä](vaylat:jnro=2940)"
    ],
    "irrotus_pvm": [
-    "2026-11-09T00:42:24Z",
-    "2026-11-09T00:42:23Z"
+    "2026-11-11T00:27:39Z",
+    "2026-11-11T00:27:40Z",
+    "2026-11-11T00:27:38Z"
    ],
    "liikenteentyyppi": [
     "Liikennöintikaista"
