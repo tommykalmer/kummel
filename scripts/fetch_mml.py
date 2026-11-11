@@ -6,7 +6,7 @@ och skriver data/rocks.geojson. Nyckeln läses ur config.js.
   stenigt område (38600) och grund (38700) som ytor.
 """
 import json, re, time, urllib.parse, urllib.request
-BBOX = (19.0, 59.65, 21.35, 60.65)
+BBOX = tuple(float(x) for x in os.environ.get("CHART_BBOX", "19.0,59.65,21.35,60.65").split(","))
 BASE = "https://avoin-paikkatieto.maanmittauslaitos.fi/maastotiedot/features/v1"
 key = re.search(r'mmlKey:\s*"([^"]+)"', open("config.js").read()).group(1)
 KIND = {38511: 1, 38512: 2, 38513: 3}
