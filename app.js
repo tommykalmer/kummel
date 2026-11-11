@@ -2179,6 +2179,7 @@ function openMenu() {
       <button class="btn" id="m-routes">Sparade rutter (${S.routes.length})</button>
       <button class="btn" id="m-log">Loggbok (${S.tracks.length} turer)</button>
       <button class="btn" id="m-catch">Fångstlogg (${S.catches.length})</button>
+      <button class="btn" id="m-plotter">Kartplotter (GPX)</button>
       <button class="btn" id="m-data">Flytta och säkerhetskopiera</button>
       <button class="btn" id="m-anchor">Ankarlarm${S.anchor ? " (på)" : ""}</button>
       <button class="btn" id="m-offline">Offlinekarta${S.offline ? " (nedladdad)" : ""}</button>
@@ -2188,7 +2189,7 @@ function openMenu() {
     </div>
     <div class="maker">${ALAND_FLAG} Kummel · en produkt från ${MAKER}, ${MAKER_TOWN}</div>`, "menu");
   $("#m-boats").onclick = openBoats; $("#m-places").onclick = openPlaces; $("#m-routes").onclick = openRoutes;
-  $("#m-log").onclick = openLog; $("#m-catch").onclick = openCatches; $("#m-data").onclick = openData; $("#m-about").onclick = openAbout; $("#m-welcome").onclick = () => termsOk() ? openTour() : openWelcome(); $("#m-legend").onclick = openLegend; $("#m-anchor").onclick = openAnchor; $("#m-offline").onclick = openOffline;
+  $("#m-log").onclick = openLog; $("#m-catch").onclick = openCatches; $("#m-data").onclick = openData; $("#m-plotter").onclick = openPlotter; $("#m-about").onclick = openAbout; $("#m-welcome").onclick = () => termsOk() ? openTour() : openWelcome(); $("#m-legend").onclick = openLegend; $("#m-anchor").onclick = openAnchor; $("#m-offline").onclick = openOffline;
 }
 $("#b-menu").onclick = openMenu;
 function openPlaces() {
@@ -2197,7 +2198,7 @@ function openPlaces() {
 }
 const boundsOf = pts => pts.reduce((b, p) => b.extend([p[1], p[0]]), new maplibregl.LngLatBounds([pts[0][1], pts[0][0]], [pts[0][1], pts[0][0]]));
 function openRoutes() {
-  openSheet("Sparade rutter", `<div class="list">${S.routes.map(r => `<div class="card"><h3>${esc(r.name)}</h3><div class="muted">${routeStats(r.pts.map(p => ({ lat: p[0], lng: p[1] }))).nm.toFixed(1)} nm · ${r.pts.length} punkter</div><div class="row"><button class="btn pri" data-nav="${r.id}">Navigera</button><button class="btn" data-open="${r.id}">Öppna</button><button class="btn" data-share="${r.id}">Dela</button><button class="btn warn" data-del="${r.id}">Ta bort</button></div></div>`).join("") || `<div class="muted">Inga sparade rutter.</div>`}</div>`, "routes");
+  openSheet("Sparade rutter", `<div class="list">${S.routes.map(r => `<div class="card"><h3>${esc(r.name)}</h3><div class="muted">${routeStats(r.pts.map(p => ({ lat: p[0], lng: p[1] }))).nm.toFixed(1)} nm · ${r.pts.length} punkter</div><div class="row"><button class="btn pri" data-nav="${r.id}">Navigera</button><button class="btn" data-open="${r.id}">Öppna</button><button class="btn" data-share="${r.id}">Dela</button><button class="btn" data-rgpx="${r.id}">GPX</button><button class="btn warn" data-del="${r.id}">Ta bort</button></div></div>`).join("") || `<div class="muted">Inga sparade rutter.</div>`}</div>`, "routes");
   document.querySelectorAll("[data-open]").forEach(x => x.onclick = () => {
     const r = S.routes.find(q => q.id === x.dataset.open);
     map.fitBounds(boundsOf(r.pts), { padding: 60, duration: 0 });
@@ -2205,6 +2206,7 @@ function openRoutes() {
   });
   document.querySelectorAll("[data-del]").forEach(x => x.onclick = () => { S.routes = S.routes.filter(q => q.id !== x.dataset.del); save(); openRoutes(); });
   document.querySelectorAll("[data-share]").forEach(x => x.onclick = () => shareRoute(S.routes.find(q => q.id === x.dataset.share)));
+  document.querySelectorAll("[data-rgpx]").forEach(x => x.onclick = () => exportRouteGpx(S.routes.find(q => q.id === x.dataset.rgpx)));
   document.querySelectorAll("[data-nav]").forEach(x => x.onclick = () => { const r = S.routes.find(q => q.id === x.dataset.nav); startNav(r.pts.map(p => ({ lat: p[0], lng: p[1] }))); });
 }
 function openLog() {
@@ -2226,9 +2228,135 @@ function downloadBlob(name, text, type) {
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name;
   document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
 }
-function downloadGpx(t) {
-  const pts = t.pts.map(p => `<trkpt lat="${p[0]}" lon="${p[1]}"><time>${new Date(p[2]).toISOString()}</time></trkpt>`).join("");
-  downloadBlob(`kummel-${new Date(t.start).toISOString().slice(0, 10)}.gpx`, `<?xml version="1.0" encoding="UTF-8"?><gpx version="1.1" creator="Kummel" xmlns="http://www.topografix.com/GPX/1/1"><trk><name>Tur ${new Date(t.start).toLocaleString("sv")}</name><trkseg>${pts}</trkseg></trk></gpx>`, "application/gpx+xml");
+function downloadGpx(t) { sendGpx(`kummel-tur-${new Date(t.start).toISOString().slice(0, 10)}.gpx`, gpxDoc([gpxTrk(t)]), "track"); }
+/* ---------- kartplotter: GPX ut och in ----------
+   GPX läses av Garmin, Raymarine, Simrad/B&G/Lowrance, Furuno, Navionics m.fl.
+   Rutter förenklas till högst GPX_MAX punkter eftersom många plottrar inte klarar fler per rutt. */
+const GPX_MAX = 100;
+const GPX_SYM = { hamn: "Marina", ankring: "Anchor", bad: "Swimming Area", fiske: "Fishing Area", service: "Fuel", fara: "Danger Area", ovrigt: "Flag, Blue" };
+const xesc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+// Douglas–Peucker i meter (lokal projektion), pts = [[lat,lng],...]
+function simplifyLL(pts, tolM) {
+  if (pts.length < 3) return pts.slice();
+  const lat0 = rad(pts[0][0]), P = pts.map(p => [p[1] * 60 * 1852 * Math.cos(lat0), p[0] * 60 * 1852]);
+  const keep = new Uint8Array(pts.length); keep[0] = keep[pts.length - 1] = 1;
+  const st = [[0, pts.length - 1]];
+  while (st.length) {
+    const [a, b] = st.pop(); let md = 0, mi = -1;
+    const [ax, ay] = P[a], [bx, by] = P[b], dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy;
+    for (let i = a + 1; i < b; i++) {
+      const [px, py] = P[i]; let t = L2 ? ((px - ax) * dx + (py - ay) * dy) / L2 : 0; t = Math.max(0, Math.min(1, t));
+      const d = Math.hypot(px - ax - t * dx, py - ay - t * dy); if (d > md) { md = d; mi = i; }
+    }
+    if (md > tolM && mi > 0) { keep[mi] = 1; st.push([a, mi], [mi, b]); }
+  }
+  return pts.filter((_, i) => keep[i]);
+}
+function routeForPlotter(pts) {
+  let out = pts, tol = 0;
+  for (tol = 3; out.length > GPX_MAX && tol < 2000; tol *= 1.5) out = simplifyLL(pts, tol);
+  return { pts: out, tol: out === pts ? 0 : tol / 1.5 };
+}
+function gpxDoc(parts) { return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Kummel – www.kummel.app" xmlns="http://www.topografix.com/GPX/1/1">\n${parts.join("\n")}\n</gpx>\n`; }
+function gpxRte(r, warn) {
+  const { pts, tol } = routeForPlotter(r.pts); if (tol > 25 && warn) warn.push(r.name);
+  const name = xesc(String(r.name || "Rutt").slice(0, 30));
+  return `<rte><name>${name}</name><desc>${xesc(r.name)} · Kummel</desc>${pts.map((p, i) => `<rtept lat="${(+p[0]).toFixed(6)}" lon="${(+p[1]).toFixed(6)}"><name>${i === 0 ? "START" : i === pts.length - 1 ? "MAL" : "K" + String(i).padStart(3, "0")}</name></rtept>`).join("")}</rte>`;
+}
+function gpxWpt(p) { return `<wpt lat="${(+p.lat).toFixed(6)}" lon="${(+p.lng).toFixed(6)}"><name>${xesc(String(p.name || "Plats").slice(0, 30))}</name>${p.note ? `<desc>${xesc(p.note)}</desc>` : ""}<sym>${GPX_SYM[p.cat] || GPX_SYM.ovrigt}</sym></wpt>`; }
+function gpxTrk(t) { return `<trk><name>Tur ${new Date(t.start).toLocaleDateString("sv")}</name><trkseg>${t.pts.map(p => `<trkpt lat="${p[0]}" lon="${p[1]}">${p[2] ? `<time>${new Date(p[2]).toISOString()}</time>` : ""}</trkpt>`).join("")}</trkseg></trk>`; }
+const gpxSafeName = s => String(s || "kummel").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "kummel";
+async function sendGpx(name, xml, what) {
+  const f = new File([xml], name, { type: "application/gpx+xml" });
+  const mobile = matchMedia("(pointer:coarse)").matches;
+  if (mobile && navigator.canShare) {
+    let g = f; if (!navigator.canShare({ files: [g] })) g = new File([xml], name, { type: "text/plain" });
+    if (navigator.canShare({ files: [g] })) { try { await navigator.share({ files: [g], title: name }); track("gpx_export", { what, how: "share" }); return; } catch (e) { if (e.name === "AbortError") return; } }
+  }
+  downloadBlob(name, xml, "application/gpx+xml"); track("gpx_export", { what, how: "file" });
+}
+function exportRouteGpx(r) { const w = []; const x = gpxDoc([gpxRte(r, w)]); sendGpx(`${gpxSafeName(r.name)}.gpx`, x, "route"); if (w.length) toast("Rutten har förenklats till högst " + GPX_MAX + " punkter. Kontrollera den i plottern.", 4500); }
+function wptCat(sym, name) {
+  const s = (sym + " " + name).toLowerCase();
+  return /anchor|ankr/.test(s) ? "ankring" : /marina|harbor|harbour|hamn|dock|gästhamn/.test(s) ? "hamn" : /fish|fisk/.test(s) ? "fiske" : /swim|bad/.test(s) ? "bad" : /fuel|gas|bensin|diesel/.test(s) ? "service" : /danger|skull|hazard|rock|shoal|fara|grund|sten/.test(s) ? "fara" : "ovrigt";
+}
+function importGpx(text) {
+  const doc = new DOMParser().parseFromString(text, "application/xml");
+  if (doc.getElementsByTagName("parsererror").length || !doc.getElementsByTagName("gpx").length) throw new Error("ingen gpx");
+  const kids = (el, tag) => Array.from(el.getElementsByTagName(tag)), txt = (el, tag) => (el.getElementsByTagName(tag)[0]?.textContent || "").trim();
+  const ll = el => [+(+el.getAttribute("lat")).toFixed(6), +(+el.getAttribute("lon")).toFixed(6)];
+  const ok = p => isFinite(p[0]) && isFinite(p[1]) && Math.abs(p[0]) <= 90 && Math.abs(p[1]) <= 180;
+  const n = { r: 0, p: 0, t: 0, dup: 0 };
+  // rutter
+  kids(doc, "rte").forEach((el, i) => {
+    const pts = kids(el, "rtept").map(ll).filter(ok); if (pts.length < 2) return;
+    const name = txt(el, "name") || `Importerad rutt ${i + 1}`;
+    if (S.routes.some(r => r.name === name && r.pts.length && distNm({ lat: r.pts[0][0], lng: r.pts[0][1] }, { lat: pts[0][0], lng: pts[0][1] }) < .01)) { n.dup++; return; }
+    S.routes.unshift({ id: uid(), name, pts, created: Date.now(), from: "gpx" }); n.r++;
+  });
+  // platser (endast fristående wpt, inte rutt- eller spårpunkter)
+  Array.from(doc.documentElement.children).filter(e => e.localName === "wpt").forEach(el => {
+    const p = ll(el); if (!ok(p)) return;
+    const name = txt(el, "name") || "Plats";
+    if (S.places.some(q => q.name === name && distNm(q, { lat: p[0], lng: p[1] }) < .01)) { n.dup++; return; }
+    S.places.push({ id: uid(), created: Date.now(), name, note: txt(el, "desc") || txt(el, "cmt"), cat: wptCat(txt(el, "sym"), name), lat: p[0], lng: p[1] }); n.p++;
+  });
+  // spår: med tider → loggboken, utan tider → rutt
+  kids(doc, "trk").forEach((el, i) => {
+    const pts = kids(el, "trkpt").map(e => { const p = ll(e), t = Date.parse(txt(e, "time")); return [p[0], p[1], isFinite(t) ? t : 0]; }).filter(ok);
+    if (pts.length < 2) return;
+    const name = txt(el, "name") || `Importerat spår ${i + 1}`;
+    if (pts[0][2] && pts[pts.length - 1][2] > pts[0][2]) {
+      const start = pts[0][2]; if (S.tracks.some(t => Math.abs((t.start || 0) - start) < 60000)) { n.dup++; return; }
+      let max = 0; for (let k = 1; k < pts.length; k++) { const dt = (pts[k][2] - pts[k - 1][2]) / 3600000; if (dt > 0.0008) { const v = distNm({ lat: pts[k - 1][0], lng: pts[k - 1][1] }, { lat: pts[k][0], lng: pts[k][1] }) / dt; if (v < 60) max = Math.max(max, v); } }
+      S.tracks.unshift({ id: uid(), start, end: pts[pts.length - 1][2], pts, nm: trackNm(pts), max, boat: name, from: "gpx" }); n.t++;
+    } else {
+      const rp = simplifyLL(pts.map(p => [p[0], p[1]]), 8);
+      if (S.routes.some(r => r.name === name)) { n.dup++; return; }
+      S.routes.unshift({ id: uid(), name, pts: rp, created: Date.now(), from: "gpx" }); n.r++;
+    }
+  });
+  S.tracks.sort((x, y) => (y.start || 0) - (x.start || 0));
+  save(); drawPlaces();
+  const parts = [n.r && `${n.r} ${n.r === 1 ? "rutt" : "rutter"}`, n.p && `${n.p} ${n.p === 1 ? "plats" : "platser"}`, n.t && `${n.t} ${n.t === 1 ? "tur" : "turer"} till loggboken`].filter(Boolean);
+  track("gpx_import", { r: n.r, p: n.p, t: n.t });
+  return (parts.length ? "Inläst: " + parts.join(", ") + "." : "Filen innehöll inget nytt att läsa in.") + (n.dup ? ` ${n.dup} fanns redan och hoppades över.` : "");
+}
+function openPlotter() {
+  const nR = S.routes.length, nP = S.places.length, nT = S.tracks.length;
+  openSheet("Kartplotter (GPX)", `
+    <div class="muted">Rita rutter och spara platser i Kummel hemma, och för över dem till plottern i båten. Det går också åt andra hållet. Kummel använder GPX, som nästan alla plottrar och navigationsappar kan läsa: Garmin, Raymarine, Simrad, B&amp;G, Lowrance, Furuno, Navionics med flera.</div>
+    <div class="card"><h3>Från Kummel till plottern</h3>
+      <label class="row"><input type="checkbox" id="gx-r" ${nR ? "checked" : "disabled"}> Rutter (${nR})</label>
+      <label class="row"><input type="checkbox" id="gx-p" ${nP ? "checked" : "disabled"}> Platser (${nP})</label>
+      <label class="row"><input type="checkbox" id="gx-t" ${nT ? "" : "disabled"}> Turer från loggboken (${nT})</label>
+      <div class="row"><button class="btn pri" id="gx-exp" ${nR + nP + nT ? "" : "disabled"}>Skapa GPX-fil</button></div>
+      <div class="muted">Rutter med fler än ${GPX_MAX} punkter förenklas, eftersom många plottrar inte klarar fler per rutt. En enskild rutt kan du också exportera från Sparade rutter.</div></div>
+    <div class="card"><h3>Från plottern till Kummel</h3>
+      <label class="btn pri" style="text-align:center">Läs in GPX-fil<input type="file" id="gx-imp" hidden></label>
+      <div class="muted">Rutter blir sparade rutter, waypoints blir platser och inspelade spår hamnar i loggboken. Inget du redan har tas bort.</div>
+      <div class="muted" id="gx-msg"></div></div>
+    <div class="card"><h3>Så gör du i plottern</h3><div class="muted">
+      <b>Minneskort:</b> spara filen på ett SD- eller microSD-kort och sätt i det i plottern. Välj import under filer eller användardata. På Garmin läggs filen i mappen <b>Garmin/GPX</b> på kortet.<br>
+      <b>Via app:</b> många plottrar kan ta emot rutter från tillverkarens app i telefonen, till exempel Garmin ActiveCaptain eller C-MAP. Dela filen dit från Kummel.<br>
+      <b>Från plottern:</b> exportera rutter, waypoints eller spår till minneskortet som GPX och läs in filen här.</div></div>
+    <div class="muted">Kontrollera alltid rutten i plottern innan du kör efter den.</div>`, "plotter");
+  $("#gx-exp").onclick = () => {
+    const parts = [], warn = [], wr = $("#gx-r").checked, wp = $("#gx-p").checked, wt = $("#gx-t").checked;
+    if (wp) S.places.forEach(p => parts.push(gpxWpt(p)));
+    if (wr) S.routes.forEach(r => parts.push(gpxRte(r, warn)));
+    if (wt) S.tracks.forEach(t => parts.push(gpxTrk(t)));
+    if (!parts.length) { toast("Välj vad som ska med i filen."); return; }
+    sendGpx(`kummel-${new Date().toISOString().slice(0, 10)}.gpx`, gpxDoc(parts), [wr && "r", wp && "p", wt && "t"].filter(Boolean).join(""));
+    if (warn.length) toast(`Förenklade rutter: ${warn.join(", ")}. Kontrollera dem i plottern.`, 5000);
+  };
+  $("#gx-imp").onchange = async e => {
+    const file = e.target.files[0]; if (!file) return;
+    const msg = t => { const el = $("#gx-msg"); if (el) el.textContent = t; };
+    try { msg("Läser in …"); const r = importGpx(await file.text()); msg(r); toast(r, 4500); }
+    catch (err) { msg(""); toast("Filen kunde inte läsas som GPX."); }
+    e.target.value = "";
+  };
 }
 function openCatches() {
   const st = catchStats(), recs = Object.entries(st.rec).filter(([, r]) => r.kg || r.len).sort((x, y) => y[1].n - x[1].n);
