@@ -103,11 +103,13 @@ const CHART_URL = "pmtiles://" + tileUrl("chart");
 const EMPTY = { type: "FeatureCollection", features: [] };
 /* Lantmäteriverket i Finland (Maanmittauslaitos): flygbild och fastighetsgränser, kräver egen gratis API-nyckel */
 const mmlKey = () => (window.KUMMEL_CONFIG && window.KUMMEL_CONFIG.mmlKey) || "";   // appens egen nyckel för alla användare
+// skarp flygbild på mobilens täta skärm: halv rutstorlek ger en zoomnivå mer detalj (MML har flygbild till nivå 18)
+const ORTO_TILE = (window.devicePixelRatio || 1) >= 1.5 ? 128 : 256;
 const MML = (layer, fmt) => `https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts/1.0.0/${layer}/default/WGS84_Pseudo-Mercator/{z}/{y}/{x}.${fmt}?api-key=${encodeURIComponent(mmlKey())}`;
 function mmlSources() {
   if (!mmlKey()) return {};
   return {
-    "mml-orto": { type: "raster", tiles: [MML("ortokuva", "jpg")], tileSize: 256, maxzoom: 16, bounds: [19, 59.3, 32, 70.2], attribution: "Flygbild © Maanmittauslaitos" },
+    "mml-orto": { type: "raster", tiles: [MML("ortokuva", "jpg")], tileSize: ORTO_TILE, maxzoom: 18, bounds: [19, 59.3, 32, 70.2], attribution: "Flygbild © Maanmittauslaitos" },
     "mml-prop": { type: "raster", tiles: [MML("kiinteistojaotus", "png")], tileSize: 256, minzoom: 12, maxzoom: 16, bounds: [19, 59.3, 32, 70.2], attribution: "Fastighetsgränser © Maanmittauslaitos" }
   };
 }
@@ -140,7 +142,7 @@ function baseStyle() {
 KummelChart.setTheme(S.theme === "day" || !S.theme ? "day" : "dark");
 const map = new maplibregl.Map({
   container: "map", style: baseStyle(), center: [S.view.lng, S.view.lat], zoom: S.view.z, bearing: S.view.bearing || 0,
-  maxZoom: 18.5, minZoom: 4, attributionControl: false, dragRotate: true, pitchWithRotate: false, touchPitch: false, hash: false
+  maxZoom: 19.5, minZoom: 4, attributionControl: false, dragRotate: true, pitchWithRotate: false, touchPitch: false, hash: false
 });
 map.on("styleimagemissing", e => {
   if (e.id === "ship" || e.id === "ship-still") { // fartyg: spetsig skrovform i fart, romb när det ligger still (SDF)
