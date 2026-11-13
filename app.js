@@ -267,6 +267,8 @@ function applyLayers() {
   const G = KummelChart.groups(), on = g => (S.layers.groups || {})[g] !== false;
   Object.entries(G).forEach(([g, ids]) => { if (!on(g)) ids.forEach(id => vis(id, false)); });
   if (S.mode !== "fiske") (G.steep || []).forEach(id => vis(id, false));   // branter bara i fiskeläget
+  // strömmande vind: lugn karta som i Windy, utan sjömärken, sektorer, djupsiffror och skyltar
+  try { if (wxOn && wxMode === "flow") ["marks", "sectors", "soundings", "limits", "steep"].forEach(g => (G[g] || []).forEach(id => vis(id, false))); } catch (e) {}
 }
 
 /* ---------- places (markers) ---------- */
@@ -1941,13 +1943,13 @@ function renderWxLayer() {
   if (!wxOn || !wxGrid) return;
   const lim = boat().maxWind || 10, i = wxGrid.t0 + wxStep, H = wxGrid.F[0].hourly;
   if (i >= H.time.length) return;
-  const water = wxMode === "water";
-  setData("wxgrid", water ? EMPTY : { type: "FeatureCollection", features: wxGrid.pts.map((p, k) => {
+  const water = wxMode === "water", flow = wxMode === "flow";
+  setData("wxgrid", water || flow ? EMPTY : { type: "FeatureCollection", features: wxGrid.pts.map((p, k) => {
     const h = wxGrid.F[k]?.hourly; if (!h) return null;
     const w = h.wind_speed_10m[i], g = h.wind_gusts_10m[i], d = h.wind_direction_10m[i], wave = wxGrid.M[k]?.hourly?.wave_height?.[i];
     return { type: "Feature", properties: { w, g, lim, rot: (d + 180) % 360, lbl: `${Math.round(w)} (${Math.round(g)})${wave != null ? "\n" + wave.toFixed(1) + " m" : ""}` }, geometry: { type: "Point", coordinates: [p.lng, p.lat] } };
   }).filter(Boolean) });
-  setData("wxobs", !water && wxStep === 0 ? { type: "FeatureCollection", features: wxObs.map(o => ({ type: "Feature", properties: { w: o.w, g: o.g ?? o.w, lim, rot: (o.d + 180) % 360, lbl: `${Math.round(o.w)}${o.g != null ? ` (${Math.round(o.g)})` : ""}` }, geometry: { type: "Point", coordinates: [o.lng, o.lat] } })) } : EMPTY);
+  setData("wxobs", !water && !flow && wxStep === 0 ? { type: "FeatureCollection", features: wxObs.map(o => ({ type: "Feature", properties: { w: o.w, g: o.g ?? o.w, lim, rot: (o.d + 180) % 360, lbl: `${Math.round(o.w)}${o.g != null ? ` (${Math.round(o.g)})` : ""}` }, geometry: { type: "Point", coordinates: [o.lng, o.lat] } })) } : EMPTY);
   if (water) {
     const fs = [
       ...wxGrid.pts.map((p, k) => { const v = wxGrid.M[k]?.hourly?.sea_surface_temperature?.[i]; return v == null ? null : { type: "Feature", properties: { v, obs: 0, lbl: v.toFixed(1) + "°" }, geometry: { type: "Point", coordinates: [p.lng, p.lat] } }; }).filter(Boolean),
@@ -1962,9 +1964,10 @@ function renderWxLayer() {
   } else setData("wxsst", EMPTY);
   const t = new Date(H.time[i]);
   $("#wxb-time").textContent = wxStep === 0 ? "Nu" : `${t.toDateString() === new Date().toDateString() ? "Idag" : DAYS[t.getDay()]} ${pad(t.getHours())}:00`;
-  $("#wxb-sub").textContent = water ? `Vattentemperatur vid ytan${wxStep === 0 ? "" : " · prognos"}` : `Vind m/s (byar) och våghöjd · ${wxObs.length && wxStep === 0 ? "kuststationer uppmätta" : "prognos"}`;
+  $("#wxb-sub").textContent = water ? `Vattentemperatur vid ytan${wxStep === 0 ? "" : " · prognos"}` : flow ? `Vindstyrka och vindriktning · ${wxStep === 0 ? "nu" : "prognos"}` : `Vind m/s (byar) och våghöjd · ${wxObs.length && wxStep === 0 ? "kuststationer uppmätta" : "prognos"}`;
   document.querySelectorAll("[data-wxm]").forEach(b => b.setAttribute("aria-pressed", b.dataset.wxm === wxMode));
-  $("#wxb-legend-wind").classList.toggle("hidden", water); $("#wxb-legend-water").classList.toggle("hidden", !water);
+  if (flow !== flowCalm) { flowCalm = flow; applyLayers(); }
+  $("#wxb-legend-wind").classList.toggle("hidden", water || flow); $("#wxb-legend-water").classList.toggle("hidden", !water); $("#wxb-legend-flow").classList.toggle("hidden", !flow);
   flowStart();
 }
 /* uppmätt vind från Meteorologiska institutets kuststationer (öppen data) */
@@ -1996,7 +1999,7 @@ function setWx(on) {
   $("#b-wx").setAttribute("aria-pressed", on);
   $("#wxbar").classList.toggle("hidden", !on);
   if (on) { wxStep = 0; $("#wxb-range").value = 0; loadWxGrid(); loadWxObs(); }
-  else { setData("wxgrid", EMPTY); setData("wxobs", EMPTY); setData("wxsst", EMPTY); flowStop(); }
+  else { setData("wxgrid", EMPTY); setData("wxobs", EMPTY); setData("wxsst", EMPTY); flowHide(); if (flowCalm) { flowCalm = false; applyLayers(); } }
 }
 $("#b-wx").onclick = () => setWx(!wxOn);
 $("#wxb-close").onclick = () => setWx(false);
@@ -2855,7 +2858,7 @@ function openWaterLevel() {
 setInterval(() => loadWaterLevel(), 15 * 60000);
 
 /* ---------- strömmande vind (partiklar som flyter med vinden, som på Windy) ---------- */
-let flowRAF = null, flowParts = [], flowField = null, flowCv = null;
+let flowRAF = null, flowParts = [], flowField = null, flowCv = null, flowCalm = false;
 function windField() {   // vind per skärmruta (px/bildruta), interpolerad mellan prognospunkterna
   if (!wxGrid || !wxGrid.pts.length) return null;
   const i = wxGrid.t0 + wxStep, br = map.getBearing() * Math.PI / 180, P = [];
@@ -2871,35 +2874,55 @@ function windField() {   // vind per skärmruta (px/bildruta), interpolerad mell
   }
   return { W, H, G, cols, rows, U, V, S: S2, at: (x, y) => { const q = Math.max(0, Math.min(cols - 1, Math.round(x / G))), r = Math.max(0, Math.min(rows - 1, Math.round(y / G))), j = r * cols + q; return [U[j], V[j], S2[j]]; } };
 }
-// ljust sjökort: mörka linjer (vita syntes inte mot det vita vattnet); flygbild och mörka teman: ljusa linjer
-const flowLight = () => (S.theme || "day") === "day" && S.layers.base !== "sat";
-function flowColor(w) { const lim = boat().maxWind || 10, L = flowLight(); return w > lim ? (L ? "205,35,35" : "255,110,110") : w > lim * .75 ? (L ? "200,120,0" : "255,214,102") : (L ? "16,58,92" : "255,255,255"); }
+/* strömmande vind i Windys stil: vindstyrkan som en mjuk färgyta, och glesa vita streck som rör sig med vinden */
+const WINDY = [[0, 98, 113, 183], [1, 57, 97, 159], [3, 74, 148, 169], [5, 77, 141, 123], [7, 83, 165, 83], [9, 53, 159, 53], [11, 167, 157, 81], [13, 159, 127, 58], [15, 161, 108, 92], [17, 129, 58, 78], [19, 175, 80, 136], [21, 117, 74, 147], [24, 109, 97, 163], [27, 68, 105, 141], [29, 92, 144, 152], [36, 125, 68, 165]];
+function windyRGB(w) {
+  if (w <= WINDY[0][0]) return WINDY[0].slice(1);
+  for (let i = 1; i < WINDY.length; i++) if (w <= WINDY[i][0]) { const a = WINDY[i - 1], b = WINDY[i], t = (w - a[0]) / (b[0] - a[0]); return [1, 2, 3].map(j => Math.round(a[j] + (b[j] - a[j]) * t)); }
+  return WINDY[WINDY.length - 1].slice(1);
+}
 function flowStart() {
   flowStop();
-  if (!wxOn || wxMode !== "flow" || document.hidden) return;
-  flowField = windField(); if (!flowField) return;
-  if (!flowCv) { flowCv = document.createElement("canvas"); flowCv.id = "flowcv"; map.getContainer().appendChild(flowCv); }
+  if (!wxOn || wxMode !== "flow") { flowHide(); return; }
+  if (document.hidden) return;
+  flowField = windField(); if (!flowField) { flowHide(); return; }
+  const box = map.getContainer();
+  if (!flowCv) { flowCv = document.createElement("canvas"); flowCv.id = "flowcv"; box.appendChild(flowCv); }
   const dpr = Math.min(2, window.devicePixelRatio || 1), F = flowField;
+  // färgytan: en pixel per rutnätspunkt, som kartbild under djupkurvor, stränder och sjömärken (följer kartan när man drar)
+  const small = document.createElement("canvas"); small.width = F.cols; small.height = F.rows;
+  const sg = small.getContext("2d"), img = sg.createImageData(F.cols, F.rows);
+  for (let j = 0; j < F.cols * F.rows; j++) { const c = windyRGB(F.S[j]); img.data[j * 4] = c[0]; img.data[j * 4 + 1] = c[1]; img.data[j * 4 + 2] = c[2]; img.data[j * 4 + 3] = 255; }
+  sg.putImageData(img, 0, 0);
+  const h = F.G / 2, corner = (x, y) => map.unproject([x, y]).toArray();
+  const coords = [corner(-h, -h), corner(F.cols * F.G - h, -h), corner(F.cols * F.G - h, F.rows * F.G - h), corner(-h, F.rows * F.G - h)], url = small.toDataURL("image/png");
+  const src = map.getSource("windheat");
+  if (src) src.updateImage({ url, coordinates: coords });
+  else { map.addSource("windheat", { type: "image", url, coordinates: coords }); map.addLayer({ id: "windheat", type: "raster", source: "windheat", paint: { "raster-opacity": .78, "raster-fade-duration": 0, "raster-resampling": "linear" } }, map.getLayer("depcnt") ? "depcnt" : undefined); }
+  if (!map.getLayer("windheat-coast") && map.getSource("ofm")) map.addLayer({ id: "windheat-coast", type: "line", source: "ofm", "source-layer": "water", paint: { "line-color": "rgba(12,28,40,.55)", "line-width": ["interpolate", ["linear"], ["zoom"], 5, .4, 10, .8, 14, 1.2] } }, map.getLayer("depcnt") ? "depcnt" : undefined);   // strandlinjer ovanpå färgytan, som i Windy
+  ["windheat", "windheat-coast"].forEach(id => map.getLayer(id) && map.setLayoutProperty(id, "visibility", "visible"));
   flowCv.width = F.W * dpr; flowCv.height = F.H * dpr; flowCv.style.width = F.W + "px"; flowCv.style.height = F.H + "px"; flowCv.style.display = "block";
   const g = flowCv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.lineCap = "round";
-  const N = Math.round(Math.min(1800, F.W * F.H / 380)), spawn = p => { p.x = Math.random() * F.W; p.y = Math.random() * F.H; p.age = 0; p.life = 40 + Math.random() * 70; return p; };
+  const N = Math.round(Math.min(700, F.W * F.H / 1600)), spawn = p => { p.x = Math.random() * F.W; p.y = Math.random() * F.H; p.age = 0; p.life = 60 + Math.random() * 80; return p; };
   flowParts = Array.from({ length: N }, () => spawn({}));
-  const k = .22 * Math.pow(2, Math.max(0, 12 - map.getZoom()) * .15);   // px per (m/s) och bildruta
+  const k = .2 * Math.pow(2, Math.max(0, 12 - map.getZoom()) * .15);   // px per (m/s) och bildruta
   const step = () => {
-    g.globalCompositeOperation = "destination-in"; g.fillStyle = "rgba(0,0,0,.94)"; g.fillRect(0, 0, F.W, F.H);
-    g.globalCompositeOperation = "source-over"; g.lineWidth = 1.6;
+    g.globalCompositeOperation = "destination-in"; g.fillStyle = "rgba(0,0,0,.955)"; g.fillRect(0, 0, F.W, F.H);
+    g.globalCompositeOperation = "source-over"; g.lineWidth = 1.5; g.strokeStyle = "rgba(255,255,255,.55)";
+    g.beginPath();
     for (const p of flowParts) {
-      const [u, v, w] = F.at(p.x, p.y), sp = w > .1 ? Math.max(1, 3 / w) : 1, nx = p.x + u * k * sp, ny = p.y + v * k * sp;   // svag vind rör sig ändå synligt
-      g.strokeStyle = `rgba(${flowColor(w)},${Math.min(.9, .5 + w / 25)})`;
-      g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(nx, ny); g.stroke();
+      const [u, v, w] = F.at(p.x, p.y), sp = w > .1 ? Math.max(1, 2 / w) : 1, nx = p.x + u * k * sp, ny = p.y + v * k * sp;
+      g.moveTo(p.x, p.y); g.lineTo(nx, ny);
       p.x = nx; p.y = ny;
       if (++p.age > p.life || nx < 0 || ny < 0 || nx > F.W || ny > F.H) spawn(p);
     }
+    g.stroke();
     flowRAF = requestAnimationFrame(step);
   };
   flowRAF = requestAnimationFrame(step);
 }
 function flowStop() { if (flowRAF) cancelAnimationFrame(flowRAF); flowRAF = null; if (flowCv) { flowCv.getContext("2d").clearRect(0, 0, flowCv.width, flowCv.height); flowCv.style.display = "none"; } }
+function flowHide() { flowStop(); ["windheat", "windheat-coast"].forEach(id => map.getLayer(id) && map.setLayoutProperty(id, "visibility", "none")); }
 map.on("movestart", flowStop);
 map.on("moveend", () => { if (wxOn) { flowStart(); if (wxMode === "water") renderWxLayer(); } });
 document.addEventListener("visibilitychange", () => { if (document.hidden) flowStop(); else if (wxOn) flowStart(); });
