@@ -267,6 +267,8 @@ body:has(#wlbar:not(.hidden)) #anchorbar{top:calc(124px + var(--sat))}
 .wl-chart{width:100%;height:auto;color:var(--fg);flex:none}
 .feat-row{display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-bottom:1px dashed var(--line)}.feat-row input{margin-top:4px;flex:none;width:20px;height:20px}
 #flowcv{position:absolute;inset:0;pointer-events:none;display:none;z-index:2}
+.rain-scale{position:relative;height:16px;border-radius:4px;background:linear-gradient(90deg,rgba(140,190,255,.5) 0%,rgb(70,140,245) 20%,rgb(40,175,120) 36%,rgb(235,215,50) 52%,rgb(245,140,35) 68%,rgb(215,40,55) 84%,rgb(165,40,170) 100%);font-size:10px;font-weight:700;color:#fff;text-shadow:0 0 2px rgba(0,0,0,.7);flex:1 1 100%}.rain-scale span{position:absolute;top:1px;transform:translateX(-50%)}
+.wxb-modes button{white-space:nowrap}
 .windy-scale{position:relative;height:16px;border-radius:4px;background:linear-gradient(90deg,rgb(98,113,183) 0.0%,rgb(57,97,159) 3.3%,rgb(74,148,169) 10.0%,rgb(77,141,123) 16.7%,rgb(83,165,83) 23.3%,rgb(53,159,53) 30.0%,rgb(167,157,81) 36.7%,rgb(159,127,58) 43.3%,rgb(161,108,92) 50.0%,rgb(129,58,78) 56.7%,rgb(175,80,136) 63.3%,rgb(117,74,147) 70.0%,rgb(109,97,163) 80.0%,rgb(68,105,141) 90.0%,rgb(92,144,152) 100.0%);display:flex;font-size:10px;font-weight:700;color:#fff;text-shadow:0 0 2px rgba(0,0,0,.6);flex:1 1 100%}.windy-scale span{position:absolute;top:1px;transform:translateX(-50%)}
 .disclaimer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
 .hidden{display:none!important}
@@ -370,7 +372,7 @@ label.row{flex-wrap:nowrap;align-items:center}
   <div id="nav-rest" class="muted"></div><div id="nav-adv"></div><div id="nav-xte"></div>
   <div id="nav-reroute" class="hidden"><span id="nav-reroute-txt"></span> <button class="btn" id="nav-rr-yes">Räkna om</button><button class="btn" id="nav-rr-no">Nej</button></div>
 </div>
-<div id="wxbar" class="hidden"><div class="wxb-top"><b id="wxb-time">Nu</b><span class="wxb-modes"><button data-wxm="wind" aria-pressed="true">Vind</button><button data-wxm="flow" aria-pressed="false">Strömmande</button><button data-wxm="water" aria-pressed="false">Vatten°</button></span><button class="x" id="wxb-close" aria-label="Stäng väderlagret">×</button></div><input type="range" id="wxb-range" min="0" max="47" step="1" value="0" aria-label="Tid för prognosen"><div id="wxb-sub" class="muted" style="font-size:12px"></div><div class="wxb-legend" id="wxb-legend-wind"><span><i style="background:var(--stbd)"></i>under din gräns</span><span><i style="background:var(--signal)"></i>nära</span><span><i style="background:var(--port)"></i>över</span><span><b>Stor pil</b> = uppmätt nu</span></div><div class="wxb-legend hidden" id="wxb-legend-flow"><div class="windy-scale"><span style="left:0.0%">0</span><span style="left:10.0%">3</span><span style="left:16.7%">5</span><span style="left:33.3%">10</span><span style="left:50.0%">15</span><span style="left:66.7%">20</span><span style="left:83.3%">25</span></div><span>m/s</span></div><div class="wxb-legend hidden" id="wxb-legend-water"><span><b id="sst-lo">–</b></span><span class="sst-scale"></span><span><b id="sst-hi">–</b></span><span>kallast–varmast i bild</span><span><b>Mörk ring</b> = uppmätt</span></div></div>
+<div id="wxbar" class="hidden"><div class="wxb-top"><b id="wxb-time">Nu</b><span class="wxb-modes"><button data-wxm="wind" aria-pressed="true">Vind</button><button data-wxm="flow" aria-pressed="false">Flöde</button><button data-wxm="rain" aria-pressed="false">Regn</button><button data-wxm="water" aria-pressed="false">Vatten°</button></span><button class="x" id="wxb-close" aria-label="Stäng väderlagret">×</button></div><input type="range" id="wxb-range" min="0" max="47" step="1" value="0" aria-label="Tid för prognosen"><div id="wxb-sub" class="muted" style="font-size:12px"></div><div class="wxb-legend" id="wxb-legend-wind"><span><i style="background:var(--stbd)"></i>under din gräns</span><span><i style="background:var(--signal)"></i>nära</span><span><i style="background:var(--port)"></i>över</span><span><b>Stor pil</b> = uppmätt nu</span></div><div class="wxb-legend hidden" id="wxb-legend-flow"><div class="windy-scale"><span style="left:2%">0</span><span style="left:10.0%">3</span><span style="left:16.7%">5</span><span style="left:33.3%">10</span><span style="left:50.0%">15</span><span style="left:66.7%">20</span><span style="left:83.3%">25</span></div><span>m/s · tryck på kartan för exakt värde</span></div><div class="wxb-legend hidden" id="wxb-legend-rain"><div class="rain-scale"><span style="left:4%">0,1</span><span style="left:20%">0,5</span><span style="left:36%">1</span><span style="left:52%">2</span><span style="left:68%">5</span><span style="left:84%">10</span></div><span>mm/h · tryck på kartan för exakt värde</span></div><div class="wxb-legend hidden" id="wxb-legend-water"><span><b id="sst-lo">–</b></span><span class="sst-scale"></span><span><b id="sst-hi">–</b></span><span>kallast–varmast i bild</span><span><b>Mörk ring</b> = uppmätt</span></div></div>
 <div id="satlegend" hidden></div>
 <div id="fab">
   <button class="fab mob hidden" id="b-mob" title="Man överbord">MOB</button>
@@ -387,8 +389,8 @@ label.row{flex-wrap:nowrap;align-items:center}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script src="config.js?v=202611132140"></script>
-<script src="chartstyle.js?v=202611132140"></script>
-<script src="app.js?v=202611132140"></script>
+<script src="config.js?v=202611132230"></script>
+<script src="chartstyle.js?v=202611132230"></script>
+<script src="app.js?v=202611132230"></script>
 </body>
 </html>
