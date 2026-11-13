@@ -271,6 +271,7 @@ function applyLayers() {
   const G = KummelChart.groups(), on = g => (S.layers.groups || {})[g] !== false;
   Object.entries(G).forEach(([g, ids]) => { if (!on(g)) ids.forEach(id => vis(id, false)); });
   if (S.mode !== "fiske") (G.steep || []).forEach(id => vis(id, false));   // branter bara i fiskeläget
+  if (base === "sat") ["ofm-place", "ofm-water-name"].forEach(id => vis(id, true));   // på flygbilden visas namnen alltid (valet finns inte där)
   // namn på flygbilden: vit text med mörk kant, annars sjökortets färger
   if (map.getLayer("ofm-place")) {
     const ids = ["ofm-place", "ofm-water-name"].filter(id => map.getLayer(id));
