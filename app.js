@@ -295,18 +295,6 @@ function refreshCatches() {
   if (mapReady && map.getLayer("catch-heat")) map.setLayoutProperty("catch-heat", "visibility", S.mode === "fiske" && S.heat ? "visible" : "none");
   setData("catches", { type: "FeatureCollection", features: S.mode === "fiske" ? S.catches.map(c => ({ type: "Feature", properties: { id: c.id }, geometry: { type: "Point", coordinates: [c.lng, c.lat] } })) : [] });
 }
-// sjöväder med färgyta: ett tryck på kartan visar exakt vind och regn just där
-map.on("click", e => {
-  if (!wxOn || !(wxMode === "flow" || wxMode === "rain") || planning || e.defaultPrevented) return;
-  if (wxPop) { wxPop.remove(); wxPop = null; }
-  const v = wxAt(e.lngLat); if (!v) return;
-  e.preventDefault();
-  wxPop = new maplibregl.Popup({ closeButton: false, maxWidth: "220px", className: "wxpop" }).setLngLat(e.lngLat)
-    .setHTML(`<div style="font:600 13px var(--f-ui);color:#14232e;line-height:1.35"><div style="font:700 20px var(--f-head)">${Math.round(v.w)} <span style="font-size:14px">m/s</span> <span style="display:inline-block;transform:rotate(${(v.d + 180) % 360}deg)">↑</span></div>Byar ${Math.round(v.g)} m/s · från ${compass(v.d)}<br>${fmtRain(v.r).replace(/^./, c => c.toUpperCase())}</div>`).addTo(map);
-  const pop = wxPop; pop.getElement().addEventListener("click", ev => { ev.stopPropagation(); pop.remove(); if (wxPop === pop) wxPop = null; });
-  setTimeout(() => { pop.remove(); if (wxPop === pop) wxPop = null; }, 8000);
-  track("wx_tap", { m: wxMode });
-});
 map.on("click", "catches", e => { const id = e.features[0].properties.id; e.preventDefault(); openCatch(id); });
 /* brant: linjen är smal, så ett tryck i närheten räcker (ca en fingertopp åt varje håll).
    Ett tryck till när rutan är öppen stänger den, liksom att flytta kartan eller vänta. */
@@ -1969,7 +1957,6 @@ function wxReadout() {
   const v = wxAt(ll(map.getCenter())); if (!v) return "";
   return `Vid korset: ${Math.round(v.w)} m/s (byar ${Math.round(v.g)}) från ${compass(v.d)} · ${fmtRain(v.r)}${wxStep === 0 ? "" : " · prognos"}`;
 }
-let wxPop = null;
 function renderWxLayer() {
   if (!wxOn || !wxGrid) return;
   const lim = boat().maxWind || 10, i = wxGrid.t0 + wxStep, H = wxGrid.F[0].hourly;
