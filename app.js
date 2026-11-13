@@ -187,7 +187,11 @@ let mapReady = false;
 
 /* overlay sources (route, track, boat …) */
 const SRC = ["route", "track", "live", "shown", "heading", "acc", "catches", "fishzone", "mob", "wxgrid", "wxobs", "wxsst", "navto", "ais", "aisvec", "anchor"];
+let placeInk = null;   // sjökortets färger för ortnamn, sparas så att de kan återställas efter flygbilden
 function addOverlays() {
+  // önamn och ortnamn överst bland sjökortets lager: annars tränger sjömärken och skyltar undan dem
+  ["ofm-water-name", "ofm-place"].forEach(id => map.getLayer(id) && map.moveLayer(id));
+  placeInk = null;
   SRC.forEach(id => { if (!map.getSource(id)) map.addSource(id, { type: "geojson", data: EMPTY }); });
   const add = l => { if (!map.getLayer(l.id)) map.addLayer(l); };
   const wxColor = ["case", [">", ["get", "g"], ["get", "lim"]], "#d64545", [">", ["get", "g"], ["*", .75, ["get", "lim"]]], "#e2a90c", "#2f8f5b"];
@@ -267,6 +271,12 @@ function applyLayers() {
   const G = KummelChart.groups(), on = g => (S.layers.groups || {})[g] !== false;
   Object.entries(G).forEach(([g, ids]) => { if (!on(g)) ids.forEach(id => vis(id, false)); });
   if (S.mode !== "fiske") (G.steep || []).forEach(id => vis(id, false));   // branter bara i fiskeläget
+  // namn på flygbilden: vit text med mörk kant, annars sjökortets färger
+  if (map.getLayer("ofm-place")) {
+    const ids = ["ofm-place", "ofm-water-name"].filter(id => map.getLayer(id));
+    if (!placeInk) placeInk = ids.map(id => [id, map.getPaintProperty(id, "text-color"), map.getPaintProperty(id, "text-halo-color")]);
+    placeInk.forEach(([id, c, h]) => { map.setPaintProperty(id, "text-color", base === "sat" ? "#ffffff" : c); map.setPaintProperty(id, "text-halo-color", base === "sat" ? "rgba(10,25,35,.85)" : h); });
+  }
   // strömmande vind: lugn karta som i Windy, utan sjömärken, sektorer, djupsiffror och skyltar
   try { if (wxOn && (wxMode === "flow" || wxMode === "rain")) ["marks", "sectors", "soundings", "limits", "steep"].forEach(g => (G[g] || []).forEach(id => vis(id, false))); } catch (e) {}
 }

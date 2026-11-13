@@ -160,7 +160,7 @@ const KummelChart = (() => {
     steep: ["steep-glow", "steep"]
   };
   const ALL = layers({ need: 1 }).map(l => l.id).filter(id => !DETAIL_IDS.includes(id) && !id.startsWith("depare-sat"));
-  const OVERLAY = ["rocks", "rock-area-line", "depcnt", "depcnt-safety", "depcnt-lbl", "soundg", "navline-case", "navline", "navline-lbl", "leadline", "fwyname", "sectors", "seclegs", "lights", "aids", "faults", "speed", "speed-lbl", "restrict", "tss-line", "pilot", "signs", "soundg-shallow", "fishband", "fishband-line", "steep-glow", "steep"];
+  const OVERLAY = ["rocks", "rock-area-line", "depcnt", "depcnt-safety", "depcnt-lbl", "soundg", "navline-case", "navline", "navline-lbl", "leadline", "fwyname", "sectors", "seclegs", "lights", "aids", "faults", "speed", "speed-lbl", "restrict", "tss-line", "pilot", "signs", "soundg-shallow", "fishband", "fishband-line", "steep-glow", "steep", "ofm-place", "ofm-water-name"];   // ortnamn och önamn syns även på flygbilden
 
   function setNeed(map, need) {
     if (map.getLayer("depare")) map.setPaintProperty("depare", "fill-color", depthFill(need));
