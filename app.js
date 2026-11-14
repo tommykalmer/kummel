@@ -280,7 +280,7 @@ function applyLayers() {
     if (!placeInk) placeInk = ids.map(id => [id, map.getPaintProperty(id, "text-color"), map.getPaintProperty(id, "text-halo-color")]);
     placeInk.forEach(([id, c, h]) => { map.setPaintProperty(id, "text-color", base === "sat" ? "#ffffff" : c); map.setPaintProperty(id, "text-halo-color", base === "sat" ? "rgba(10,25,35,.85)" : h); });
   }
-  // strömmande vind: lugn karta som i Windy, utan sjömärken, sektorer, djupsiffror och skyltar
+  // strömmande vind: lugn karta utan sjömärken, sektorer, djupsiffror och skyltar
   try { if (wxOn && (wxMode === "flow" || wxMode === "rain")) ["marks", "sectors", "soundings", "limits", "steep"].forEach(g => (G[g] || []).forEach(id => vis(id, false))); } catch (e) {}
 }
 
@@ -2899,7 +2899,7 @@ function openWaterLevel() {
 }
 setInterval(() => loadWaterLevel(), 15 * 60000);
 
-/* ---------- strömmande vind (partiklar som flyter med vinden, som på Windy) ---------- */
+/* ---------- strömmande vind (partiklar som flyter med vinden) ---------- */
 let flowRAF = null, flowParts = [], flowField = null, flowCv = null, flowCalm = false;
 function windField() {   // vind per skärmruta (px/bildruta), interpolerad mellan prognospunkterna
   if (!wxGrid || !wxGrid.pts.length) return null;
@@ -2916,7 +2916,7 @@ function windField() {   // vind per skärmruta (px/bildruta), interpolerad mell
   }
   return { W, H, G, cols, rows, U, V, S: S2, R, at: (x, y) => { const q = Math.max(0, Math.min(cols - 1, Math.round(x / G))), r = Math.max(0, Math.min(rows - 1, Math.round(y / G))), j = r * cols + q; return [U[j], V[j], S2[j]]; } };
 }
-/* strömmande vind i Windys stil: vindstyrkan som en mjuk färgyta, och glesa vita streck som rör sig med vinden */
+/* strömmande vind: vindstyrkan som en mjuk färgyta, och glesa vita streck som rör sig med vinden */
 const WINDY = [[0, 98, 113, 183], [1, 57, 97, 159], [3, 74, 148, 169], [5, 77, 141, 123], [7, 83, 165, 83], [9, 53, 159, 53], [11, 167, 157, 81], [13, 159, 127, 58], [15, 161, 108, 92], [17, 129, 58, 78], [19, 175, 80, 136], [21, 117, 74, 147], [24, 109, 97, 163], [27, 68, 105, 141], [29, 92, 144, 152], [36, 125, 68, 165]];
 // regn mm/h: genomskinligt när det är torrt, sedan ljusblått → blått → grönt → gult → orange → rött → lila
 const RAINC = [[0, 0, 0, 0, 0], [.1, 140, 190, 255, 90], [.5, 70, 140, 245, 160], [1, 40, 175, 120, 190], [2, 235, 215, 50, 205], [5, 245, 140, 35, 220], [10, 215, 40, 55, 230], [20, 165, 40, 170, 240]];
@@ -2949,7 +2949,7 @@ function flowStart() {
   const src = map.getSource("windheat");
   if (src) src.updateImage({ url, coordinates: coords });
   else { map.addSource("windheat", { type: "image", url, coordinates: coords }); map.addLayer({ id: "windheat", type: "raster", source: "windheat", paint: { "raster-opacity": .78, "raster-fade-duration": 0, "raster-resampling": "linear" } }, map.getLayer("depcnt") ? "depcnt" : undefined); }
-  if (!map.getLayer("windheat-coast") && map.getSource("ofm")) map.addLayer({ id: "windheat-coast", type: "line", source: "ofm", "source-layer": "water", paint: { "line-color": "rgba(12,28,40,.85)", "line-width": ["interpolate", ["linear"], ["zoom"], 5, .7, 10, 1.1, 14, 1.5] } }, map.getLayer("depcnt") ? "depcnt" : undefined);   // strandlinjer ovanpå färgytan, som i Windy
+  if (!map.getLayer("windheat-coast") && map.getSource("ofm")) map.addLayer({ id: "windheat-coast", type: "line", source: "ofm", "source-layer": "water", paint: { "line-color": "rgba(12,28,40,.85)", "line-width": ["interpolate", ["linear"], ["zoom"], 5, .7, 10, 1.1, 14, 1.5] } }, map.getLayer("depcnt") ? "depcnt" : undefined);   // strandlinjer ovanpå färgytan
   ["windheat", "windheat-coast"].forEach(id => map.getLayer(id) && map.setLayoutProperty(id, "visibility", "visible"));
   flowCv.width = F.W * dpr; flowCv.height = F.H * dpr; flowCv.style.width = F.W + "px"; flowCv.style.height = F.H + "px"; flowCv.style.display = "block";
   const g = flowCv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.lineCap = "round";
