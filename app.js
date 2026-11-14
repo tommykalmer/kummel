@@ -702,6 +702,7 @@ function placeForm(p) {
     <label class="f">Typ<select id="pf-cat">${Object.entries(CATS).map(([k, c]) => `<option value="${k}" ${k === p.cat ? "selected" : ""}>${c.e} ${c.n}</option>`).join("")}</select></label>
     <label class="f">Anteckning<textarea id="pf-note" rows="3" placeholder="t.ex. Bra skydd vid sydvästlig vind, 3 m djup vid berget">${esc(p.note)}</textarea></label>
     <div class="muted">${fmtPosTxt(p)}${p.depth != null ? ` · djup enligt sjökortet ${p.depth}` : ""}</div>
+    <div class="private-note">🔒 Sparas bara i din telefon. Ingen annan ser den, inte heller vi som gör Kummel.</div>
     <div class="row"><button class="btn pri" id="pf-save">Spara</button>${p.id ? `<button class="btn warn" id="pf-del">Ta bort</button><button class="btn" id="pf-nav">Rutt hit</button>` : ""}</div>`;
 }
 function newPlace(pos) {
@@ -814,6 +815,7 @@ function newPastCatch() {
     </div>
     <label class="f">Bete / metod<input id="pc-lure" placeholder="t.ex. jigg 10 cm"></label>
     <label class="f">Anteckning<textarea id="pc-note" rows="2"></textarea></label>
+    <div class="private-note">🔒 Sparas bara i din telefon. Ingen annan ser den, inte heller vi som gör Kummel.</div>
     <div class="row"><button class="btn pri" id="pc-save">Spara fångst här</button></div>
     <div class="muted">Väder, lufttryck, vattentemperatur och månfas hämtas för den tidpunkt du anger.</div>`, "pastcatch");
   $("#sheet").classList.add("compact");
@@ -854,6 +856,7 @@ function openCatch(id) {
         <div><b>${w.temp.toFixed(0)}°</b><span>Luft</span></div>
         <div><b>${w.moon.icon}</b><span>${w.moon.name}</span></div></div>` : `<div class="muted">Hämtar väder … (sparas automatiskt när nätet finns)</div>`}
     </div>
+    <div class="private-note">🔒 Sparas bara i din telefon. Ingen annan ser den, inte heller vi som gör Kummel.</div>
     ${draft ? `<div class="row"><button class="btn pri" id="cf-save">Spara fångst</button><button class="btn" id="cf-share">Spara och dela</button><button class="btn" id="cf-del">Avbryt</button></div>
       <div class="muted">Fångsten hamnar på kartan och i fångstloggen när du sparar.</div>`
     : `<div class="row"><button class="btn pri" id="cf-save">Spara</button><button class="btn" id="cf-share">Dela fångst</button><button class="btn warn" id="cf-del">Ta bort</button></div>`}`, "catch:" + c.id);
@@ -2536,7 +2539,7 @@ function openAbout() {
       <div class="row"><button class="btn pri" id="ab-share">Dela Kummel</button><a class="btn" href="/om/" target="_blank" rel="noopener">Om Kummel på webben</a></div></div>
     <div class="card"><h3>Officiella källor</h3><div class="muted">Djup och sjökort: Traficom. Farleder, sjömärken, fyrar och vattentrafikmärken: Väylävirasto. Stenar, grund och flygbild: Lantmäteriverket. Vattenstånd och vattentemperatur: Meteorologiska institutet. Fartyg (AIS): Digitraffic. Väderprognos: Open-Meteo. Bakgrundskarta: OpenStreetMap. Sjökortet uppdateras varje vecka.</div></div>
     <div class="card"><h3>Kontakt</h3><div class="muted">Frågor, idéer eller fel i kartan? Mejla <a href="mailto:${CONTACT}">${CONTACT}</a>. Skriv gärna var felet finns, så rättar vi eller rapporterar vidare till rätt myndighet.</div></div>
-    <div class="card"><h3>Integritet</h3><div class="muted">Dina platser, rutter, fångster och foton sparas bara i den här enheten. För att hämta väder, vattenstånd och kartor skickas kartans position till respektive tjänst, men aldrig till oss. ${GA_ID ? "Om du tillåter det räknar Kummel anonymt vilka funktioner som används (Google Analytics), utan positioner eller fångster." : ""}</div>
+    <div class="card"><h3>Dina fiskeplatser är dina</h3><div class="muted">Platser, rutter, fångster och foton sparas bara i den här enheten. Kummel har ingen databas och inga konton, så ingen annan kan se dem, inte heller vi som gör appen. Det enda som lämnar telefonen är det du själv delar, och när du delar en fångst väljer du om platsen ska synas. För att hämta väder, vattenstånd och kartor skickas kartans position till respektive tjänst, men aldrig till oss. ${GA_ID ? "Om du tillåter det räknar Kummel anonymt vilka funktioner som används (Google Analytics), utan positioner eller fångster." : ""}</div>
       ${GA_ID ? `<label class="row"><input type="checkbox" id="ab-stats" ${S.stats === 1 ? "checked" : ""}> Tillåt anonym statistik</label>` : ""}</div>
     <div class="card"><h3>Tips</h3><div class="muted">Håll fingret på kartan för att spara en plats. Vrid kartan med två fingrar. Tryck på positionsknappen två gånger för kurs upp. Ställ in båtens djupgående under Meny → Båtar, så markeras grunt vatten för just din båt. Lägg till Kummel på hemskärmen så öppnas den som en app.</div></div>
     <div class="disclaimer">Kummel är inte ett certifierat navigationshjälpmedel. Ruttförslag och varningar är hjälpmedel: föraren ansvarar alltid för navigeringen. Sjökortsdata från Traficom (CC BY 4.0) är inte avsedd för navigering.</div>
