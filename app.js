@@ -2208,29 +2208,27 @@ const OPTS = {
 };
 const applies = k => (OPTS[k] || []).includes(S.layers.base || "chart");
 function openLayers() {
-  const r = (k, v) => `<label class="row"><input type="radio" name="base" value="${k}" ${S.layers.base === k ? "checked" : ""}> ${v}</label>`;
+  const r = (k, v) => `<button data-base="${k}" aria-pressed="${S.layers.base === k}">${v}</button>`;
   openSheet("Kartlager", `
-    <div class="card"><h3>Karta</h3>${r("chart", "Sjökort")}${r("sat", "Flygfoto med farleder och sjömärken")}${r("osm", "Gatukarta")}</div>
-    <div class="card"><h3>Båtpilen</h3>
-      <label class="row"><input type="checkbox" id="ly-compass" ${S.compassSlow ? "checked" : ""}> Använd telefonens kompass när båten går långsamt</label>
-      <div class="muted">Annars pekar pilen åt det håll båten senast rörde sig. Kompassen fungerar bäst om telefonen ligger fast i båten med överkanten mot fören.</div></div>
-    <div class="card"><h3>Fastighetsgränser</h3>
-      <label class="row"><input type="checkbox" id="ly-prop" ${S.layers.props ? "checked" : ""} ${mmlKey() ? "" : "disabled"}> Visa fastighetsgränser</label>
-      <div class="muted">Flygbild och fastighetsgränser kommer från Lantmäteriverket i Finland.</div>
+    <div class="card"><h3>Karta</h3><div class="wxb-modes ly-base" role="group" aria-label="Bakgrundskarta">${r("chart", "Sjökort")}${r("sat", "Flygbild")}${r("osm", "Gatukarta")}</div>
+      ${S.layers.base === "sat" ? `<div class="muted">Flygbild med farleder, sjömärken och djup ovanpå.</div>` : ""}</div>
+    <div class="card"><h3>Visa på kartan</h3>
+      <div class="row" style="gap:8px;margin-bottom:4px"><button class="btn sm" id="ly-all">Välj alla</button><button class="btn sm" id="ly-none">Avmarkera alla</button></div>
+      ${[["fairways", "Farleder, ledlinjer och farledsdjup"], ["marks", "Sjömärken och fyrar"], ["rocks", "Stenar och grund"], ["sectors", "Ljussektorer"], ["contours", "Djupkurvor"], ["satdepth", "Djupfärg på flygfotot"], ["limits", "Fartbegränsningar och förbudsområden"], ["land", "Ortnamn, vägar och hus"], ["steep", "Branter (syns i läget Fiske)"]].filter(([g]) => applies(g)).map(([g, t]) => `<label class="row"><input type="checkbox" data-grp="${g}" ${(S.layers.groups || {})[g] !== false ? "checked" : ""}> ${t}</label>`).join("")}
+      ${applies("soundings") ? `<label class="row"><input type="checkbox" id="ly-snd" ${S.layers.soundings ? "checked" : ""}> Djupsiffror${S.layers.base === "sat" ? " (bara grundare än din båt)" : ""}</label>` : ""}
+      <label class="row"><input type="checkbox" id="ly-ais" ${S.layers.ais ? "checked" : ""}> AIS-fartyg i realtid</label>
+      <label class="row"><input type="checkbox" id="ly-prop" ${S.layers.props ? "checked" : ""} ${mmlKey() ? "" : "disabled"}> Fastighetsgränser (när du zoomar in)</label>
     </div>
     ${applies("detail") ? `<div class="card"><h3>Detaljkort</h3>
       <label class="row"><input type="checkbox" id="ly-det" ${S.layers.detail ? "checked" : ""}> Visa detaljkortet när jag zoomar in</label>
       <label class="f">Visa detaljkortet från<select id="ly-dz">${[[11, "Översikt (ca 2 nm över skärmen)"], [12, "Mellan (ca 1 nm)"], [13, "Nära (ca 0,5 nm), rekommenderas"], [14, "Mycket nära (ca 0,25 nm)"]].map(([z, t]) => `<option value="${z}" ${dz() === z ? "selected" : ""}>${t}</option>`).join("")}</select></label>
       <div class="muted">Traficoms inskannade sjökort ovanpå vektorkortet. Längre ut blir det svårläst eftersom kortet förminskas.</div>
     </div>` : ""}
-    <div class="card"><h3>Visa på kartan</h3>
-      <div class="row" style="gap:8px;margin-bottom:4px"><button class="btn sm" id="ly-all">Välj alla</button><button class="btn sm" id="ly-none">Avmarkera alla</button></div>
-      ${[["fairways", "Farleder, ledlinjer och farledsdjup"], ["marks", "Sjömärken och fyrar"], ["rocks", "Stenar och grund"], ["sectors", "Ljussektorer"], ["contours", "Djupkurvor"], ["satdepth", "Djupfärg på flygfotot"], ["limits", "Fartbegränsningar och förbudsområden"], ["land", "Ortnamn, vägar och hus"], ["steep", "Branter (syns i läget Fiske)"]].filter(([g]) => applies(g)).map(([g, t]) => `<label class="row"><input type="checkbox" data-grp="${g}" ${(S.layers.groups || {})[g] !== false ? "checked" : ""}> ${t}</label>`).join("")}
-      ${applies("soundings") ? `<label class="row"><input type="checkbox" id="ly-snd" ${S.layers.soundings ? "checked" : ""}> Djupsiffror${S.layers.base === "sat" ? " (bara grundare än din båt)" : ""}</label>` : ""}
-      <label class="row"><input type="checkbox" id="ly-ais" ${S.layers.ais ? "checked" : ""}> AIS-fartyg i realtid</label>
-    </div>
+    <div class="card"><h3>Båtpilen</h3>
+      <label class="row"><input type="checkbox" id="ly-compass" ${S.compassSlow ? "checked" : ""}> Använd telefonens kompass när båten går långsamt</label>
+      <div class="muted">Annars pekar pilen åt det håll båten senast rörde sig. Kompassen fungerar bäst om telefonen ligger fast i båten med överkanten mot fören.</div></div>
     ${applies("detail") ? `<div class="muted">På detaljkortet är vatten som är grundare än din båt behöver skuggat i rött.</div>` : ""}
-    <div class="disclaimer">Källa: Traficom (CC BY 4.0). Ej för navigering, uppfyller inte kraven för officiella sjökort. Använd alltid uppdaterade officiella sjökort.</div>`, "layers");
+    <div class="disclaimer">Källa: Traficom (CC BY 4.0). Flygbild och fastighetsgränser: Lantmäteriverket. Ej för navigering, uppfyller inte kraven för officiella sjökort. Använd alltid uppdaterade officiella sjökort.</div>`, "layers");
   const on = (id, ev, f) => { const el = $(id); if (el) el[ev] = f; };
   on("#ly-snd", "onchange", e => { S.layers.soundings = e.target.checked; save(); applyLayers(); });
   $("#ly-ais").onchange = e => setAis(e.target.checked);
@@ -2241,7 +2239,8 @@ function openLayers() {
   const setAll = on => { const card = $("#ly-all").closest(".card"); card.querySelectorAll("input[type=checkbox]:not(:disabled)").forEach(x => { if (x.checked !== on) { x.checked = on; x.dispatchEvent(new Event("change")); } }); };
   $("#ly-all").onclick = () => setAll(true); $("#ly-none").onclick = () => setAll(false);
   document.querySelectorAll("[data-grp]").forEach(x => x.onchange = () => { S.layers.groups = { ...(S.layers.groups || {}), [x.dataset.grp]: x.checked }; save(); applyLayers(); });
-  document.querySelectorAll("input[name=base]").forEach(x => x.onchange = () => { S.layers.base = x.value; save(); applyLayers(); track("base_map", { base: x.value }); const y = $("#sh-body").scrollTop; openLayers(); $("#sh-body").scrollTop = y; });
+  document.querySelectorAll("[data-base]").forEach(x => x.onclick = () => { if (S.layers.base === x.dataset.base) return; S.layers.base = x.dataset.base; save(); applyLayers(); track("base_map", { base: x.dataset.base }); const y = $("#sh-body").scrollTop; openLayers(); $("#sh-body").scrollTop = y; });
+  if (!S.layersSeen) { S.layersSeen = 1; save(); setSheetState($("#sheet"), 2); }   // första gången: hela panelen, så att alla val syns
 }
 $("#b-layers").onclick = openLayers;
 $("#b-detail").onclick = () => {
