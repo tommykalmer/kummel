@@ -2938,7 +2938,7 @@ function flowStart() {
   const src = map.getSource("windheat");
   if (src) src.updateImage({ url, coordinates: coords });
   else { map.addSource("windheat", { type: "image", url, coordinates: coords }); map.addLayer({ id: "windheat", type: "raster", source: "windheat", paint: { "raster-opacity": .78, "raster-fade-duration": 0, "raster-resampling": "linear" } }, map.getLayer("depcnt") ? "depcnt" : undefined); }
-  if (!map.getLayer("windheat-coast") && map.getSource("ofm")) map.addLayer({ id: "windheat-coast", type: "line", source: "ofm", "source-layer": "water", paint: { "line-color": "rgba(12,28,40,.55)", "line-width": ["interpolate", ["linear"], ["zoom"], 5, .4, 10, .8, 14, 1.2] } }, map.getLayer("depcnt") ? "depcnt" : undefined);   // strandlinjer ovanpå färgytan, som i Windy
+  if (!map.getLayer("windheat-coast") && map.getSource("ofm")) map.addLayer({ id: "windheat-coast", type: "line", source: "ofm", "source-layer": "water", paint: { "line-color": "rgba(12,28,40,.85)", "line-width": ["interpolate", ["linear"], ["zoom"], 5, .7, 10, 1.1, 14, 1.5] } }, map.getLayer("depcnt") ? "depcnt" : undefined);   // strandlinjer ovanpå färgytan, som i Windy
   ["windheat", "windheat-coast"].forEach(id => map.getLayer(id) && map.setLayoutProperty(id, "visibility", "visible"));
   flowCv.width = F.W * dpr; flowCv.height = F.H * dpr; flowCv.style.width = F.W + "px"; flowCv.style.height = F.H + "px"; flowCv.style.display = "block";
   const g = flowCv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.lineCap = "round";
