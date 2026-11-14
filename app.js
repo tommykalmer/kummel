@@ -2521,7 +2521,7 @@ function shareApp() {
 }
 function openAbout() {
   openSheet("Om Kummel", `
-    <div class="home-line">${ALAND_FLAG}<div><b>Kummel</b> är sjökortet för Åland, Åbolands skärgård och Nylands kust: djup, sjömärken, grynnor, sjöväder, rutter med ankomsttid och fiske. Byggt av båtfolk för de egna vattnen: hela Åland, från Ålands hav i väster till Brändö, Kökar och skärgården mot Åboland i öster.</div></div>
+    <div class="home-line">${ALAND_FLAG}<div><b>Kummel</b> är sjökortet för Åland, Åbolands skärgård och Nylands kust: djup, sjömärken, grynnor, sjöväder, rutter med ankomsttid och fiske. Byggt av båtfolk för de egna vattnen: från Ålands hav i väster, genom hela Åland och Åbolands skärgård med Åbo och Nådendal, längs Nylands kust förbi Hangö och Helsingfors till Pellinge utanför Borgå i öster.</div></div>
     <div class="card"><h3>${SITE}</h3><div class="muted">Här finns Kummel alltid. Tipsa gärna båt- och fiskevänner.</div>
       <div class="row"><button class="btn pri" id="ab-share">Dela Kummel</button><a class="btn" href="/om/" target="_blank" rel="noopener">Om Kummel på webben</a></div></div>
     <div class="card"><h3>Officiella källor</h3><div class="muted">Djup och sjökort: Traficom. Farleder, sjömärken, fyrar och vattentrafikmärken: Väylävirasto. Stenar, grund och flygbild: Lantmäteriverket. Vattenstånd och vattentemperatur: Meteorologiska institutet. Fartyg (AIS): Digitraffic. Väderprognos: Open-Meteo. Bakgrundskarta: OpenStreetMap. Sjökortet uppdateras varje vecka.</div></div>
