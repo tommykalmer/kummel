@@ -719,7 +719,7 @@ function bindPlaceForm(p) {
     save(); drawPlaces(); closeSheet(); toast("Platsen sparad");
   };
   const del = $("#pf-del"); if (del) del.onclick = () => { S.places = S.places.filter(x => x.id !== p.id); save(); drawPlaces(); closeSheet(); };
-  const nav = $("#pf-nav"); if (nav) nav.onclick = () => { const from = gps ? ll(gps) : ll(map.getCenter()); startPlanning([from, ll(p)]); autoRoute(from, ll(p)); };
+  const nav = $("#pf-nav"); if (nav) nav.onclick = () => routeFromMe(ll(p));
 }
 function depthAt(pos) {
   if (!mapReady) return null;
@@ -1149,6 +1149,17 @@ $("#b-depth").onclick = () => {
 
 /* ---------- route planning ---------- */
 let planning = false, wps = [], wpMarkers = [], wpsOff = [], autoInfo = null, routeId = null, routeName = "";
+/* rutt från där jag är (GPS) till en plats; saknas en färsk position hämtas den först */
+function routeFromMe(to) {
+  const go = from => { startPlanning([from, to]); autoRoute(from, to); };
+  if (gps && Date.now() - (gps.t || 0) < 120000) return go(ll(gps));
+  if (!navigator.geolocation) { toast("Din position är inte känd. Tryck på ruttknappen och välj start själv."); return; }
+  toast("Hämtar din position …", 8000);
+  navigator.geolocation.getCurrentPosition(
+    q => go({ lat: q.coords.latitude, lng: q.coords.longitude }),
+    () => toast("Kunde inte hitta din position. Slå på platstjänster för Kummel, eller planera rutten med ruttknappen.", 5000),
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+}
 function startPlanning(initial) {
   planning = true; wps = (initial || []).map(ll);
   document.body.classList.add("plan"); $("#b-route").setAttribute("aria-pressed", "true");
