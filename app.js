@@ -2917,7 +2917,7 @@ function windField() {   // vind per skärmruta (px/bildruta), interpolerad mell
   return { W, H, G, cols, rows, U, V, S: S2, R, at: (x, y) => { const q = Math.max(0, Math.min(cols - 1, Math.round(x / G))), r = Math.max(0, Math.min(rows - 1, Math.round(y / G))), j = r * cols + q; return [U[j], V[j], S2[j]]; } };
 }
 /* strömmande vind: vindstyrkan som en mjuk färgyta, och glesa vita streck som rör sig med vinden */
-const WINDY = [[0, 98, 113, 183], [1, 57, 97, 159], [3, 74, 148, 169], [5, 77, 141, 123], [7, 83, 165, 83], [9, 53, 159, 53], [11, 167, 157, 81], [13, 159, 127, 58], [15, 161, 108, 92], [17, 129, 58, 78], [19, 175, 80, 136], [21, 117, 74, 147], [24, 109, 97, 163], [27, 68, 105, 141], [29, 92, 144, 152], [36, 125, 68, 165]];
+const WIND_SCALE = [[0, 98, 113, 183], [1, 57, 97, 159], [3, 74, 148, 169], [5, 77, 141, 123], [7, 83, 165, 83], [9, 53, 159, 53], [11, 167, 157, 81], [13, 159, 127, 58], [15, 161, 108, 92], [17, 129, 58, 78], [19, 175, 80, 136], [21, 117, 74, 147], [24, 109, 97, 163], [27, 68, 105, 141], [29, 92, 144, 152], [36, 125, 68, 165]];
 // regn mm/h: genomskinligt när det är torrt, sedan ljusblått → blått → grönt → gult → orange → rött → lila
 const RAINC = [[0, 0, 0, 0, 0], [.1, 140, 190, 255, 90], [.5, 70, 140, 245, 160], [1, 40, 175, 120, 190], [2, 235, 215, 50, 205], [5, 245, 140, 35, 220], [10, 215, 40, 55, 230], [20, 165, 40, 170, 240]];
 function rainRGBA(r) {
@@ -2925,10 +2925,10 @@ function rainRGBA(r) {
   for (let i = 1; i < RAINC.length; i++) if (r <= RAINC[i][0]) { const a = RAINC[i - 1], b = RAINC[i], t = (r - a[0]) / (b[0] - a[0]); return [1, 2, 3, 4].map(j => Math.round(a[j] + (b[j] - a[j]) * t)); }
   return RAINC[RAINC.length - 1].slice(1);
 }
-function windyRGB(w) {
-  if (w <= WINDY[0][0]) return WINDY[0].slice(1);
-  for (let i = 1; i < WINDY.length; i++) if (w <= WINDY[i][0]) { const a = WINDY[i - 1], b = WINDY[i], t = (w - a[0]) / (b[0] - a[0]); return [1, 2, 3].map(j => Math.round(a[j] + (b[j] - a[j]) * t)); }
-  return WINDY[WINDY.length - 1].slice(1);
+function windRGB(w) {
+  if (w <= WIND_SCALE[0][0]) return WIND_SCALE[0].slice(1);
+  for (let i = 1; i < WIND_SCALE.length; i++) if (w <= WIND_SCALE[i][0]) { const a = WIND_SCALE[i - 1], b = WIND_SCALE[i], t = (w - a[0]) / (b[0] - a[0]); return [1, 2, 3].map(j => Math.round(a[j] + (b[j] - a[j]) * t)); }
+  return WIND_SCALE[WIND_SCALE.length - 1].slice(1);
 }
 function flowStart() {
   flowStop();
@@ -2942,7 +2942,7 @@ function flowStart() {
   // färgytan: en pixel per rutnätspunkt, som kartbild under djupkurvor, stränder och sjömärken (följer kartan när man drar)
   const small = document.createElement("canvas"); small.width = F.cols; small.height = F.rows;
   const sg = small.getContext("2d"), img = sg.createImageData(F.cols, F.rows);
-  for (let j = 0; j < F.cols * F.rows; j++) { const c = rainMode ? rainRGBA(F.R[j]) : windyRGB(F.S[j]).concat(255); img.data[j * 4] = c[0]; img.data[j * 4 + 1] = c[1]; img.data[j * 4 + 2] = c[2]; img.data[j * 4 + 3] = c[3]; }
+  for (let j = 0; j < F.cols * F.rows; j++) { const c = rainMode ? rainRGBA(F.R[j]) : windRGB(F.S[j]).concat(255); img.data[j * 4] = c[0]; img.data[j * 4 + 1] = c[1]; img.data[j * 4 + 2] = c[2]; img.data[j * 4 + 3] = c[3]; }
   sg.putImageData(img, 0, 0);
   const h = F.G / 2, corner = (x, y) => map.unproject([x, y]).toArray();
   const coords = [corner(-h, -h), corner(F.cols * F.G - h, -h), corner(F.cols * F.G - h, F.rows * F.G - h), corner(-h, F.rows * F.G - h)], url = small.toDataURL("image/png");
