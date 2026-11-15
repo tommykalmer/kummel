@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Diagnostik: flygbildens skärpa. Jämför WMTS z18 (Pseudo-Mercator) med WMS i högre upplösning för samma ruta.
-KEY=$(grep -o 'mmlKey: "[^"]*"' config.js | cut -d'"' -f2)
+KEY=${MML_KEY:-$(grep -o 'mmlKey: "[^"]*"' config.js | cut -d'"' -f2)}
 mkdir -p data/diag; out=data/diag.md; echo "# Diagnostik $(date -u)" > $out
 read x y minx miny maxx maxy < <(python3 -c "
 import math

@@ -1,0 +1,5 @@
+name = "kummel-mml"
+main = "mml.js"
+compatibility_date = "2026-11-01"
+workers_dev = false
+routes = [{ pattern = "mml.kummel.app", custom_domain = true }]

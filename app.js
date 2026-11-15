@@ -102,10 +102,12 @@ const CHART_URL = "pmtiles://" + tileUrl("chart");
 
 const EMPTY = { type: "FeatureCollection", features: [] };
 /* Lantmäteriverket i Finland (Maanmittauslaitos): flygbild och fastighetsgränser, kräver egen gratis API-nyckel */
-const mmlKey = () => (window.KUMMEL_CONFIG && window.KUMMEL_CONFIG.mmlKey) || "";   // appens egen nyckel för alla användare
+/* Lantmäteriverkets kartor går via vår mellanhand mml.kummel.app (nyckeln ligger hos Cloudflare); mmlKey i config.js bara som reserv */
+const MML_PROXY = (window.KUMMEL_CONFIG && KUMMEL_CONFIG.mmlProxy) || "";
+const mmlKey = () => MML_PROXY ? "proxy" : (window.KUMMEL_CONFIG && window.KUMMEL_CONFIG.mmlKey) || "";
 // skarp flygbild på mobilens täta skärm: halv rutstorlek ger en zoomnivå mer detalj (MML har flygbild till nivå 18)
 const ORTO_TILE = (window.devicePixelRatio || 1) >= 1.5 ? 128 : 256;
-const MML = (layer, fmt) => `https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts/1.0.0/${layer}/default/WGS84_Pseudo-Mercator/{z}/{y}/{x}.${fmt}?api-key=${encodeURIComponent(mmlKey())}`;
+const MML = (layer, fmt) => MML_PROXY ? `${MML_PROXY}/${layer}/{z}/{y}/{x}.${fmt}` : `https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts/1.0.0/${layer}/default/WGS84_Pseudo-Mercator/{z}/{y}/{x}.${fmt}?api-key=${encodeURIComponent(mmlKey())}`;
 function mmlSources() {
   if (!mmlKey()) return {};
   return {

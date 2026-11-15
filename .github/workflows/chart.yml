@@ -27,6 +27,7 @@ jobs:
     env:
       # Åland, Åboland och Nyland till Pellinge
       CHART_BBOX: "19.0,59.65,25.95,60.75"
+      MML_KEY: ${{ secrets.MML_KEY }}
     steps:
       - uses: actions/checkout@v4
 

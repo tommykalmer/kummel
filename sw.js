@@ -7,7 +7,7 @@ const SHELL_FILES = ["./", "./index.html", "./app.js", "./chartstyle.js", "./con
   "https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js",
   "https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.css",
   "https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"];
-const TILE_HOSTS = ["avoin-karttakuva.maanmittauslaitos.fi", "tiles.openfreemap.org", "julkinen.traficom.fi", "tile.openstreetmap.org", "basemaps.cartocdn.com", "server.arcgisonline.com"];
+const TILE_HOSTS = ["mml.kummel.app", "avoin-karttakuva.maanmittauslaitos.fi", "tiles.openfreemap.org", "julkinen.traficom.fi", "tile.openstreetmap.org", "basemaps.cartocdn.com", "server.arcgisonline.com"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(SHELL).then(c => c.addAll(SHELL_FILES)).then(() => self.skipWaiting()));
