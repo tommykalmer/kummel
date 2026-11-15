@@ -10,9 +10,9 @@ R=20037508.342789244;s=2*R/n
 print(x,y,-R+x*s,R-(y+1)*s,-R+(x+1)*s,R-y*s)")
 r=$(curl -s -o data/diag/sharp-wmts-z18.jpg -w '%{http_code} %{size_download}' "https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts/1.0.0/ortokuva/default/WGS84_Pseudo-Mercator/18/$y/$x.jpg?api-key=$KEY")
 echo "- wmts z18: $r" >> $out
-for px in 256 1024; do
-  r=$(curl -s -o data/diag/sharp-wms-$px.jpg -w '%{http_code} %{size_download} %{content_type}' "https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wms?service=WMS&version=1.3.0&request=GetMap&layers=ortokuva&styles=&crs=EPSG:3857&bbox=$minx,$miny,$maxx,$maxy&width=$px&height=$px&format=image/jpeg&api-key=$KEY")
-  echo "- wms $px px: $r" >> $out
+for z in 14 15 16 17; do
+  read tx ty < <(python3 scripts/tm35.py 60.10292 20.05887 $z)
+  r=$(curl -s -o data/diag/sharp-tm35-z$z.jpg -w '%{http_code} %{size_download}' "https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts/1.0.0/ortokuva/default/ETRS-TM35FIN/$z/$ty/$tx.jpg?api-key=$KEY")
+  echo "- tm35 z$z: $r" >> $out
 done
-head -c 300 data/diag/sharp-wms-1024.jpg | strings | head -3 >> $out
 cat $out
