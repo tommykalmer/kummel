@@ -8,7 +8,8 @@ och skriver data/rocks.geojson. Nyckeln läses ur config.js.
 import json, os, re, time, urllib.parse, urllib.request
 BBOX = tuple(float(x) for x in os.environ.get("CHART_BBOX", "19.0,59.65,21.35,60.65").split(","))
 BASE = "https://avoin-paikkatieto.maanmittauslaitos.fi/maastotiedot/features/v1"
-key = os.environ.get("MML_KEY") or re.search(r'mmlKey:\s*"([^"]+)"', open("config.js").read()).group(1)   # nyckeln som GitHub-hemlighet
+key = os.environ.get("MML_KEY") or SystemExit("MML_KEY saknas (GitHub-hemligheten MML_TOKEN)")
+if isinstance(key, SystemExit): raise key
 KIND = {38511: 1, 38512: 2, 38513: 3}
 
 def get(url):

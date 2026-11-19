@@ -1,9 +1,10 @@
 /* Kummel – inställningar som gäller för alla användare.
-   mmlKey: API-nyckel för Maanmittauslaitos öppna karttjänst (flygbild, fastighetsgränser).
+   mmlProxy: vår mellanhand för Lantmäteriverkets flygbild och fastighetsgränser (Cloudflare Worker, se worker/).
+             API-nyckeln ligger som hemlighet hos Cloudflare och i GitHub, aldrig här.
    gaId: Google Analytics 4 (mät-ID, börjar med G-). Tomt = ingen statistik.
    Statistiken laddas bara för användare som har sagt ja till den. */
 window.KUMMEL_CONFIG = {
-  mmlKey: "b344905c-5b9b-41e0-a5c6-1b388fc9f517",
+  mmlProxy: "https://mml.kummel.app",
   gaId: "G-BHQM5TPKPQ",
   tilesBase: "https://kartor.kummel.app/"   // kartfilerna i Cloudflare R2
 };
