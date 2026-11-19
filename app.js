@@ -208,7 +208,7 @@ function addOverlays() {
   add({ id: "acc-line", type: "line", source: "acc", paint: { "line-color": "#1d6fa3", "line-width": 1 } });
   add({ id: "shown", type: "line", source: "shown", paint: { "line-color": "#1d6fa3", "line-width": 4, "line-opacity": .85 } });
   add({ id: "track", type: "line", source: "live", paint: { "line-color": "#d64545", "line-width": 4, "line-opacity": .85 } });
-  add({ id: "route", type: "line", source: "route", paint: { "line-color": ["case", ["==", ["get", "off"], 1], "#e07b00", "#d64545"], "line-width": ["case", ["==", ["get", "off"], 1], 3, 3.5], "line-dasharray": [2, 1.5] } });
+  add({ id: "route", type: "line", source: "route", paint: { "line-color": ["match", ["get", "off"], 1, "#e07b00", 2, "#55626d", "#d64545"], "line-width": ["match", ["get", "off"], 1, 3, 2, 2.5, 3.5], "line-dasharray": [2, 1.5] } });
   add({ id: "route-lbl", type: "symbol", source: "route", layout: { "symbol-placement": "line-center", "text-field": ["get", "label"], "text-font": ["Noto Sans Medium"], "text-size": 12, "text-allow-overlap": false }, paint: { "text-color": "#d64545", "text-halo-color": "#fff", "text-halo-width": 2 } });
   /* AIS: klara färger som inte är blå (vattnet och djupkurvorna är blå), mörk kant och en ljus ring bakom */
   const aisColor = ["match", ["get", "cat"], "pass", "#e8175d", "cargo", "#16a34a", "tank", "#dc2626", "fish", "#f97316", "sail", "#9333ea", "leis", "#facc15", "serv", "#84cc16", "#334155"];
@@ -1225,14 +1225,14 @@ function drawWps() {
   wpMarkers.forEach(m => m.remove()); wpMarkers = [];
   const st = routeStats(wps);
   const many = wps.length > 12;
-  setData("route", { type: "FeatureCollection", features: wps.slice(1).map((p, i) => ({ type: "Feature", properties: { i, off: wpsOff[i] ? 1 : 0, label: many ? "" : `${String(Math.round(st.legs[i].brg)).padStart(3, "0")}° ${st.legs[i].d.toFixed(1)} nm` }, geometry: { type: "LineString", coordinates: [lnglat(wps[i]), lnglat(p)] } })) });
+  setData("route", { type: "FeatureCollection", features: wps.slice(1).map((p, i) => ({ type: "Feature", properties: { i, off: wpsOff[i] === 2 ? 2 : wpsOff[i] ? 1 : 0, label: many ? "" : `${String(Math.round(st.legs[i].brg)).padStart(3, "0")}° ${st.legs[i].d.toFixed(1)} nm` }, geometry: { type: "LineString", coordinates: [lnglat(wps[i]), lnglat(p)] } })) });
   wps.forEach((p, i) => {
     const el = document.createElement("div"), end = i === 0 || i === wps.length - 1;
     if (many && !end) el.className = "wp-dot"; else { el.className = "wp-icon"; el.textContent = many ? (i === 0 ? "A" : "B") : i + 1; }
     const m = new maplibregl.Marker({ element: el, draggable: true }).setLngLat(lnglat(p)).addTo(map);
     let dragged = false;
     m.on("dragstart", () => { dragged = true; closeWpMenu(); });
-    m.on("drag", () => { wps[i] = ll(m.getLngLat()); setData("route", { type: "FeatureCollection", features: wps.slice(1).map((q, k) => ({ type: "Feature", properties: { i: k, off: wpsOff[k] ? 1 : 0, label: "" }, geometry: { type: "LineString", coordinates: [lnglat(wps[k]), lnglat(q)] } })) }); });
+    m.on("drag", () => { wps[i] = ll(m.getLngLat()); setData("route", { type: "FeatureCollection", features: wps.slice(1).map((q, k) => ({ type: "Feature", properties: { i: k, off: wpsOff[k] === 2 ? 2 : wpsOff[k] ? 1 : 0, label: "" }, geometry: { type: "LineString", coordinates: [lnglat(wps[k]), lnglat(q)] } })) }); });
     m.on("dragend", () => { if (autoInfo) autoInfo = { ...autoInfo, edited: true }; renderRoute(); setTimeout(() => dragged = false, 50); });
     el.addEventListener("click", e => { e.stopPropagation(); if (planning && !dragged) openWpMenu(i); });
     wpMarkers.push(m);
@@ -1270,7 +1270,7 @@ function renderRoute() {
     ${wps.length >= 2 && !autoInfo ? `<button class="btn pri" id="rt-auto">Föreslå rutt längs farleder</button><div class="muted">Använder första och sista punkten som start och mål.</div>` : ""}
     ${wps.length >= 2 ? `<div class="muted">Dra i en punkt för att flytta den. Tryck på linjen för att lägga till en punkt där, eller på en punkt för att ta bort den.</div>` : ""}
     ${wps.length < 2 ? `<div class="muted">Tryck ut start och mål, och låt appen föreslå vägen längs farlederna. Eller tryck ut hela rutten själv.</div>` : ""}
-    ${autoInfo ? `<div class="callout ${autoInfo.offNm > .3 ? "bad" : "ok"}">${autoInfo.edited ? "Justerat ruttförslag. Kontrollera dina ändringar mot sjökortet. " : ""}Ruttförslag längs farleder: <b>${autoInfo.onNm.toFixed(1)} nm i farled</b>${autoInfo.minDraft ? `, minsta farledsdjup ${autoInfo.minDraft.toFixed(1)} m` : ""}${autoInfo.unknownNm > .1 ? `, varav ${autoInfo.unknownNm.toFixed(1)} nm med okänt farledsdjup` : ""}.${autoInfo.landEnd || autoInfo.landStart ? ` <b>${autoInfo.landEnd ? "B" : "Starten"} ligger på land enligt sjökortet</b>, rutten går till närmaste vatten (${autoInfo.landEnd || autoInfo.landStart} m därifrån). Biten över land är bara en rak linje.` : ""}${autoInfo.offNm > .02 ? ` <b>${autoInfo.offNm.toFixed(2)} nm utanför farled</b> (orange)${autoInfo.unchecked ? ": appen hittade ingen väg i tillräckligt djupt vatten där, rita den själv" : autoInfo.shallow ? ": vägen dit passerar vatten som enligt sjökortet kan vara grundare än din båt behöver, kör försiktigt och kontrollera" : ": vägen går runt land och kända grund men stenar finns inte i datan, kontrollera mot sjökortet"}.` : ""}</div>` : ""}
+    ${autoInfo ? `<div class="callout ${autoInfo.offNm > .3 ? "bad" : "ok"}">${autoInfo.edited ? "Justerat ruttförslag. Kontrollera dina ändringar mot sjökortet. " : ""}Ruttförslag längs farleder: <b>${autoInfo.onNm.toFixed(1)} nm i farled</b>${autoInfo.minDraft ? `, minsta farledsdjup ${autoInfo.minDraft.toFixed(1)} m` : ""}${autoInfo.unknownNm > .1 ? `, varav ${autoInfo.unknownNm.toFixed(1)} nm med okänt farledsdjup` : ""}.${autoInfo.landEnd || autoInfo.landStart ? ` <b>${autoInfo.landEnd ? "B" : "Starten"} ligger på land enligt sjökortet</b>, rutten går till närmaste vatten (${autoInfo.landEnd || autoInfo.landStart} m därifrån). Biten över land är bara en rak linje.` : ""}${autoInfo.shallowNm > .01 ? ` <b>Den grå biten (${autoInfo.shallowNm.toFixed(2)} nm) är grundare än din båt behöver enligt sjökortet.</b> Där finns ingen säker väg i datan, och små öar, uddar och stenar kan saknas. Navigera själv där, gärna med flygbilden som stöd.` : ""}${autoInfo.offNm > .02 ? ` <b>${autoInfo.offNm.toFixed(2)} nm utanför farled</b> (orange)${autoInfo.unchecked ? ": appen hittade ingen väg i tillräckligt djupt vatten där, rita den själv" : autoInfo.shallow ? ": vägen dit passerar vatten som enligt sjökortet kan vara grundare än din båt behöver, kör försiktigt och kontrollera" : ": vägen går runt land och kända grund men stenar finns inte i datan, kontrollera mot sjökortet"}.` : ""}</div>` : ""}
     ${shTxt}${dark}${routeWindNote()}
     <div>${st.legs.map((l, i) => `<div class="leg"><span class="pill">${i + 1}→${i + 2}</span><span>${compass(l.brg)}</span><span class="num">${String(Math.round(l.brg)).padStart(3, "0")}°</span><span class="num">${l.d.toFixed(2)} nm</span></div>`).join("") || `<div class="muted">Tryck på kartan för att lägga till punkter.</div>`}</div>
     ${wps.length > 1 ? `<div class="card"><h3>Ankomsttid</h3>
@@ -1384,8 +1384,8 @@ function pbfReader(buf) {
     skip(w) { if (w === 0) varint(); else if (w === 1) pos += 8; else if (w === 2) pos += varint(); else if (w === 5) pos += 4; }
   };
 }
-function decodeDepare(buf, z, x, y) {
-  const T = pbfReader(buf), polys = [];
+function decodeLayer(buf, z, x, y, layer, prop) {
+  const T = pbfReader(buf), out = [];
   while (!T.end) {
     const [f, w] = T.tag(); if (f !== 3) { T.skip(w); continue; }
     const L = pbfReader(T.bytes()); let name = "", extent = 4096; const keys = [], vals = [], feats = [];
@@ -1395,13 +1395,12 @@ function decodeDepare(buf, z, x, y) {
       else if (lf === 4) { const V = pbfReader(L.bytes()); let v = null; while (!V.end) { const [vf, vw] = V.tag(); if (vf === 1) v = V.str(); else if (vf === 2) v = V.f32(); else if (vf === 3) v = V.f64(); else if (vf === 4 || vf === 5) v = V.varint(); else if (vf === 6) { const n = V.varint(); v = (n % 2 ? -(n + 1) / 2 : n / 2); } else if (vf === 7) v = !!V.varint(); else V.skip(vw); } vals.push(v); }
       else if (lf === 5) extent = L.varint(); else L.skip(lw);
     }
-    if (name !== "depare") continue;
+    if (name !== layer) continue;
     const n2 = 2 ** z, toLL = (px, py) => { const X = (x + px / extent) / n2, Y = (y + py / extent) / n2; return [X * 360 - 180, deg(Math.atan(Math.sinh(Math.PI * (1 - 2 * Y))))]; };
     for (const fb of feats) {
       const F = pbfReader(fb); let tags = [], geom = [], type = 0;
       while (!F.end) { const [ff, fw] = F.tag(); if (ff === 2) tags = F.packed(); else if (ff === 3) type = F.varint(); else if (ff === 4) geom = F.packed(); else F.skip(fw); }
-      if (type !== 3) continue;
-      let d1 = null; for (let k = 0; k < tags.length; k += 2) if (keys[tags[k]] === "d1") d1 = vals[tags[k + 1]];
+      let v = null; for (let k = 0; k < tags.length; k += 2) if (keys[tags[k]] === prop) v = vals[tags[k + 1]];
       const rings = []; let ring = null, cx = 0, cy = 0, minX = 999, minY = 999, maxX = -999, maxY = -999;
       for (let k = 0; k < geom.length;) {
         const c = geom[k++], id = c & 7, cnt = c >> 3;
@@ -1414,15 +1413,29 @@ function decodeDepare(buf, z, x, y) {
         }
       }
       if (ring) rings.push(ring);
-      polys.push({ d1: d1 ?? 0, rings, bb: [minX, minY, maxX, maxY] });
+      out.push({ type, v, rings, bb: [minX, minY, maxX, maxY] });
     }
   }
-  return polys;
+  return out;
+}
+const decodeDepare = (buf, z, x, y) => decodeLayer(buf, z, x, y, "depare", "d1").filter(f => f.type === 3).map(f => ({ d1: f.v ?? 0, rings: f.rings, bb: f.bb }));
+/* stenar och grund (Maanmittauslaitos): k 1 sten under ytan, 2 i ytan, 3 över ytan, 4 stenigt område, 5 grund */
+const rocksPM = new pmtiles.PMTiles(tileUrl("rocks"));
+function decodeRocks(buf, z, x, y) {
+  const pts = [], areas = [];
+  for (const f of decodeLayer(buf, z, x, y, "rocks", "k")) {
+    if (f.type === 1) for (const r of f.rings) for (const p of r) pts.push([p[0], p[1], f.v]);
+    else if (f.type === 3) areas.push({ k: f.v, rings: f.rings, bb: f.bb });
+  }
+  return { pts, areas };
 }
 const tileOf = (p, z) => { const n = 2 ** z; return [Math.floor((p.lng + 180) / 360 * n), Math.floor((1 - Math.log(Math.tan(rad(p.lat)) + 1 / Math.cos(rad(p.lat))) / Math.PI) / 2 * n)]; };
 function depTile(x, y) {
   const k = x + "/" + y;
-  if (!depCache.has(k)) depCache.set(k, chartPM.getZxy(DZ, x, y).then(t => ({ polys: t ? decodeDepare(t.data, DZ, x, y) : [] })).catch(() => ({ polys: [] })));
+  if (!depCache.has(k)) depCache.set(k, Promise.all([
+    chartPM.getZxy(DZ, x, y).then(t => t ? decodeDepare(t.data, DZ, x, y) : []).catch(() => []),
+    rocksPM.getZxy(DZ, x, y).then(t => t ? decodeRocks(t.data, DZ, x, y) : null).catch(() => null)
+  ]).then(([polys, rocks]) => ({ polys, rocks: rocks || { pts: [], areas: [] } })));
   return depCache.get(k);
 }
 async function loadDepth(bb) {
@@ -1444,11 +1457,20 @@ function waterDepth(p) {   // grundaste djup för punkten enligt djupområdena, 
   }
   return null;
 }
+const inRings = (p, rings) => { let inside = false; for (const r of rings) for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const [xi, yi] = r[i], [xj, yj] = r[j]; if ((yi > p.lat) !== (yj > p.lat) && p.lng < (xj - xi) * (p.lat - yi) / (yj - yi) + xi) inside = !inside; } return inside; };
+const ROCK_R = 18;   // m runt en sten som räknas som hinder
+function rockLand(p) {   // sten i eller över ytan nära punkten, eller inne i ett stenigt område
+  const [x, y] = tileOf(p, DZ), t = depData.get(x + "/" + y); if (!t || !t.rocks) return false;
+  const kx = Math.cos(rad(p.lat)) * 111320;
+  for (const [lng, lat, k] of t.rocks.pts) if (k >= 2 && Math.hypot((lng - p.lng) * kx, (lat - p.lat) * 111320) < ROCK_R) return true;
+  for (const A of t.rocks.areas) if (A.k === 4 && p.lng >= A.bb[0] && p.lng <= A.bb[2] && p.lat >= A.bb[1] && p.lat <= A.bb[3] && inRings(p, A.rings)) return true;
+  return false;
+}
 async function waterPath(a, b, need, free) {
   const lerp = (p, q, t) => ({ lat: p.lat + (q.lat - p.lat) * t, lng: p.lng + (q.lng - p.lng) * t });
   const isFree = p => free.some(f => distNm(f, p) * NM < 120);   // bryggor och hamnar: närmaste biten räknas fri
   // 1 = djupt nog, 2 = vatten men grundare än båten behöver (dyrt, undviks), 0 = land
-  const cls = p => { if (isFree(p)) return 1; const d = waterDepth(p); return d == null ? 0 : d >= need ? 1 : 2; };
+  const cls = p => { if (isFree(p)) return 1; const d = waterDepth(p); return d == null || rockLand(p) ? 0 : d >= need ? 1 : 2; };
   const los = (p, q, strict) => { const n = Math.max(2, Math.ceil(distNm(p, q) * NM / 10)); for (let i = 1; i < n; i++) { const c = cls(lerp(p, q, i / n)); if (!c || (strict && c !== 1)) return false; } return true; };
   const padLat = .006, padLng = .012;
   const bb = [Math.min(a.lng, b.lng) - padLng, Math.min(a.lat, b.lat) - padLat, Math.max(a.lng, b.lng) + padLng, Math.max(a.lat, b.lat) + padLat];
@@ -1501,6 +1523,26 @@ function depthGrid(bb, nx, ny, need) {
       g.beginPath();
       for (const r of P.rings) { r.forEach(([lng, lat], i) => i ? g.lineTo(X(lng), Y(lat)) : g.moveTo(X(lng), Y(lat))); g.closePath(); }
       g.fill("evenodd");
+    }
+  }
+  // stenar och grund ovanpå: grunda områden och stenar under ytan blir grunt, stenar i/över ytan och steniga områden blir hinder
+  const rpx = Math.max(.7, ROCK_R / ((bb[3] - bb[1]) * 111320 / ny));
+  for (const pass of [0, 1]) for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) {
+    const t = depData.get(x + "/" + y); if (!t || !t.rocks) continue;
+    for (const A of t.rocks.areas) {
+      if (A.bb[2] < bb[0] || A.bb[0] > bb[2] || A.bb[3] < bb[1] || A.bb[1] > bb[3]) continue;
+      const hard = A.k === 4; if ((pass === 1) !== hard) continue;
+      g.fillStyle = hard ? "rgb(0,0,0)" : "rgb(128,0,0)";
+      g.beginPath(); for (const r of A.rings) { r.forEach(([lng, lat], i) => i ? g.lineTo(X(lng), Y(lat)) : g.moveTo(X(lng), Y(lat))); g.closePath(); }
+      // grund ritas bara där det redan är vatten
+      if (!hard) { g.save(); g.globalCompositeOperation = "source-atop"; g.fill("evenodd"); g.restore(); } else g.fill("evenodd");
+    }
+    for (const [lng, lat, k] of t.rocks.pts) {
+      if (lng < bb[0] || lng > bb[2] || lat < bb[1] || lat > bb[3]) continue;
+      const hard = k >= 2; if ((pass === 1) !== hard) continue;
+      g.fillStyle = hard ? "rgb(0,0,0)" : "rgb(128,0,0)";
+      g.beginPath(); g.arc(X(lng), Y(lat), rpx, 0, 2 * Math.PI);
+      if (!hard) { g.save(); g.globalCompositeOperation = "source-atop"; g.fill(); g.restore(); } else g.fill();
     }
   }
   const px = g.getImageData(0, 0, nx, ny).data, out = new Uint8Array(nx * ny);
@@ -1567,7 +1609,7 @@ async function waterField0(target, radiusM, need) {
     const n = Math.max(2, Math.ceil(distNm(p, q) * NM / 8));
     for (let i = 1; i < n; i++) {
       const s = lerp(p, q, i / n), c = idx(s); if (c < 0 || !cls[c] || clr[c] < th) return false;
-      if (!nearT(s) && waterDepth(s) == null) return false;
+      if (!nearT(s) && (waterDepth(s) == null || rockLand(s))) return false;
     }
     return true;
   };
@@ -1575,19 +1617,21 @@ async function waterField0(target, radiusM, need) {
     cost: p => { const c = idx(p); return c < 0 ? Infinity : dist[c]; },
     path: p => {   // från p till målet, förenklad utan att gå närmare land än vägen själv gör
       let c = idx(p); if (c < 0 || !isFinite(dist[c])) return null;
-      const raw = [p], rc = [Math.min(SHORE, clr[c])]; let shallow = false, guard = 0;
-      while (c !== -1 && c !== T && guard++ < nx * ny) { c = prev[c]; if (c >= 0) { raw.push(at(c % nx, (c / nx) | 0)); rc.push(Math.min(SHORE, clr[c])); if (cls[c] === 2) shallow = true; } }
-      raw.push(target); rc.push(0);
-      const out = [raw[0]];
+      const raw = [p], rc = [Math.min(SHORE, clr[c])], rs = [cls[c] === 2]; let shallow = false, guard = 0;
+      while (c !== -1 && c !== T && guard++ < nx * ny) { c = prev[c]; if (c >= 0) { const q = at(c % nx, (c / nx) | 0); raw.push(q); rc.push(Math.min(SHORE, clr[c])); rs.push(nearT(q) ? rs[rs.length - 1] : cls[c] === 2); if (cls[c] === 2) shallow = true; } }
+      raw.push(target); rc.push(0); rs.push(rs[rs.length - 1]);
+      const out = [raw[0]], sh = [];
       for (let i = 0; i < raw.length - 1;) {
         const mn = [rc[i]]; for (let j = i + 1; j < raw.length; j++) mn.push(Math.min(mn[mn.length - 1], rc[j]));
-        let j = raw.length - 1;
+        // förenkla aldrig över gränsen mellan tillräckligt djupt och grunt vatten
+        let jMax = i + 1; while (jMax < raw.length - 1 && rs[jMax] === rs[i]) jMax++;
+        let j = jMax;
         // tröskeln: det smalaste stället vägen själv passerar mellan i och j (minus en halv cell för avrundning)
         while (j > i + 1 && !los(raw[i], raw[j], Math.max(0, mn[j - i] - cell * .5))) j--;
-        out.push(raw[j]); i = j;
+        out.push(raw[j]); sh.push(rs[i]); i = j;
       }
       let nm = 0; for (let i = 1; i < out.length; i++) nm += distNm(out[i - 1], out[i]);
-      return { pts: out, nm, shallow };
+      return { pts: out, nm, shallow, sh };
     }
   };
 }
@@ -1609,7 +1653,7 @@ async function bestExit(line, target, need, fromEnd) {
   if (!best) return null;
   const wp = F.path(best.q); if (!wp) return null;
   const kept = [...P.slice(0, best.i + 1), best.q];
-  return { line: fromEnd ? kept : kept.reverse(), water: fromEnd ? wp.pts : wp.pts.slice().reverse(), nm: wp.nm, shallow: wp.shallow };
+  return { line: fromEnd ? kept : kept.reverse(), water: fromEnd ? wp.pts : wp.pts.slice().reverse(), sh: fromEnd ? wp.sh : wp.sh.slice().reverse(), nm: wp.nm, shallow: wp.shallow };
 }
 function nearestFwList(G, p, ok, n) {
   const list = [];
@@ -1627,7 +1671,7 @@ async function connectCands(G, p, ok, need) {
     const q = G.pt(m);
     if (distNm(p, q) * NM < 25) { out.push({ node: m, pts: [p, q], ok: true, nm: 0, cost: 0, near: true }); continue; }
     const fp = F && isFinite(F.cost(q)) ? F.path(q) : null;
-    if (fp) { out.push({ node: m, pts: fp.pts.slice().reverse(), ok: true, nm: fp.nm, shallow: fp.shallow, cost: F.cost(q) / NM * 1.6 }); continue; }
+    if (fp) { out.push({ node: m, pts: fp.pts.slice().reverse(), sh: fp.sh.slice().reverse(), ok: true, nm: fp.nm, shallow: fp.shallow, cost: F.cost(q) / NM * 1.6 }); continue; }
     const w = await waterPath(p, q, need, [p]);
     const nm = w.ok ? w.nm : distNm(p, q);
     out.push({ node: m, ...w, nm, cost: w.ok ? nm * (w.shallow ? 3 : 1.6) : nm * 3 + 5 });   // farled föredras framför okontrollerat vatten
@@ -1693,13 +1737,13 @@ async function computeAutoRoute(from, to) {
   // välj var rutten lämnar farleden: punkten som ger kortast total väg i vatten som är djupt nog
   let exitS = null, exitT = null;
   if (mid.length > 1 && !ct.near) exitT = await bestExit(mid, to, need, true);
-  if (exitT) { mid = exitT.line; ct = { ...ct, pts: exitT.water.slice().reverse(), nm: exitT.nm, ok: true, shallow: exitT.shallow }; }
+  if (exitT) { mid = exitT.line; ct = { ...ct, pts: exitT.water.slice().reverse(), sh: exitT.sh.slice().reverse(), nm: exitT.nm, ok: true, shallow: exitT.shallow }; }
   if (mid.length > 1 && !cs.near) exitS = await bestExit(mid, from, need, false);
-  if (exitS) { mid = exitS.line; cs = { ...cs, pts: exitS.water, nm: exitS.nm, ok: true, shallow: exitS.shallow }; }
+  if (exitS) { mid = exitS.line; cs = { ...cs, pts: exitS.water, sh: exitS.sh, nm: exitS.nm, ok: true, shallow: exitS.shallow }; }
   const out = [ll(from)], off = [];
-  if (!cs.near) for (const p of cs.pts.slice(1)) { out.push(ll(p)); off.push(true); }
+  if (!cs.near) cs.pts.slice(1).forEach((p, k) => { out.push(ll(p)); off.push(cs.sh && cs.sh[k] ? 2 : true); });
   for (let i = cs.near ? 0 : 1; i < mid.length; i++) { out.push(mid[i]); off.push(false); }
-  if (!ct.near) { for (const p of ct.pts.slice().reverse().slice(1)) { out.push(ll(p)); off.push(true); } }
+  if (!ct.near) { const shr = (ct.sh || []).slice().reverse(); ct.pts.slice().reverse().slice(1).forEach((p, k) => { out.push(ll(p)); off.push(shr[k] ? 2 : true); }); }
   else out[out.length - 1] = ll(to);
   if (cs.near && out.length > 2 && distNm(out[0], out[1]) * NM < 1) { out.splice(1, 1); off.splice(0, 1); }
   let onNm = 0, unknownNm = 0, minDraft = Infinity;
@@ -1709,7 +1753,8 @@ async function computeAutoRoute(from, to) {
   }
   for (let i = 1; i < mid.length; i++) onNm += distNm(mid[i - 1], mid[i]);
   const offNm = (cs.near ? 0 : cs.nm) + (ct.near ? 0 : ct.nm);
-  return { pts: out, off: off.slice(0, out.length - 1), info: { onNm, offNm, unknownNm, minDraft: isFinite(minDraft) ? minDraft : null, unchecked: (!cs.near && !cs.ok) || (!ct.near && !ct.ok), shallow: !!(cs.shallow || ct.shallow) } };
+  let shallowNm = 0; for (let i = 0; i < off.length && i < out.length - 1; i++) if (off[i] === 2) shallowNm += distNm(out[i], out[i + 1]);
+  return { pts: out, off: off.slice(0, out.length - 1), info: { onNm, offNm, shallowNm, unknownNm, minDraft: isFinite(minDraft) ? minDraft : null, unchecked: (!cs.near && !cs.ok) || (!ct.near && !ct.ok), shallow: !!(cs.shallow || ct.shallow) } };
 }
 async function autoRoute(from, to) {
   if (!S.autoAck) return autoDisclaimer(() => autoRoute(from, to));
