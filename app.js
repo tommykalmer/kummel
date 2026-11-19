@@ -1270,7 +1270,7 @@ function renderRoute() {
     ${wps.length >= 2 && !autoInfo ? `<button class="btn pri" id="rt-auto">Föreslå rutt längs farleder</button><div class="muted">Använder första och sista punkten som start och mål.</div>` : ""}
     ${wps.length >= 2 ? `<div class="muted">Dra i en punkt för att flytta den. Tryck på linjen för att lägga till en punkt där, eller på en punkt för att ta bort den.</div>` : ""}
     ${wps.length < 2 ? `<div class="muted">Tryck ut start och mål, och låt appen föreslå vägen längs farlederna. Eller tryck ut hela rutten själv.</div>` : ""}
-    ${autoInfo ? `<div class="callout ${autoInfo.offNm > .3 ? "bad" : "ok"}">${autoInfo.edited ? "Justerat ruttförslag. Kontrollera dina ändringar mot sjökortet. " : ""}Ruttförslag längs farleder: <b>${autoInfo.onNm.toFixed(1)} nm i farled</b>${autoInfo.minDraft ? `, minsta farledsdjup ${autoInfo.minDraft.toFixed(1)} m` : ""}${autoInfo.unknownNm > .1 ? `, varav ${autoInfo.unknownNm.toFixed(1)} nm med okänt farledsdjup` : ""}.${autoInfo.offNm > .02 ? ` <b>${autoInfo.offNm.toFixed(2)} nm utanför farled</b> (orange)${autoInfo.unchecked ? ": appen hittade ingen väg i tillräckligt djupt vatten där, rita den själv" : autoInfo.shallow ? ": vägen dit passerar vatten som enligt sjökortet kan vara grundare än din båt behöver, kör försiktigt och kontrollera" : ": vägen går runt land och kända grund men stenar finns inte i datan, kontrollera mot sjökortet"}.` : ""}</div>` : ""}
+    ${autoInfo ? `<div class="callout ${autoInfo.offNm > .3 ? "bad" : "ok"}">${autoInfo.edited ? "Justerat ruttförslag. Kontrollera dina ändringar mot sjökortet. " : ""}Ruttförslag längs farleder: <b>${autoInfo.onNm.toFixed(1)} nm i farled</b>${autoInfo.minDraft ? `, minsta farledsdjup ${autoInfo.minDraft.toFixed(1)} m` : ""}${autoInfo.unknownNm > .1 ? `, varav ${autoInfo.unknownNm.toFixed(1)} nm med okänt farledsdjup` : ""}.${autoInfo.landEnd || autoInfo.landStart ? ` <b>${autoInfo.landEnd ? "B" : "Starten"} ligger på land enligt sjökortet</b>, rutten går till närmaste vatten (${autoInfo.landEnd || autoInfo.landStart} m därifrån). Biten över land är bara en rak linje.` : ""}${autoInfo.offNm > .02 ? ` <b>${autoInfo.offNm.toFixed(2)} nm utanför farled</b> (orange)${autoInfo.unchecked ? ": appen hittade ingen väg i tillräckligt djupt vatten där, rita den själv" : autoInfo.shallow ? ": vägen dit passerar vatten som enligt sjökortet kan vara grundare än din båt behöver, kör försiktigt och kontrollera" : ": vägen går runt land och kända grund men stenar finns inte i datan, kontrollera mot sjökortet"}.` : ""}</div>` : ""}
     ${shTxt}${dark}${routeWindNote()}
     <div>${st.legs.map((l, i) => `<div class="leg"><span class="pill">${i + 1}→${i + 2}</span><span>${compass(l.brg)}</span><span class="num">${String(Math.round(l.brg)).padStart(3, "0")}°</span><span class="num">${l.d.toFixed(2)} nm</span></div>`).join("") || `<div class="muted">Tryck på kartan för att lägga till punkter.</div>`}</div>
     ${wps.length > 1 ? `<div class="card"><h3>Ankomsttid</h3>
@@ -1449,11 +1449,11 @@ async function waterPath(a, b, need, free) {
   const isFree = p => free.some(f => distNm(f, p) * NM < 120);   // bryggor och hamnar: närmaste biten räknas fri
   // 1 = djupt nog, 2 = vatten men grundare än båten behöver (dyrt, undviks), 0 = land
   const cls = p => { if (isFree(p)) return 1; const d = waterDepth(p); return d == null ? 0 : d >= need ? 1 : 2; };
-  const los = (p, q) => { const n = Math.max(2, Math.ceil(distNm(p, q) * NM / 10)); for (let i = 1; i < n; i++) if (cls(lerp(p, q, i / n)) !== 1) return false; return true; };
+  const los = (p, q, strict) => { const n = Math.max(2, Math.ceil(distNm(p, q) * NM / 10)); for (let i = 1; i < n; i++) { const c = cls(lerp(p, q, i / n)); if (!c || (strict && c !== 1)) return false; } return true; };
   const padLat = .006, padLng = .012;
   const bb = [Math.min(a.lng, b.lng) - padLng, Math.min(a.lat, b.lat) - padLat, Math.max(a.lng, b.lng) + padLng, Math.max(a.lat, b.lat) + padLat];
   if (!(await loadDepth(bb))) return { pts: [a, b], ok: false };
-  if (los(a, b)) return { pts: [a, b], ok: true, nm: distNm(a, b) };
+  if (los(a, b, true)) return { pts: [a, b], ok: true, nm: distNm(a, b) };
   const k = Math.cos(rad((a.lat + b.lat) / 2)) * 111320, Wm = (bb[2] - bb[0]) * k, Hm = (bb[3] - bb[1]) * 111320;
   const cell = Math.max(12, Math.hypot(Wm, Hm) / 170), nx = Math.ceil(Wm / cell), ny = Math.ceil(Hm / cell);
   const at = (i, j) => ({ lng: bb[0] + (i + .5) * cell / k, lat: bb[1] + (j + .5) * cell / 111320 });
@@ -1533,7 +1533,7 @@ async function waterField(target, radiusM, need) {
     }
   }
   const lerp = (p, q, t) => ({ lat: p.lat + (q.lat - p.lat) * t, lng: p.lng + (q.lng - p.lng) * t });
-  const free = p => { const c = idx(p); return c >= 0 && cls[c] === 1; };
+  const free = p => { const c = idx(p); return c >= 0 && cls[c] > 0; };
   const los = (p, q) => { const n = Math.max(2, Math.ceil(distNm(p, q) * NM / 10)); for (let i = 1; i < n; i++) if (!free(lerp(p, q, i / n))) return false; return true; };
   return {
     cost: p => { const c = idx(p); return c < 0 ? Infinity : dist[c]; },
@@ -1606,7 +1606,34 @@ function fwSearchMulti(G, sources, ok, targets) {
   }
   return { dist, prev };
 }
+/* om punkten ligger på land enligt sjökortet: närmaste vatten (inom 2 km), helst djupt nog */
+async function snapWater(p, need) {
+  const R = 2000, dLat = R / 111320, dLng = R / (111320 * Math.cos(rad(p.lat)));
+  const bb = [p.lng - dLng, p.lat - dLat, p.lng + dLng, p.lat + dLat];
+  if (!(await loadDepth(bb))) return null;
+  const k = Math.cos(rad(p.lat)) * 111320, cell = 12, nx = Math.ceil(2 * R / cell), ny = nx;
+  const g = depthGrid([bb[0], bb[1], bb[0] + nx * cell / k, bb[1] + ny * cell / 111320], nx, ny, need);
+  const pi = (p.lng - bb[0]) * k / cell, pj = (p.lat - bb[1]) * 111320 / cell;
+  let best = null;
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+    const v = g[j * nx + i]; if (!v) continue;
+    const dm = Math.hypot(i + .5 - pi, j + .5 - pj) * cell, sc = dm + (v === 2 ? 250 : 0);
+    if (!best || sc < best.sc) best = { sc, dm, i, j };
+  }
+  if (!best || best.dm < 60) return null;   // nära vatten (brygga): inget att flytta
+  // en bit in i vattnet, inte precis på strandlinjen
+  const q = { lng: bb[0] + (best.i + .5) * cell / k, lat: bb[1] + (best.j + .5) * cell / 111320 };
+  return { p: q, m: best.dm };
+}
 async function computeAutoRoute(from, to) {
+  const need0 = needDepth();
+  const sf = waterDepth(from) == null ? await snapWater(from, need0) : null, st = waterDepth(to) == null ? await snapWater(to, need0) : null;
+  if (sf || st) {
+    const r = await computeAutoRoute(sf ? sf.p : from, st ? st.p : to); if (r.err) return r;
+    if (sf) { r.pts.unshift(ll(from)); r.off.unshift(true); r.info.landStart = Math.round(sf.m); }
+    if (st) { r.pts.push(ll(to)); r.off.push(true); r.info.landEnd = Math.round(st.m); }
+    return r;
+  }
   let G; try { G = await loadFairways(); } catch (e) { return { err: "Farledsnätet kunde inte laddas. Försök igen om en stund." }; }
   const b = boat(), ok = d => d === 0 || d / 10 >= (+b.draft || 0), need = needDepth();
   const S0 = await connectCands(G, from, ok, need), T0 = await connectCands(G, to, ok, need);
