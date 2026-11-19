@@ -2386,6 +2386,7 @@ function openMenu() {
       <button class="btn" id="m-data">Flytta och säkerhetskopiera</button>
       <button class="btn" id="m-anchor">Ankarlarm${S.anchor ? " (på)" : ""}</button>
       <button class="btn" id="m-offline">Offlinekarta${S.offline ? " (nedladdad)" : ""}</button>
+      <button class="btn" id="m-night">${S.theme && S.theme !== "day" ? THEMES[S.theme] : "Nattläge: av"}</button>
       <button class="btn" id="m-legend">Teckenförklaring</button>
       <button class="btn" id="m-welcome">Så fungerar Kummel</button>
       <button class="btn" id="m-about">Om Kummel</button>
@@ -2393,6 +2394,7 @@ function openMenu() {
     <div class="maker">${ALAND_FLAG} Kummel · en produkt från ${MAKER}, ${MAKER_TOWN}</div>`, "menu");
   $("#m-boats").onclick = openBoats; $("#m-places").onclick = openPlaces; $("#m-routes").onclick = openRoutes;
   $("#m-log").onclick = openLog; $("#m-catch").onclick = openCatches; $("#m-data").onclick = openData; $("#m-plotter").onclick = openPlotter; $("#m-about").onclick = openAbout; $("#m-welcome").onclick = () => termsOk() ? openTour() : openWelcome(); $("#m-legend").onclick = openLegend; $("#m-anchor").onclick = openAnchor; $("#m-offline").onclick = openOffline;
+  $("#m-night").onclick = () => { $("#b-night").click(); $("#m-night").textContent = S.theme === "day" ? "Nattläge: av" : THEMES[S.theme]; };
 }
 $("#b-menu").onclick = openMenu;
 function openPlaces() {
@@ -3206,7 +3208,8 @@ function openTour() {
       ${row("#b-wx", "<b>Sjöväder.</b> Vind, vågor och vattentemperatur över kartan, nu och framåt.")}
       ${row("#b-layers", "<b>Kartlager.</b> Sjökort, flygbild, AIS-fartyg med mera.")}
       ${row("#b-menu", "<b>Meny.</b> Båtar, sparade platser och rutter, loggbok, fångstlogg och offlinekarta.")}
-      ${row("#b-night", "<b>Nattläge.</b> Mörk karta eller rött ljus för kvällen.")}
+      ${row("#b-hide", "<b>Färre knappar.</b> Dölj knapparna så att kartan syns bättre. Fart, kurs och vattenstånd syns ändå. Tryck igen för att visa dem.")}
+      ${row("#b-night", "<b>Nattläge</b> finns i Menyn: mörk karta eller rött ljus för kvällen.")}
     </div>
     <div class="card"><h3>Fiske</h3><div class="wl">
       ${row("#b-fish", "<b>Fisk!</b> Ett tryck när du får napp sparar plats, tid, väder och vattentemperatur. Lägg till art, storlek och foto när du har tid, och dela fångsten som bild.")}
@@ -3259,6 +3262,17 @@ $("#b-night").onclick = () => {
   applyTheme(true); toast(THEMES[S.theme], 1500);
 };
 applyTheme(false);
+
+/* ---------- dölj/visa knapparna ---------- */
+function applyRails() {
+  const on = !!S.railsMin, b = $("#b-hide");
+  document.body.classList.toggle("rails-min", on);
+  b.setAttribute("aria-pressed", "false");   // räknas inte som ett aktivt verktyg
+  b.title = on ? "Visa knappar" : "Dölj knappar"; b.setAttribute("aria-label", b.title);
+  b.querySelector("svg").innerHTML = on ? '<circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/>' : '<path d="m6 15 6-6 6 6"/>';
+}
+$("#b-hide").onclick = () => { S.railsMin = !S.railsMin; save(); applyRails(); };
+applyRails();
 
 /* ---------- knapparna växlar: tryck igen så stängs panelen ---------- */
 ["#b-layers", "#b-menu", "#b-place", "#b-idx", "#b-depth"].forEach(id => {
