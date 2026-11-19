@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
-# Diagnostik: svarar mml.kummel.app (Cloudflare Worker) rätt?
+# Diagnostik: tål MML och mml.kummel.app många rutor på en gång? (som när man zoomar in i appen)
 out=data/diag.md; echo "# Diagnostik $(date -u)" > $out
-t() { echo "- $1 $(curl -s -o /dev/null -w '%{http_code} %{size_download} B %{content_type} cf=' -D /tmp/h -H "Origin: https://www.kummel.app" -H "Referer: https://www.kummel.app/" ${2:-} "https://mml.kummel.app/$1")$(grep -i '^cf-cache-status' /tmp/h | tr -d '\r' | cut -d' ' -f2) acao=$(grep -i '^access-control-allow-origin' /tmp/h | tr -d '\r' | cut -d' ' -f2)" >> $out; }
-t ortokuva/16/18998/36395.jpg
-t ortokuva/16/18998/36395.jpg
-t ortokuva/18/75994/145581.jpg
-t kiinteistojaotus/16/18998/36395.png
-echo "- främmande sida: $(curl -s -o /dev/null -w '%{http_code}' -H 'Referer: https://evil.example/' https://mml.kummel.app/ortokuva/16/18998/36395.jpg)" >> $out
+burst() { # $1 = namn, $2 = url-mall med X och Y, $3 = startx, $4 = starty
+  for i in $(seq 0 47); do
+    x=$(( $3 + i % 8 )); y=$(( $4 + i / 8 )); u=${2//XX/$x}; u=${u//YY/$y}
+    curl -s -o /dev/null -w "%{http_code}\n" -H "Origin: https://www.kummel.app" -H "Referer: https://www.kummel.app/" "$u" &
+  done > /tmp/r; wait
+  echo "- $1: $(sort /tmp/r | uniq -c | tr '\n' ' ')" >> $out
+}
+# rutor som ingen har tittat på (öster om Mariehamn, z18)
+burst "MML direkt, 48 rutor samtidigt" "https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts/1.0.0/ortokuva/default/WGS84_Pseudo-Mercator/18/YY/XX.jpg?api-key=$MML_KEY" 145700 76000
+burst "via mml.kummel.app, nya rutor" "https://mml.kummel.app/ortokuva/18/YY/XX.jpg" 145720 76010
+burst "via mml.kummel.app, samma rutor igen" "https://mml.kummel.app/ortokuva/18/YY/XX.jpg" 145720 76010
 cat $out
