@@ -95,7 +95,6 @@ button,input,select,textarea{font:inherit;color:inherit}
 #b-hide{align-self:center;opacity:.85}
 /* färre knappar: dölj allt utom Min position och det som är aktivt. Instrument och vattenstånd syns alltid */
 body.rails-min #rail > :not(#b-locate):not(#b-hide):not([aria-pressed="true"]),body.rails-min #lrail > :not(#b-north){display:none!important}
-@media (pointer:coarse){#b-zin,#b-zout{display:none!important}}   /* på mobil zoomar man med fingrarna */
 @media (max-height:760px){#rail{gap:6px}#rail .rb{width:44px;height:44px}}
 .rb{width:48px;height:48px;border-radius:50%;border:0;background:var(--panel);box-shadow:var(--shadow);display:grid;place-items:center;cursor:pointer;color:var(--fg)}
 .rb svg{width:22px;height:22px}
@@ -398,8 +397,8 @@ label.row{flex-wrap:nowrap;align-items:center}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script src="config.js?v=202611192350"></script>
-<script src="chartstyle.js?v=202611192350"></script>
-<script src="app.js?v=202611192350"></script>
+<script src="config.js?v=202611200030"></script>
+<script src="chartstyle.js?v=202611200030"></script>
+<script src="app.js?v=202611200030"></script>
 </body>
 </html>
