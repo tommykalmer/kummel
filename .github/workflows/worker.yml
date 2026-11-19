@@ -16,7 +16,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
-          MML_KEY: ${{ secrets.MML_KEY }}
+          MML_KEY: ${{ secrets.MML_KEY || secrets.MML_TOKEN }}
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$MML_KEY" ]; then echo "Hemligheterna CF_API_TOKEN och MML_KEY saknas än" | tee -a $GITHUB_STEP_SUMMARY; exit 0; fi
           npx --yes wrangler@3.99.0 deploy
