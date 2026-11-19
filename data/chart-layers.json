@@ -160,6 +160,31 @@
  },
  {
   "service": "avoin",
+  "name": "avoin:kotimaan_liikennealueet",
+  "title": "Kotimaan liikennealueet",
+  "layer": "kotimaan_liikennealueet",
+  "count": 6,
+  "geom": {
+   "MultiPolygon": 6
+  },
+  "fields": {
+   "ID": [
+    1,
+    2,
+    3,
+    4,
+    7,
+    8
+   ],
+   "ALUENIMI": [
+    "Kotimaa 1",
+    "Kotimaa 2",
+    "Kotimaa 3"
+   ]
+  }
+ },
+ {
+  "service": "avoin",
   "name": "avoin:navigational_warnings_a",
   "title": "Navigational warnings (Area)",
   "layer": "navigational_warnings_a",
@@ -361,7 +386,7 @@
   },
   "fields": {
    "ID": [
-    574
+    1610
    ],
    "WARNINGINFORMATIONNAVWARNTYPEDETAILS_FI": [
     "Valaistu kiinteä turvalaite - valo ei käytössä"
@@ -376,13 +401,13 @@
     175
    ],
    "WARNINGINFORMATION_FI": [
-    "SEKTORILOISTO TUPALAHTI TL 20128 PAIKASSA 60-27.36N 022-03.41E. VALO EI TOIMI."
+    "REUNAMERKKI KYRKOGÅRDSGRUND NRO 5972 PAIKASSA 60-13.48N 21-45.09E VALO EI TOIMI"
    ],
    "WARNINGINFORMATION_SV": [
-    "SEKTORFYR TUPALAHTI NR 20128 I POSITION 60-27.36N 022-03.41E. LJUSET UR FUNKTION."
+    "RANDMÄRKE KYRKOGÅRDSGRUND NR 5972 I POSITION 60-13.48N 21-45.09E LJUSET UR FUNKTION"
    ],
    "WARNINGINFORMATION_EN": [
-    "SECTORLIGHT TUPALAHTI NO 20128 IN POSITION 60-27.36N 022-03.41E. LIGHT OUT OF ORDER."
+    "EDGE MARK KYRKOGÅRDSGRUND NR 5972 IN POSITION 60-13.48N 21-45.09E LIGHT OUT OF ORDER"
    ],
    "INTSERVICE": [
     "true    "
@@ -391,7 +416,7 @@
     "FI05"
    ],
    "MESSAGESERIESIDENTIFIERINTEROPERABILITYIDENTIFIER": [
-    "urn:mrn:fin:navwarn:FI05:LC:2026:574"
+    "urn:mrn:fin:navwarn:FI05:LC:2026:630"
    ],
    "MESSAGESERIESIDENTIFIERNAMEOFSERIES_FI": [
     "Coastal and Local Warnings"
@@ -406,7 +431,7 @@
     "FI"
    ],
    "MESSAGESERIESIDENTIFIERWARNINGNUMBER": [
-    574
+    630
    ],
    "MESSAGESERIESIDENTIFIERWARNINGTYPE": [
     "Local Navigational Warning"
@@ -430,7 +455,7 @@
     1
    ],
    "PUBLICATIONTIME": [
-    "2026-10-21T14:45:08Z"
+    "2026-11-18T23:23:00Z"
    ],
    "GENERALAREALOCATIONNAME_FI": [
     "Saaristomeri"
@@ -442,13 +467,13 @@
     "Archipelago Sea"
    ],
    "LOCALITYLOCATIONNAME_FI": [
-    "NAANTALI"
+    "UTÖ-NAANTALI VÄYLÄ"
    ],
    "LOCALITYLOCATIONNAME_EN": [
-    "NAANTALI"
+    "UTÖ-NAANTALI FAIRWAY"
    ],
    "LOCALITYLOCATIONNAME_SV": [
-    "NÅDENDAL"
+    "UTÖ-NÅDENDAL FARLED"
    ]
   }
  },
@@ -1345,9 +1370,9 @@
   "name": "vesivaylatiedot:loistot_uusi",
   "title": "Loistot",
   "layer": "loistot_uusi",
-  "count": 1872,
+  "count": 1873,
   "geom": {
-   "Point": 1872
+   "Point": 1873
   },
   "fields": {
    "id": [
@@ -1451,12 +1476,12 @@
     "20210"
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:31:13Z",
-    "2026-11-16T00:41:06Z",
-    "2026-11-16T00:40:32Z",
-    "2026-11-16T00:31:14Z",
-    "2026-11-16T00:31:16Z",
-    "2026-11-16T00:21:32Z"
+    "2026-11-19T00:15:50Z",
+    "2026-11-19T00:25:47Z",
+    "2026-11-19T00:25:13Z",
+    "2026-11-19T00:15:51Z",
+    "2026-11-19T00:15:52Z",
+    "2026-11-19T00:06:03Z"
    ],
    "jnro": [
     "4455",
@@ -1545,7 +1570,7 @@
     "112276"
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:18:50Z"
+    "2026-11-19T00:03:20Z"
    ]
   }
  },
@@ -1774,12 +1799,12 @@
     "Väri: Punainen/valkoinen/punainen, Väritys: Vaakavyöt ylhäältä lukien, Muoto: Majakkatorni, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): , Korkeus vedestä: \\nVäri: Punainen/valkoinen/punainen, Väritys: Vaakavyöt ylhäältä lukien, Muoto: Majakkatorni, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): , Korkeus vedestä: "
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:26:34Z",
-    "2026-11-16T00:28:16Z",
-    "2026-11-16T00:28:22Z",
-    "2026-11-16T00:28:24Z",
-    "2026-11-16T00:29:22Z",
-    "2026-11-16T00:31:16Z"
+    "2026-11-19T00:11:01Z",
+    "2026-11-19T00:12:48Z",
+    "2026-11-19T00:12:54Z",
+    "2026-11-19T00:12:56Z",
+    "2026-11-19T00:13:56Z",
+    "2026-11-19T00:15:53Z"
    ],
    "vaylan_nimi": [
     "[2930: Gustaf Dalen-Kalkskär-väylä](vaylat:jnro=2930)\\n[3255: Utö-Naantali väylä](vaylat:jnro=3255)",
@@ -1940,11 +1965,12 @@
     "4640"
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:43:57Z",
-    "2026-11-16T00:43:58Z",
-    "2026-11-16T00:43:56Z",
-    "2026-11-16T00:43:59Z",
-    "2026-11-16T00:43:55Z"
+    "2026-11-19T00:28:40Z",
+    "2026-11-19T00:28:42Z",
+    "2026-11-19T00:28:41Z",
+    "2026-11-19T00:28:39Z",
+    "2026-11-19T00:28:38Z",
+    "2026-11-19T00:28:37Z"
    ],
    "vaylan_nimi": [
     "[4065: Hangon kappelisataman väylä](vaylat:jnro=4065)",
@@ -2193,12 +2219,12 @@
     "Väri: Punainen, Väritys: Yksivärinen, Muoto: Lieriömäinen, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): , Korkeus vedestä: \\nVäri: Punainen, Väritys: Yksivärinen, Muoto: Lieriömäinen, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): , Korkeus vedestä: "
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:33:08Z",
-    "2026-11-16T00:36:12Z",
-    "2026-11-16T00:41:12Z",
-    "2026-11-16T00:25:35Z",
-    "2026-11-16T00:25:40Z",
-    "2026-11-16T00:26:08Z"
+    "2026-11-19T00:17:48Z",
+    "2026-11-19T00:20:55Z",
+    "2026-11-19T00:25:53Z",
+    "2026-11-19T00:10:06Z",
+    "2026-11-19T00:10:11Z",
+    "2026-11-19T00:10:39Z"
    ],
    "vaylan_nimi": [
     "[2650: Saaristomeri (avomeri)](vaylat:jnro=2650)",
@@ -2397,8 +2423,9 @@
     "[3267: Raumankarin väylä](vaylat:jnro=3267)"
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:42:38Z",
-    "2026-11-16T00:42:39Z"
+    "2026-11-19T00:27:21Z",
+    "2026-11-19T00:27:22Z",
+    "2026-11-19T00:27:20Z"
    ]
   }
  },
@@ -2519,11 +2546,12 @@
     "4950"
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:43:57Z",
-    "2026-11-16T00:43:56Z",
-    "2026-11-16T00:43:59Z",
-    "2026-11-16T00:43:58Z",
-    "2026-11-16T00:43:55Z"
+    "2026-11-19T00:28:39Z",
+    "2026-11-19T00:28:41Z",
+    "2026-11-19T00:28:38Z",
+    "2026-11-19T00:28:40Z",
+    "2026-11-19T00:28:42Z",
+    "2026-11-19T00:28:37Z"
    ],
    "vaylan_nimi": [
     "[5135: Kalbådagrundin pohjoisenpuolen väylä](vaylat:jnro=5135)",
@@ -2642,12 +2670,12 @@
     11516
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:16:36Z",
-    "2026-11-16T00:16:37Z",
-    "2026-11-16T00:16:40Z",
-    "2026-11-16T00:19:10Z",
-    "2026-11-16T00:19:15Z",
-    "2026-11-16T00:19:22Z"
+    "2026-11-19T00:01:06Z",
+    "2026-11-19T00:01:07Z",
+    "2026-11-19T00:01:10Z",
+    "2026-11-19T00:03:42Z",
+    "2026-11-19T00:03:48Z",
+    "2026-11-19T00:03:54Z"
    ],
    "paivamerkkipintamateriaalikoodi": [
     6,
@@ -2803,8 +2831,8 @@
     "Tullsundet"
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:42:36Z",
-    "2026-11-16T00:42:37Z"
+    "2026-11-19T00:27:18Z",
+    "2026-11-19T00:27:19Z"
    ],
    "vaylan_nimi": [
     "[4465: Dragesvikenin veneväylä](vaylat:jnro=4465)",
@@ -2894,11 +2922,11 @@
     "111988"
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:18:50Z",
-    "2026-11-16T00:18:54Z",
-    "2026-11-16T00:18:51Z",
-    "2026-11-16T00:18:52Z",
-    "2026-11-16T00:18:53Z"
+    "2026-11-19T00:03:21Z",
+    "2026-11-19T00:03:25Z",
+    "2026-11-19T00:03:22Z",
+    "2026-11-19T00:03:23Z",
+    "2026-11-19T00:03:24Z"
    ]
   }
  },
@@ -2974,12 +3002,12 @@
     "1"
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:43:42Z",
-    "2026-11-16T00:43:48Z",
-    "2026-11-16T00:43:46Z",
-    "2026-11-16T00:43:41Z",
-    "2026-11-16T00:43:51Z",
-    "2026-11-16T00:43:49Z"
+    "2026-11-19T00:28:23Z",
+    "2026-11-19T00:28:30Z",
+    "2026-11-19T00:28:27Z",
+    "2026-11-19T00:28:22Z",
+    "2026-11-19T00:28:32Z",
+    "2026-11-19T00:28:31Z"
    ],
    "vaylan_nimi": [
     "[4455: Etelä-Suomen talviväylä, Porkkala-Helsinki](vaylat:jnro=4455)",
@@ -3146,12 +3174,12 @@
     11696
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:26:34Z",
-    "2026-11-16T00:28:16Z",
-    "2026-11-16T00:28:22Z",
-    "2026-11-16T00:28:24Z",
-    "2026-11-16T00:29:22Z",
-    "2026-11-16T00:31:16Z"
+    "2026-11-19T00:11:01Z",
+    "2026-11-19T00:12:48Z",
+    "2026-11-19T00:12:54Z",
+    "2026-11-19T00:12:56Z",
+    "2026-11-19T00:13:56Z",
+    "2026-11-19T00:15:53Z"
    ]
   }
  },
@@ -3263,7 +3291,7 @@
     "Långnäsin satama"
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:43:55Z"
+    "2026-11-19T00:28:37Z"
    ],
    "id": [
     2325,
@@ -3412,7 +3440,7 @@
     "På NV sidan av Nåtö"
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:43:55Z"
+    "2026-11-19T00:28:37Z"
    ],
    "id": [
     2350,
@@ -3556,7 +3584,7 @@
     "Humalkari"
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:43:55Z"
+    "2026-11-19T00:28:37Z"
    ],
    "id": [
     2370,
@@ -3703,7 +3731,7 @@
     "Vähä-Varestus"
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:43:55Z"
+    "2026-11-19T00:28:37Z"
    ],
    "id": [
     2310,
@@ -3850,7 +3878,7 @@
     "Finbo"
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:43:55Z"
+    "2026-11-19T00:28:37Z"
    ],
    "id": [
     2340,
@@ -4000,7 +4028,7 @@
     "Paavastenkari"
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:43:55Z"
+    "2026-11-19T00:28:37Z"
    ],
    "id": [
     147,
@@ -4052,9 +4080,9 @@
   "name": "vesivaylatiedot:valosektorit_uusi",
   "title": "Valosektorit",
   "layer": "valosektorit_uusi",
-  "count": 2846,
+  "count": 2847,
   "geom": {
-   "Point": 2846
+   "Point": 2847
   },
   "fields": {
    "id": [
@@ -4104,12 +4132,12 @@
     "k"
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:16:35Z",
-    "2026-11-16T00:16:36Z",
-    "2026-11-16T00:16:40Z",
-    "2026-11-16T00:16:43Z",
-    "2026-11-16T00:18:55Z",
-    "2026-11-16T00:19:10Z"
+    "2026-11-19T00:01:05Z",
+    "2026-11-19T00:01:06Z",
+    "2026-11-19T00:01:10Z",
+    "2026-11-19T00:01:12Z",
+    "2026-11-19T00:03:26Z",
+    "2026-11-19T00:03:42Z"
    ],
    "jnro": [
     "4005",
@@ -4250,12 +4278,12 @@
     "5160"
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:18:26Z",
-    "2026-11-16T00:18:12Z",
-    "2026-11-16T00:17:59Z",
-    "2026-11-16T00:18:25Z",
-    "2026-11-16T00:18:02Z",
-    "2026-11-16T00:16:50Z"
+    "2026-11-19T00:02:57Z",
+    "2026-11-19T00:02:42Z",
+    "2026-11-19T00:02:30Z",
+    "2026-11-19T00:02:55Z",
+    "2026-11-19T00:02:33Z",
+    "2026-11-19T00:01:21Z"
    ],
    "vaylan_nimi": [
     "[5240: Sandholmen-Finnholmarna](vaylat:jnro=5240)",
@@ -4422,8 +4450,8 @@
     "Svartholmen itäpuoli"
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:42:36Z",
-    "2026-11-16T00:42:37Z"
+    "2026-11-19T00:27:18Z",
+    "2026-11-19T00:27:19Z"
    ],
    "vaylan_nimi": [
     "[4215: Torsön väylä](vaylat:jnro=4215)",
@@ -4537,8 +4565,8 @@
     "Karhusalmi"
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:42:36Z",
-    "2026-11-16T00:42:37Z"
+    "2026-11-19T00:27:18Z",
+    "2026-11-19T00:27:19Z"
    ],
    "vaylan_nimi": [
     "[4465: Dragesvikenin veneväylä](vaylat:jnro=4465)",
@@ -4567,18 +4595,18 @@
   "name": "vesivaylatiedot:vesivaylien_turvalaiteviat_kauppamerenkulku",
   "title": "Vesiväylien turvalaiteviat kauppamerenkulunväylät",
   "layer": "vesivaylien_turvalaiteviat_kauppamerenkulku",
-  "count": 17,
+  "count": 20,
   "geom": {
-   "Point": 17
+   "Point": 20
   },
   "fields": {
    "vikaid": [
+    "-2139920958",
+    "-2139920959",
+    "-2139920960",
     "-2139920978",
     "-2139920986",
-    "-2139921113",
-    "-2139921139",
-    "-2139921145",
-    "-2139921152"
+    "-2139921113"
    ],
    "vikatyyppikoodi": [
     "1022541001",
@@ -4589,28 +4617,28 @@
     "1022541004"
    ],
    "turvalaitenumero": [
+    "28435",
+    "12841",
+    "5972",
     "7109",
     "13020",
-    "20128",
-    "6673",
-    "3624",
-    "11515"
+    "20128"
    ],
    "turvalaitenimifi": [
+    "Lilla Ankargrundet",
+    "Sommarö",
+    "Kyrkogårdsgrund",
     "Nygrund",
     "Inkoo 4",
-    "Tupalahti",
-    "Strömmingsgrundet",
-    "Järngrynnan",
-    "Haru Bredgrund"
+    "Tupalahti"
    ],
    "turvalaitenimisv": [
+    "Lilla Ankargrundet",
+    "Sommarö",
+    "Kyrkogårdsgrund",
     "Nygrund",
     "Ingå 4",
-    "Tupalahti",
-    "Strömmingsgrundet",
-    "Järngrynnan",
-    "Haru Bredgrund"
+    "Tupalahti"
    ],
    "vikatyyppifi": [
     "Valo pimeä",
@@ -4637,18 +4665,18 @@
     "Destroyed/Missing"
    ],
    "kirjausaika": [
+    "2026-11-19T06:32:52",
+    "2026-11-19T04:08:43",
+    "2026-11-19T01:10:58",
     "2026-11-15T02:16:30",
     "2026-11-12T01:30:43",
-    "2026-10-21T17:00:00",
-    "2026-10-19T09:26:19",
-    "2026-10-17T14:20:19",
-    "2026-10-16T18:03:18"
+    "2026-10-21T17:00:00"
    ],
    "vaylaluokitus": [
     "kauppamerenkulku"
    ],
    "irrotuspvm": [
-    "2026-11-16T13:25:32.603Z"
+    "2026-11-19T13:16:32.677Z"
    ]
   }
  },
@@ -4715,7 +4743,7 @@
     "matalavaylat"
    ],
    "irrotuspvm": [
-    "2026-11-16T13:25:32.603Z"
+    "2026-11-19T13:16:32.677Z"
    ]
   }
  },
@@ -4841,7 +4869,7 @@
     "Yara"
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:43:55Z"
+    "2026-11-19T00:28:37Z"
    ],
    "id": [
     147,
@@ -5019,8 +5047,9 @@
     "[4190: Kalvön-Stengrundskobb](vaylat:jnro=4190)"
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:42:38Z",
-    "2026-11-16T00:42:39Z"
+    "2026-11-19T00:27:20Z",
+    "2026-11-19T00:27:21Z",
+    "2026-11-19T00:27:22Z"
    ]
   }
  },
@@ -5136,11 +5165,12 @@
     "4950"
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:43:57Z",
-    "2026-11-16T00:43:56Z",
-    "2026-11-16T00:43:59Z",
-    "2026-11-16T00:43:58Z",
-    "2026-11-16T00:43:55Z"
+    "2026-11-19T00:28:39Z",
+    "2026-11-19T00:28:41Z",
+    "2026-11-19T00:28:38Z",
+    "2026-11-19T00:28:40Z",
+    "2026-11-19T00:28:42Z",
+    "2026-11-19T00:28:37Z"
    ],
    "vaylan_nimi": [
     "[5135: Kalbådagrundin pohjoisenpuolen väylä](vaylat:jnro=5135)",
@@ -5380,12 +5410,12 @@
     "Väri: Punainen/valkoinen/punainen, Väritys: Vaakavyöt ylhäältä lukien, Muoto: Majakkatorni, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): , Korkeus vedestä: \\nVäri: Punainen/valkoinen/punainen, Väritys: Vaakavyöt ylhäältä lukien, Muoto: Majakkatorni, Pintamateriaali: , Kummelin tunnus: , Korkeus (m): , Leveys (m): , Korkeus maasta (m): , Korkeus vedestä: "
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:26:34Z",
-    "2026-11-16T00:28:16Z",
-    "2026-11-16T00:28:22Z",
-    "2026-11-16T00:28:24Z",
-    "2026-11-16T00:29:22Z",
-    "2026-11-16T00:31:16Z"
+    "2026-11-19T00:11:01Z",
+    "2026-11-19T00:12:48Z",
+    "2026-11-19T00:12:54Z",
+    "2026-11-19T00:12:56Z",
+    "2026-11-19T00:13:56Z",
+    "2026-11-19T00:15:53Z"
    ],
    "vaylan_nimi": [
     "[2930: Gustaf Dalen-Kalkskär-väylä](vaylat:jnro=2930)\\n[3255: Utö-Naantali väylä](vaylat:jnro=3255)",
@@ -5565,8 +5595,9 @@
     "[4210: Skomakarskär-Granskär](vaylat:jnro=4210)"
    ],
    "irrotus_pvm": [
-    "2026-11-16T00:42:38Z",
-    "2026-11-16T00:42:39Z"
+    "2026-11-19T00:27:20Z",
+    "2026-11-19T00:27:21Z",
+    "2026-11-19T00:27:22Z"
    ]
   }
  },
@@ -5608,7 +5639,7 @@
     "https://vayla.fi/koverharin-merivaylan-syventaminen"
    ],
    "irrotus_pvm": [
-    "2026-11-10T00:00:00Z"
+    "2026-11-17T00:00:00Z"
    ]
   }
  },
@@ -5650,7 +5681,7 @@
     "https://vayla.fi/suunnittelu-rakentaminen/hankkeiden-suunnittelu/hankkeiden-suunnittelun-vaiheet"
    ],
    "irrotus_pvm": [
-    "2026-11-10T00:00:00Z"
+    "2026-11-17T00:00:00Z"
    ],
    "oid": [
     "1.2.246.578.5.1.2704209922.611477828"
