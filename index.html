@@ -217,6 +217,10 @@ label.f input,label.f select,label.f textarea{border:1px solid var(--line);borde
 .callout{border-radius:12px;padding:10px 12px;background:var(--paper);border-left:4px solid var(--accent)}
 .callout.ok{border-color:var(--stbd)}.callout.bad{border-color:var(--port)}
 .leg{display:grid;grid-template-columns:auto 1fr auto auto;gap:6px;font-variant-numeric:tabular-nums;font-size:14px;align-items:center;padding:4px 0;border-bottom:1px dashed var(--line)}
+.pickbar{position:fixed;z-index:850;left:50%;top:calc(70px + var(--sat));transform:translateX(-50%);width:min(520px,calc(100vw - 32px));background:var(--ink);color:#fff;padding:14px 16px;border-radius:14px;box-shadow:var(--shadow);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.pickbar > div:first-child{flex:1 1 220px}.pickbar b{display:block;font-size:17px}.pickbar span{font-size:14px;opacity:.85}
+.pickbar-b{display:flex;gap:8px}.pickbar .btn.sec{background:transparent;color:#fff;border-color:rgba(255,255,255,.4)}
+.pick-to{width:28px;height:28px;border-radius:50%;background:#d64545;color:#fff;font:700 14px/28px var(--f-ui);text-align:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35)}
 .toast{position:fixed;z-index:900;left:50%;top:calc(70px + var(--sat));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;box-shadow:var(--shadow);font-weight:600;max-width:90vw}
 #night{position:fixed;inset:0;z-index:2000;pointer-events:none;background:#b00000;mix-blend-mode:multiply;display:none}
 body.night #night{display:block}
@@ -397,8 +401,8 @@ label.row{flex-wrap:nowrap;align-items:center}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script src="config.js?v=202611200030"></script>
-<script src="chartstyle.js?v=202611200030"></script>
-<script src="app.js?v=202611200030"></script>
+<script src="config.js?v=202611231420"></script>
+<script src="chartstyle.js?v=202611231420"></script>
+<script src="app.js?v=202611231420"></script>
 </body>
 </html>
