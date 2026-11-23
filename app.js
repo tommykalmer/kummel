@@ -1523,8 +1523,10 @@ async function waterPath(a, b, need, free) {
   // raka sträckor över djupt vatten får inte skära genom grunt; grunda bitar hålls för sig
   for (let i = 0; i < raw.length - 1;) {
     let jMax = i + 1; while (jMax < raw.length - 1 && rs[jMax] === rs[i]) jMax++;
+        // sluta vid sista punkten i samma sorts vatten; steget över gränsen räknas som grunt (ritas inte)
+        if (rs[jMax] !== rs[i] && jMax - 1 > i) jMax--;
     let j = jMax; while (j > i + 1 && !los(raw[i], raw[j], !rs[i])) j--;
-    out.push(raw[j]); sh.push(rs[i]); i = j;
+    out.push(raw[j]); sh.push(rs[i] || rs[j]); i = j;
   }
   let nm = 0; for (let i = 1; i < out.length; i++) nm += distNm(out[i - 1], out[i]);
   return { pts: out, ok: true, nm, shallow, sh };
@@ -1657,10 +1659,12 @@ async function waterField0(target, radiusM, need) {
         const mn = [rc[i]]; for (let j = i + 1; j < raw.length; j++) mn.push(Math.min(mn[mn.length - 1], rc[j]));
         // förenkla aldrig över gränsen mellan tillräckligt djupt och grunt vatten
         let jMax = i + 1; while (jMax < raw.length - 1 && rs[jMax] === rs[i]) jMax++;
+        // sluta vid sista punkten i samma sorts vatten; steget över gränsen räknas som grunt (ritas inte)
+        if (rs[jMax] !== rs[i] && jMax - 1 > i) jMax--;
         let j = jMax;
         // tröskeln: det smalaste stället vägen själv passerar mellan i och j (minus en halv cell för avrundning)
         while (j > i + 1 && !los(raw[i], raw[j], Math.max(0, mn[j - i] - cell * .5), !rs[i])) j--;
-        out.push(raw[j]); sh.push(rs[i]); i = j;
+        out.push(raw[j]); sh.push(rs[i] || rs[j]); i = j;
       }
       let nm = 0; for (let i = 1; i < out.length; i++) nm += distNm(out[i - 1], out[i]);
       return { pts: out, nm, shallow, sh };
