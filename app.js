@@ -1512,16 +1512,22 @@ async function waterPath(a, b, need, free) {
     for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
       if (!di && !dj) continue; const i2 = ci + di, j2 = cj + dj; if (i2 < 0 || j2 < 0 || i2 >= nx || j2 >= ny) continue;
       const n = j2 * nx + i2; if (!ok[n]) continue; if (di && dj && (!ok[cj * nx + i2] || !ok[j2 * nx + ci])) continue;
-      const ng = g[c] + (di && dj ? 1.414 : 1) * (ok[n] === 2 ? 8 : 1);
+      const ng = g[c] + (di && dj ? 1.414 : 1) * (ok[n] === 2 ? 40 : 1);
       if (ng < g[n]) { g[n] = ng; prev[n] = c; push([ng + h(n), n]); }
     }
   }
   if (!found) return { pts: [a, b], ok: false };
-  const cells = []; let shallow = false; for (let c = T0; c !== -1; c = prev[c]) { cells.push(at(c % nx, Math.floor(c / nx))); if (ok[c] === 2) shallow = true; }
-  const raw = [a, ...cells.reverse().slice(1, -1), b], out = [a];
-  for (let i = 0; i < raw.length - 1;) { let j = raw.length - 1; while (j > i + 1 && !los(raw[i], raw[j])) j--; out.push(raw[j]); i = j; }
+  const cells = [], cs = []; let shallow = false; for (let c = T0; c !== -1; c = prev[c]) { cells.push(at(c % nx, Math.floor(c / nx))); cs.push(ok[c] === 2); if (ok[c] === 2) shallow = true; }
+  cells.reverse(); cs.reverse();
+  const raw = [a, ...cells.slice(1, -1), b], rs = [cs[1] ?? false, ...cs.slice(1, -1), cs[cs.length - 2] ?? false], out = [a], sh = [];
+  // raka sträckor över djupt vatten får inte skära genom grunt; grunda bitar hålls för sig
+  for (let i = 0; i < raw.length - 1;) {
+    let jMax = i + 1; while (jMax < raw.length - 1 && rs[jMax] === rs[i]) jMax++;
+    let j = jMax; while (j > i + 1 && !los(raw[i], raw[j], !rs[i])) j--;
+    out.push(raw[j]); sh.push(rs[i]); i = j;
+  }
   let nm = 0; for (let i = 1; i < out.length; i++) nm += distNm(out[i - 1], out[i]);
-  return { pts: out, ok: true, nm, shallow };
+  return { pts: out, ok: true, nm, shallow, sh };
 }
 /* avståndsfält i vatten från en punkt: kortaste väg från varje rutnätscell till punkten */
 /* djupområden ritade på ett rutnät (snabbt: canvas) -> 1 djupt nog, 2 grunt, 0 land/okänt */
@@ -1605,7 +1611,7 @@ async function waterField0(target, radiusM, need) {
   const T = idx(target); if (T < 0) return null; cls[T] = 1;
   const clr = shoreDist(cls, nx, ny, cell);
   // dyrare nära land och i grunt vatten: vägen håller sig mitt i sunden
-  const w = c => (cls[c] === 2 ? 8 : 1) * (1 + 2.5 * Math.max(0, (SHORE - clr[c]) / SHORE));
+  const w = c => (cls[c] === 2 ? 40 : 1) * (1 + 2.5 * Math.max(0, (SHORE - clr[c]) / SHORE));
   const dist = new Float64Array(nx * ny).fill(Infinity), prev = new Int32Array(nx * ny).fill(-1), heap = [[0, T]]; dist[T] = 0;
   const push = it => { heap.push(it); let i = heap.length - 1; while (i) { const p = (i - 1) >> 1; if (heap[p][0] <= heap[i][0]) break; [heap[p], heap[i]] = [heap[i], heap[p]]; i = p; } };
   const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === i) break; [heap[m], heap[i]] = [heap[i], heap[m]]; i = m; } } return top; };
@@ -1621,16 +1627,26 @@ async function waterField0(target, radiusM, need) {
   }
   const lerp = (p, q, t) => ({ lat: p.lat + (q.lat - p.lat) * t, lng: p.lng + (q.lng - p.lng) * t });
   // rak linje är ok om den håller minst th meter från land i rutnätet och aldrig korsar land i själva sjökortet
-  const los = (p, q, th) => {
+  const los = (p, q, th, strict) => {
     const n = Math.max(2, Math.ceil(distNm(p, q) * NM / 8));
     for (let i = 1; i < n; i++) {
-      const s = lerp(p, q, i / n), c = idx(s); if (c < 0 || !cls[c] || clr[c] < th) return false;
+      const s = lerp(p, q, i / n), c = idx(s); if (c < 0 || !cls[c] || clr[c] < th || (strict && cls[c] !== 1)) return false;
       if (!nearT(s) && (waterDepth(s) == null || rockLand(s))) return false;
     }
     return true;
   };
   return {
     cost: p => { const c = idx(p); return c < 0 ? Infinity : dist[c]; },
+    // billigaste djupa cellen inom r meter (farledens punkter ligger ibland precis på kanten mot grunt)
+    near: (p, r) => {
+      const c0 = idx(p); if (c0 < 0) return null; const n = Math.ceil(r / cell), ci = c0 % nx, cj = (c0 / nx) | 0; let best = null;
+      for (let dj = -n; dj <= n; dj++) for (let di = -n; di <= n; di++) {
+        const i = ci + di, j = cj + dj; if (i < 0 || j < 0 || i >= nx || j >= ny || Math.hypot(di, dj) > n) continue;
+        const c = j * nx + i; if (cls[c] !== 1 || !isFinite(dist[c])) continue;
+        const v = dist[c] + Math.hypot(di, dj) * cell; if (!best || v < best.cost) best = { cost: v, p: at(i, j) };
+      }
+      return best;
+    },
     path: p => {   // från p till målet, förenklad utan att gå närmare land än vägen själv gör
       let c = idx(p); if (c < 0 || !isFinite(dist[c])) return null;
       const raw = [p], rc = [Math.min(SHORE, clr[c])], rs = [cls[c] === 2]; let shallow = false, guard = 0;
@@ -1643,7 +1659,7 @@ async function waterField0(target, radiusM, need) {
         let jMax = i + 1; while (jMax < raw.length - 1 && rs[jMax] === rs[i]) jMax++;
         let j = jMax;
         // tröskeln: det smalaste stället vägen själv passerar mellan i och j (minus en halv cell för avrundning)
-        while (j > i + 1 && !los(raw[i], raw[j], Math.max(0, mn[j - i] - cell * .5))) j--;
+        while (j > i + 1 && !los(raw[i], raw[j], Math.max(0, mn[j - i] - cell * .5), !rs[i])) j--;
         out.push(raw[j]); sh.push(rs[i]); i = j;
       }
       let nm = 0; for (let i = 1; i < out.length; i++) nm += distNm(out[i - 1], out[i]);
@@ -1683,11 +1699,27 @@ function nearestFwList(G, p, ok, n) {
 /* kandidater för anslutning mellan en punkt och farledsnätet, via vatten som är djupt nog */
 async function connectCands(G, p, ok, need) {
   const out = [], F = await waterField(p, 5000, need);
+  // kandidater: farledspunkter som går att nå i vattnet, billigast först och utspridda (inte tio punkter i samma kurva)
+  if (F) {
+    const cand = [];
+    for (const m of nearestFwList(G, p, ok, 400)) {
+      const q = G.pt(m); if (distNm(p, q) * NM > 4800) continue;
+      if (distNm(p, q) * NM < 25) { cand.push({ m, q, cost: 0, near: true }); continue; }
+      const nb = F.near(q, 60); if (nb) cand.push({ m, q, nb, cost: nb.cost });
+    }
+    cand.sort((x, y) => x.cost - y.cost);
+    const pick = [];
+    for (const c of cand) { if (pick.length >= 10) break; if (pick.some(o => distNm(o.q, c.q) * NM < 300)) continue; pick.push(c); }
+    for (const c of pick) {
+      if (c.near) { out.push({ node: c.m, pts: [p, c.q], ok: true, nm: 0, cost: 0, near: true }); continue; }
+      const fp = F.path(c.nb.p); if (!fp) continue;
+      out.push({ node: c.m, pts: [...fp.pts.slice().reverse(), c.q], sh: [...fp.sh.slice().reverse(), false], ok: true, nm: fp.nm + distNm(c.nb.p, c.q), shallow: fp.shallow, cost: c.cost / NM * 1.6 });
+    }
+    if (out.length) return out;
+  }
   for (const m of nearestFwList(G, p, ok, 10)) {
     const q = G.pt(m);
     if (distNm(p, q) * NM < 25) { out.push({ node: m, pts: [p, q], ok: true, nm: 0, cost: 0, near: true }); continue; }
-    const fp = F && isFinite(F.cost(q)) ? F.path(q) : null;
-    if (fp) { out.push({ node: m, pts: fp.pts.slice().reverse(), sh: fp.sh.slice().reverse(), ok: true, nm: fp.nm, shallow: fp.shallow, cost: F.cost(q) / NM * 1.6 }); continue; }
     const w = await waterPath(p, q, need, [p]);
     const nm = w.ok ? w.nm : distNm(p, q);
     out.push({ node: m, ...w, nm, cost: w.ok ? nm * (w.shallow ? 3 : 1.6) : nm * 3 + 5 });   // farled föredras framför okontrollerat vatten
@@ -1761,7 +1793,7 @@ async function computeAutoRoute0(from, to) {
   if (!best) return { err: `Ingen sammanhängande farled där djupet räcker för ${b.name} (${b.draft} m).` };
   const path = []; for (let u = best.t.node; u !== -1; u = prev[u]) path.push(u); path.reverse();
   let cs = S0.find(s => s.node === path[0]), ct = best.t;
-  let mid = simplify(path.map(G.pt), 12);
+  let mid = simplify(path.map(G.pt), 30);
   // välj var rutten lämnar farleden: punkten som ger kortast total väg i vatten som är djupt nog
   let exitS = null, exitT = null;
   if (mid.length > 1 && !ct.near) exitT = await bestExit(mid, to, need, true);
