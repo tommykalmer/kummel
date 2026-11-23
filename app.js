@@ -208,7 +208,7 @@ function addOverlays() {
   add({ id: "acc-line", type: "line", source: "acc", paint: { "line-color": "#1d6fa3", "line-width": 1 } });
   add({ id: "shown", type: "line", source: "shown", paint: { "line-color": "#1d6fa3", "line-width": 4, "line-opacity": .85 } });
   add({ id: "track", type: "line", source: "live", paint: { "line-color": "#d64545", "line-width": 4, "line-opacity": .85 } });
-  add({ id: "route", type: "line", source: "route", paint: { "line-color": ["match", ["get", "off"], 1, "#e07b00", 2, "#55626d", "#d64545"], "line-width": ["match", ["get", "off"], 1, 3, 2, 2.5, 3.5], "line-dasharray": [2, 1.5] } });
+  add({ id: "route", type: "line", source: "route", paint: { "line-color": ["match", ["get", "off"], 1, "#e07b00", 2, "#55626d", "#d64545"], "line-width": ["match", ["get", "off"], 1, 3, 2, 2.5, 3.5], "line-dasharray": [2, 1.5], "line-opacity": ["match", ["get", "off"], 2, 0, 1] } });
   add({ id: "route-lbl", type: "symbol", source: "route", layout: { "symbol-placement": "line-center", "text-field": ["get", "label"], "text-font": ["Noto Sans Medium"], "text-size": 12, "text-allow-overlap": false }, paint: { "text-color": "#d64545", "text-halo-color": "#fff", "text-halo-width": 2 } });
   /* AIS: klara färger som inte är blå (vattnet och djupkurvorna är blå), mörk kant och en ljus ring bakom */
   const aisColor = ["match", ["get", "cat"], "pass", "#e8175d", "cargo", "#16a34a", "tank", "#dc2626", "fish", "#f97316", "sail", "#9333ea", "leis", "#facc15", "serv", "#84cc16", "#334155"];
@@ -1241,7 +1241,7 @@ function drawWps() {
   wpMarkers.forEach(m => m.remove()); wpMarkers = [];
   const st = routeStats(wps);
   const many = wps.length > 12;
-  setData("route", { type: "FeatureCollection", features: wps.slice(1).map((p, i) => ({ type: "Feature", properties: { i, off: wpsOff[i] === 2 ? 2 : wpsOff[i] ? 1 : 0, label: many ? "" : `${String(Math.round(st.legs[i].brg)).padStart(3, "0")}° ${st.legs[i].d.toFixed(1)} nm` }, geometry: { type: "LineString", coordinates: [lnglat(wps[i]), lnglat(p)] } })) });
+  setData("route", { type: "FeatureCollection", features: wps.slice(1).map((p, i) => ({ type: "Feature", properties: { i, off: wpsOff[i] === 2 ? 2 : wpsOff[i] ? 1 : 0, label: many || wpsOff[i] === 2 ? "" : `${String(Math.round(st.legs[i].brg)).padStart(3, "0")}° ${st.legs[i].d.toFixed(1)} nm` }, geometry: { type: "LineString", coordinates: [lnglat(wps[i]), lnglat(p)] } })) });
   wps.forEach((p, i) => {
     const el = document.createElement("div"), end = i === 0 || i === wps.length - 1;
     if (many && !end) el.className = "wp-dot"; else { el.className = "wp-icon"; el.textContent = many ? (i === 0 ? "A" : "B") : i + 1; }
@@ -1286,9 +1286,9 @@ function renderRoute() {
     ${wps.length >= 2 && !autoInfo ? `<button class="btn pri" id="rt-auto">Föreslå rutt längs farleder</button><div class="muted">Använder första och sista punkten som start och mål.</div>` : ""}
     ${wps.length >= 2 ? `<div class="muted">Dra i en punkt för att flytta den. Tryck på linjen för att lägga till en punkt där, eller på en punkt för att ta bort den.</div>` : ""}
     ${wps.length < 2 ? `<div class="muted">Tryck ut start och mål, och låt appen föreslå vägen längs farlederna. Eller tryck ut hela rutten själv.</div>` : ""}
-    ${autoInfo ? `<div class="callout ${autoInfo.offNm > .3 ? "bad" : "ok"}">${autoInfo.edited ? "Justerat ruttförslag. Kontrollera dina ändringar mot sjökortet. " : ""}${autoInfo.direct ? "Ruttförslag direkt i vattnet, utan farled (målet ligger nära)." : `Ruttförslag längs farleder: <b>${autoInfo.onNm.toFixed(1)} nm i farled</b>${autoInfo.minDraft ? `, minsta farledsdjup ${autoInfo.minDraft.toFixed(1)} m` : ""}${autoInfo.unknownNm > .1 ? `, varav ${autoInfo.unknownNm.toFixed(1)} nm med okänt farledsdjup` : ""}.`}${autoInfo.landEnd || autoInfo.landStart ? ` <b>${autoInfo.landEnd ? "B" : "Starten"} ligger på land enligt sjökortet</b>, rutten går till närmaste vatten (${autoInfo.landEnd || autoInfo.landStart} m därifrån). Biten över land är bara en rak linje.` : ""}${autoInfo.shallowNm > .01 ? ` <b>Den grå biten (${autoInfo.shallowNm.toFixed(2)} nm) är grundare än din båt behöver enligt sjökortet.</b> Där finns ingen säker väg i datan, och små öar, uddar och stenar kan saknas. Navigera själv där, gärna med flygbilden som stöd.` : ""}${autoInfo.offNm > .02 ? ` <b>${autoInfo.offNm.toFixed(2)} nm utanför farled</b> (orange)${autoInfo.unchecked ? ": appen hittade ingen väg i tillräckligt djupt vatten där, rita den själv" : autoInfo.shallow ? ": vägen dit passerar vatten som enligt sjökortet kan vara grundare än din båt behöver, kör försiktigt och kontrollera" : ": vägen går runt land och kända grund men stenar finns inte i datan, kontrollera mot sjökortet"}.` : ""}</div>` : ""}
+    ${autoInfo ? `<div class="callout ${autoInfo.offNm > .3 ? "bad" : "ok"}">${autoInfo.edited ? "Justerat ruttförslag. Kontrollera dina ändringar mot sjökortet. " : ""}${autoInfo.direct ? "Ruttförslag direkt i vattnet, utan farled (målet ligger nära)." : `Ruttförslag längs farleder: <b>${autoInfo.onNm.toFixed(1)} nm i farled</b>${autoInfo.minDraft ? `, minsta farledsdjup ${autoInfo.minDraft.toFixed(1)} m` : ""}${autoInfo.unknownNm > .1 ? `, varav ${autoInfo.unknownNm.toFixed(1)} nm med okänt farledsdjup` : ""}.`}${autoInfo.landEnd || autoInfo.landStart ? ` <b>${autoInfo.landEnd ? "B" : "Starten"} ligger på land enligt sjökortet</b>, rutten går till närmaste vatten (${autoInfo.landEnd || autoInfo.landStart} m därifrån). Biten över land är bara en rak linje.` : ""}${autoInfo.shallowNm > .01 ? ` <b>${autoInfo.shallowNm.toFixed(2)} nm ritas inte</b>: där är det grundare än din båt behöver enligt sjökortet, och små holmar, uddar och stenar saknas ofta i datan. Appen kan inte föreslå någon säker väg där. Navigera själv, med sikt och flygbild.` : ""}${autoInfo.offNm > .02 ? ` <b>${autoInfo.offNm.toFixed(2)} nm utanför farled</b> (orange)${autoInfo.unchecked ? ": appen hittade ingen väg i tillräckligt djupt vatten där, rita den själv" : autoInfo.shallow ? ": vägen dit passerar vatten som enligt sjökortet kan vara grundare än din båt behöver, kör försiktigt och kontrollera" : ": vägen går runt land och kända grund men stenar finns inte i datan, kontrollera mot sjökortet"}.` : ""}</div>` : ""}
     ${shTxt}${dark}${routeWindNote()}
-    <div>${st.legs.map((l, i) => `<div class="leg"><span class="pill">${i + 1}→${i + 2}</span><span>${compass(l.brg)}</span><span class="num">${String(Math.round(l.brg)).padStart(3, "0")}°</span><span class="num">${l.d.toFixed(2)} nm</span></div>`).join("") || `<div class="muted">Tryck på kartan för att lägga till punkter.</div>`}</div>
+    <div>${st.legs.map((l, i) => wpsOff[i] === 2 ? `<div class="leg"><span class="pill">${i + 1}→${i + 2}</span><span class="muted" style="grid-column:span 3">Grunt, ingen väg ritad (${l.d.toFixed(2)} nm fågelvägen)</span></div>` : `<div class="leg"><span class="pill">${i + 1}→${i + 2}</span><span>${compass(l.brg)}</span><span class="num">${String(Math.round(l.brg)).padStart(3, "0")}°</span><span class="num">${l.d.toFixed(2)} nm</span></div>`).join("") || `<div class="muted">Tryck på kartan för att lägga till punkter.</div>`}</div>
     ${wps.length > 1 ? `<div class="card"><h3>Ankomsttid</h3>
       <label class="f">Vill vara framme kl<span class="row" style="flex-wrap:nowrap"><input type="time" id="rt-arr" value="${S.arrTime || ""}" style="flex:1"><button class="btn" id="rt-arr-clr" type="button">Ingen tid</button></span></label>
       <div id="rt-arrout" class="muted"></div>
@@ -1730,11 +1730,23 @@ async function snapWater(p, need) {
   const q = { lng: bb[0] + (best.i + .5) * cell / k, lat: bb[1] + (best.j + .5) * cell / 111320 };
   return { p: q, m: best.dm };
 }
-async function computeAutoRoute(from, to) {
+/* grunda bitar (grundare än båten behöver enligt sjökortet) ritas inte: där finns ingen väg appen kan gå i god för,
+   och sjökortet saknar ofta små holmar och uddar där. En sådan bit blir ett enda osynligt steg */
+function collapseShallow(r) {
+  if (!r || r.err || !r.off.includes(2)) return r;
+  const pts = [r.pts[0]], off = [];
+  for (let i = 0; i < r.off.length; i++) {
+    if (r.off[i] === 2 && off[off.length - 1] === 2) pts[pts.length - 1] = r.pts[i + 1];
+    else { pts.push(r.pts[i + 1]); off.push(r.off[i]); }
+  }
+  return { ...r, pts, off };
+}
+async function computeAutoRoute(from, to) { return collapseShallow(await computeAutoRoute0(from, to)); }
+async function computeAutoRoute0(from, to) {
   const need0 = needDepth();
   const sf = waterDepth(from) == null ? await snapWater(from, need0) : null, st = waterDepth(to) == null ? await snapWater(to, need0) : null;
   if (sf || st) {
-    const r = await computeAutoRoute(sf ? sf.p : from, st ? st.p : to); if (r.err) return r;
+    const r = await computeAutoRoute0(sf ? sf.p : from, st ? st.p : to); if (r.err) return r;
     if (sf) { r.pts.unshift(ll(from)); r.off.unshift(true); r.info.landStart = Math.round(sf.m); }
     if (st) { r.pts.push(ll(to)); r.off.push(true); r.info.landEnd = Math.round(st.m); }
     return r;
