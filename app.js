@@ -1975,7 +1975,7 @@ let wx = null, sunInfo = null, wxT = null, wxKey = "";
 async function fetchWx(lat, lng) {
   const q = `latitude=${lat.toFixed(3)}&longitude=${lng.toFixed(3)}&timezone=auto&forecast_days=3`;
   const [f, m] = await Promise.all([
-    fetch(`https://api.open-meteo.com/v1/forecast?${q}&wind_speed_unit=ms&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,precipitation,weather_code&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation,pressure_msl&daily=sunrise,sunset`).then(r => r.json()),
+    fetch(`https://api.open-meteo.com/v1/forecast?${q.replace("forecast_days=3", "forecast_days=7")}&wind_speed_unit=ms&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,precipitation,weather_code&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation,pressure_msl,weather_code&daily=sunrise,sunset,weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant`).then(r => r.json()),
     fetch(`https://marine-api.open-meteo.com/v1/marine?${q}&past_days=1&current=wave_height,sea_surface_temperature&hourly=wave_height,sea_surface_temperature`).then(r => r.ok ? r.json() : null).catch(() => null)
   ]);
   if (f.error) throw new Error(f.reason);
@@ -2068,6 +2068,59 @@ function weatherWindow() {
   let k = j; while (k < end && ok(k)) k++;
   return { cls: "bad", txt: `Blåsigt nu. Nästa lugna fönster: <b>${fmt(j)}–${k >= end ? "framåt" : fmt(k)}</b> (byar under ${lim} m/s).` };
 }
+/* ---------- prognos: flikar för vind, lufttryck, temperatur, regn och vattenstånd + 7 dygn ---------- */
+const FC_TABS = [["wind", "Vind"], ["p", "Tryck"], ["t", "Temp"], ["rain", "Regn"], ["wl", "Vattenstånd"]];
+const fcTab = () => FC_TABS.some(t => t[0] === S.fcTab) ? S.fcTab : "wind";
+function fcChart() {
+  const t = fcTab(), h = wx.hourly, i0 = hourIndex(wx), n = Math.min(48, h.time.length - i0);
+  const note = txt => `<div class="muted" style="margin-bottom:4px">${txt}</div>`;
+  if (t === "wind") return note("Kommande 48 h · stapel = medelvind, streck = byar, röd linje = din gräns") + `<div class="chart">${windChart()}</div>`;
+  if (t === "wl") {
+    if (!wl) return note("Hämtar vattenstånd …");
+    const lo = wl.fc.length ? wl.fc.reduce((m, p) => p.v < m.v ? p : m) : null, hi = wl.fc.length ? wl.fc.reduce((m, p) => p.v > m.v ? p : m) : null;
+    return note(`Nu ${fmtCm(wl.cm)} i ${esc(wl.station)} · heldragen = uppmätt, streckad = prognos`) + `<div class="chart">${wlChart()}</div>` +
+      (lo ? `<div class="muted">Lägst ${fmtCm(lo.v)}, högst ${fmtCm(hi.v)} de närmaste dygnen. Källa: Meteorologiska institutet.</div>` : "");
+  }
+  const xs = [...Array(n)].map((_, k) => i0 + k);
+  if (t === "rain") {
+    const v = xs.map(i => h.precipitation[i] || 0), sum = v.reduce((a, b) => a + b, 0);
+    return note(`Nederbörd mm per timme · totalt ${sum.toFixed(1).replace(".", ",")} mm kommande 48 h`) + `<div class="chart">${hourChart(xs, v, { bars: true, unit: "mm", min: 0, max: Math.max(2, ...v), col: "#3a86c8" })}</div>`;
+  }
+  if (t === "p") {
+    const v = xs.map(i => h.pressure_msl[i]), d = v[Math.min(23, v.length - 1)] - v[0];
+    const trend = d > 3 ? "stiger tydligt, ofta bättre väder på väg" : d > 1 ? "stiger" : d < -3 ? "faller tydligt, ofta mer vind och sämre väder på väg" : d < -1 ? "faller" : "stabilt";
+    return note(`Lufttryck hPa · ${trend} (${d >= 0 ? "+" : ""}${d.toFixed(1)} hPa kommande 24 h)`) + `<div class="chart">${hourChart(xs, v, { unit: "hPa", col: "#7a5cc2", step: 5 })}</div>`;
+  }
+  const v = xs.map(i => h.temperature_2m[i]);
+  return note("Lufttemperatur °C kommande 48 h") + `<div class="chart">${hourChart(xs, v, { unit: "°", col: "#d6763a", step: 2, zero: true })}</div>`;
+}
+/* linje- eller stapeldiagram över timmar, samma format som vinddiagrammet */
+function hourChart(xs, v, o) {
+  const h = wx.hourly, W = 720, H = 160, padL = 34, padB = 22, n = xs.length, bw = (W - padL) / n;
+  const st = o.step || 1;
+  let lo = o.min ?? Math.floor(Math.min(...v) / st) * st, hi = Math.ceil(Math.max(...v) / st) * st; if (hi - lo < st * 2) { hi += st; if (o.min == null) lo -= st; }
+  const y = x => (H - padB) - (x - lo) / (hi - lo) * (H - padB - 10), X = k => padL + k * bw + bw / 2;
+  const gstep = o.bars ? (hi > 6 ? 2 : hi > 3 ? 1 : .5) : st;
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" style="font:11px var(--f-ui)">`;
+  for (let g = Math.ceil(lo / gstep) * gstep; g <= hi + 1e-9; g += gstep) s += `<line x1="${padL}" x2="${W}" y1="${y(g)}" y2="${y(g)}" stroke="var(--line)"/><text x="${padL - 4}" y="${y(g) + 4}" text-anchor="end" fill="var(--muted)">${+g.toFixed(1)}</text>`;
+  if (o.zero && lo < 0 && hi > 0) s += `<line x1="${padL}" x2="${W}" y1="${y(0)}" y2="${y(0)}" stroke="var(--muted)" stroke-dasharray="4 4"/>`;
+  if (o.bars) v.forEach((x, k) => { if (x > 0) s += `<rect x="${padL + k * bw + 1}" y="${y(x)}" width="${bw - 2}" height="${y(0) - y(x)}" fill="${o.col}" rx="2"/>`; });
+  else s += `<path d="${v.map((x, k) => `${k ? "L" : "M"}${X(k).toFixed(1)},${y(x).toFixed(1)}`).join("")}" fill="none" stroke="${o.col}" stroke-width="2.5"/>`;
+  xs.forEach((i, k) => { const d = new Date(h.time[i]); if (d.getHours() % 6 === 0) s += `<text x="${padL + k * bw}" y="${H - 4}" fill="var(--muted)">${d.getHours() === 0 ? DAYS[d.getDay()] : pad(d.getHours())}</text>`; });
+  return s + `</svg>`;
+}
+const WX_ICON = c => c === 0 ? "☀️" : c <= 2 ? "⛅" : c === 3 ? "☁️" : c <= 48 ? "🌫️" : c <= 57 ? "🌦️" : c <= 67 ? "🌧️" : c <= 77 ? "🌨️" : c <= 82 ? "🌧️" : c <= 86 ? "🌨️" : "⛈️";
+function dailyHtml() {
+  const d = wx.daily; if (!d?.weather_code) return "";
+  const lim = boat().maxWind || 10;
+  return `<div class="card"><h3>Kommande 7 dygn</h3><div class="fc-days">${d.time.map((t, i) => {
+    const dt = new Date(t + "T12:00"), g = d.wind_gusts_10m_max[i], r = d.precipitation_sum[i];
+    return `<div class="fc-day"><b>${i === 0 ? "I dag" : DAYS[dt.getDay()][0].toUpperCase() + DAYS[dt.getDay()].slice(1)}</b><span class="fc-ic">${WX_ICON(d.weather_code[i])}</span>
+      <span>${Math.round(d.temperature_2m_min[i])}° / ${Math.round(d.temperature_2m_max[i])}°</span>
+      <span style="${g > lim ? "color:var(--port);font-weight:700" : ""}">${Math.round(d.wind_speed_10m_max[i])} (${Math.round(g)}) ${compass(d.wind_direction_10m_dominant[i])}</span>
+      <span class="muted">${r >= .1 ? r.toFixed(1).replace(".", ",") + " mm" : "uppehåll"}</span></div>`;
+  }).join("")}</div><div class="muted">Vind i m/s: högsta medelvind (byar) och riktning under dygnet. Rött = byar över gränsen för ${esc(boat().name)}.</div></div>`;
+}
 function windChart() {
   const h = wx.hourly, i0 = hourIndex(wx), n = 48, lim = boat().maxWind || 10;
   const W = 720, H = 170, padL = 26, padB = 30, bw = (W - padL) / n;
@@ -2113,11 +2166,19 @@ function openWx() {
       <div><b>${sr ? hm(sr) : "–"}</b><span>Sol upp</span></div>
       <div><b>${ss ? hm(ss) : "–"}</b><span>Sol ned</span></div>
     </div>
-    <div><div class="muted" style="margin-bottom:4px">Vind kommande 48 h · stapel = medelvind, streck = byar, röd linje = din gräns</div><div class="chart">${windChart()}</div></div>
+    <div class="wxb-modes fc-tabs" role="tablist" aria-label="Prognos">${FC_TABS.map(([k, t]) => `<button data-fct="${k}" aria-pressed="${fcTab() === k}">${t}</button>`).join("")}</div>
+    <div id="fc-chart">${fcChart()}</div>
+    ${dailyHtml()}
     ${S.mode === "fiske" ? `<div class="card"><h3>Fiskeförhållanden</h3>${sst ? `<div><b>Vattnet ${sst.v.toFixed(1)}°</b>${sst.d != null ? `, ${trendTxt(sst.d)}` : ""} <span class="muted">(${sst.src})</span></div>` : ""}<div>${moon.icon} ${moon.name} · Tryck ${pTrend > .5 ? "stigande" : pTrend < -.5 ? "fallande" : "stabilt"} (${pTrend >= 0 ? "+" : ""}${pTrend.toFixed(1)} hPa/3 h)</div></div>` : ""}
     <div class="muted">Prognos för ${fmtPosTxt({ lat: wx.lat, lng: wx.lng })} · uppdaterad för ${age} min sedan. Källa: Open-Meteo.</div>
     <button class="btn" id="wx-ref">Uppdatera</button>`, "wx");
   $("#wx-ref").onclick = () => loadWx(true);
+  document.querySelectorAll("[data-fct]").forEach(b => b.onclick = () => {
+    S.fcTab = b.dataset.fct; save(); track("forecast_tab", { t: S.fcTab });
+    document.querySelectorAll("[data-fct]").forEach(x => x.setAttribute("aria-pressed", x === b));
+    $("#fc-chart").innerHTML = fcChart();
+    if (S.fcTab === "wl" && !wl) loadWaterLevel(true).then(() => { if (sheetView === "wx" && fcTab() === "wl") $("#fc-chart").innerHTML = fcChart(); });
+  });
   document.querySelectorAll("[data-wsrc]").forEach(b => b.onclick = () => {
     if ((S.wxSrc === "map" ? "map" : "me") === b.dataset.wsrc) return;
     S.wxSrc = b.dataset.wsrc; save(); track("weather_where", { w: S.wxSrc });
@@ -2356,6 +2417,59 @@ function openShip(mmsi, refresh) {
 ["ais", "ais-bg"].forEach(l => map.on("click", l, e => { if (e.defaultPrevented) return; e.preventDefault(); openShip(+e.features[0].properties.mmsi); }));
 map.on("mouseenter", "ais", () => map.getCanvas().style.cursor = "pointer");
 map.on("mouseleave", "ais", () => map.getCanvas().style.cursor = "");
+/* ---------- sök fartyg: namn, MMSI, IMO eller anropssignal bland fartyg som synts i AIS senaste dygnet ---------- */
+let aisAllAt = 0;
+async function loadAisAll() {
+  if (Date.now() - aisAllAt < 30 * 60000) return true;
+  try {
+    const list = await (await fetch(`https://meri.digitraffic.fi/api/ais/v1/vessels?from=${Date.now() - 24 * 3600000}`, DT)).json();
+    (Array.isArray(list) ? list : []).forEach(v => { aisMeta[v.mmsi] = v; });
+    aisAllAt = Date.now(); return true;
+  } catch (e) { return false; }
+}
+function openShipSearch() {
+  openSheet("Sök fartyg", `
+    <input id="ss-q" type="search" placeholder="Namn, MMSI eller IMO" autocomplete="off" enterkeyhint="search" style="width:100%">
+    <div id="ss-res" class="list"><div class="muted">Hämtar fartygslistan …</div></div>
+    <div class="muted">Fartyg som har synts i AIS-nätet i Finland och på Åland det senaste dygnet. Fritidsbåtar har sällan AIS. Källa: Fintraffic / Digitraffic.</div>`, "shipsearch");
+  const q = $("#ss-q"), res = $("#ss-res");
+  setTimeout(() => q.focus(), 50);
+  const norm = x => (x || "").toString().toLowerCase().replace(/[^a-z0-9åäöæøü]/g, "");
+  const run = () => {
+    const t = norm(q.value);
+    if (t.length < 2) { res.innerHTML = `<div class="muted">Skriv minst två tecken.</div>`; return; }
+    const hits = [];
+    for (const m of Object.values(aisMeta)) {
+      const n = norm(m.name), score = n.startsWith(t) ? 0 : n.includes(t) ? 1 : String(m.mmsi).startsWith(t) || (m.imo && String(m.imo).startsWith(t)) || norm(m.callSign) === t ? 2 : -1;
+      if (score >= 0) hits.push([score, n, m]);
+    }
+    hits.sort((a, b) => a[0] - b[0] || a[1].localeCompare(b[1]));
+    res.innerHTML = hits.length ? hits.slice(0, 25).map(([, , m]) => `<button class="btn ss-hit" data-mmsi="${m.mmsi}"><b>${esc((m.name || "").trim() || "Namn saknas")}</b> <span class="muted">${CATNAME[SHIPCAT(m.shipType)]}${m.destination ? " · mot " + esc(m.destination.trim()) : ""}</span></button>`).join("")
+      : `<div class="muted">Inget fartyg med det namnet har synts det senaste dygnet.</div>`;
+    res.querySelectorAll("[data-mmsi]").forEach(b => b.onclick = () => findShip(+b.dataset.mmsi));
+  };
+  q.oninput = run;
+  loadAisAll().then(ok => { if (sheetView !== "shipsearch") return; if (!ok && !Object.keys(aisMeta).length) res.innerHTML = `<div class="muted">Fartygslistan kunde inte hämtas just nu.</div>`; else run(); });
+}
+async function findShip(mmsi) {
+  track("ship_search");
+  try {
+    const j = await (await fetch(`https://meri.digitraffic.fi/api/ais/v1/locations?mmsi=${mmsi}`, DT)).json();
+    const f = (j.features || [])[0], p = f?.properties || {}, [lng, lat] = f?.geometry?.coordinates || [];
+    if (lat == null) throw new Error("ingen position");
+    const s = { mmsi, lat, lng, sog: p.sog ?? 0, cog: p.cog ?? 0, hdg: p.heading, nav: p.navStat, t: p.timestampExternal || Date.now() };
+    if (!S.layers.ais) setAis(true);
+    aisShips = [...aisShips.filter(x => x.mmsi !== mmsi), s]; renderAis();
+    map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 11.5) });
+    openShip(mmsi);
+  } catch (e) {
+    const m = aisMeta[mmsi] || {};
+    openSheet(esc((m.name || "Fartyg").trim()), `<div class="callout bad">Fartyget har ingen aktuell position i AIS-nätet i Finland, till exempel för att det är för långt bort eller har stängt av sin AIS.</div>
+      <div class="row"><a class="btn" target="_blank" rel="noopener" href="https://www.vesselfinder.com/vessels/details/${m.imo || mmsi}">Visa på VesselFinder</a><a class="btn" target="_blank" rel="noopener" href="https://www.marinetraffic.com/en/ais/details/ships/mmsi:${mmsi}">Visa på MarineTraffic</a></div>
+      <button class="btn" id="ss-back">Tillbaka till sökningen</button>`, "shipsearch-miss");
+    $("#ss-back").onclick = openShipSearch;
+  }
+}
 function setAis(on) {
   if (on) track("ais_on");
   S.layers.ais = on; save(); clearInterval(aisT);
@@ -2454,6 +2568,7 @@ function openMenu() {
   openSheet("Meny", `
     <div class="card sel"><h3>${esc(b.name)}</h3><div class="muted">${BTYPES[b.type]} · djupgående ${b.draft} m · ${b.speed} kn</div><div class="row"><button class="btn" id="m-boats">Båtar</button></div></div>
     <div class="list">
+      <button class="btn" id="m-shipsearch">Sök fartyg (AIS)</button>
       <button class="btn" id="m-places">Mina platser (${S.places.length})</button>
       <button class="btn" id="m-routes">Sparade rutter (${S.routes.length})</button>
       <button class="btn" id="m-log">Loggbok (${S.tracks.length} turer)</button>
@@ -2468,6 +2583,7 @@ function openMenu() {
       <button class="btn" id="m-about">Om Kummel</button>
     </div>
     <div class="maker">${ALAND_FLAG} Kummel · en produkt från ${MAKER}, ${MAKER_TOWN}</div>`, "menu");
+  $("#m-shipsearch").onclick = openShipSearch;
   $("#m-boats").onclick = openBoats; $("#m-places").onclick = openPlaces; $("#m-routes").onclick = openRoutes;
   $("#m-log").onclick = openLog; $("#m-catch").onclick = openCatches; $("#m-data").onclick = openData; $("#m-plotter").onclick = openPlotter; $("#m-about").onclick = openAbout; $("#m-welcome").onclick = () => termsOk() ? openTour() : openWelcome(); $("#m-legend").onclick = openLegend; $("#m-anchor").onclick = openAnchor; $("#m-offline").onclick = openOffline;
   $("#m-night").onclick = () => { $("#b-night").click(); $("#m-night").textContent = S.theme === "day" ? "Nattläge: av" : THEMES[S.theme]; };
