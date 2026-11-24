@@ -2111,16 +2111,17 @@ function hourChart(xs, v, o) {
   xs.forEach((i, k) => { const d = new Date(h.time[i]); if (d.getHours() % 6 === 0) s += `<text x="${padL + k * bw}" y="${H - 4}" fill="var(--muted)">${d.getHours() === 0 ? DAYS[d.getDay()] : pad(d.getHours())}</text>`; });
   return s + `</svg>`;
 }
+const WX_TXT = c => c === 0 ? "Klart" : c === 1 ? "Mest klart" : c === 2 ? "Halvklart" : c === 3 ? "Mulet" : c <= 48 ? "Dimma" : c <= 57 ? "Duggregn" : c <= 67 ? "Regn" : c <= 77 ? "Snö" : c <= 82 ? "Regnskurar" : c <= 86 ? "Snöbyar" : "Åska";
 const WX_ICON = c => c === 0 ? "☀️" : c <= 2 ? "⛅" : c === 3 ? "☁️" : c <= 48 ? "🌫️" : c <= 57 ? "🌦️" : c <= 67 ? "🌧️" : c <= 77 ? "🌨️" : c <= 82 ? "🌧️" : c <= 86 ? "🌨️" : "⛈️";
 function dailyHtml() {
   const d = wx.daily; if (!d?.weather_code) return "";
   const lim = boat().maxWind || 10;
   return `<div class="card"><h3>Kommande 7 dygn</h3><div class="fc-days">${d.time.map((t, i) => {
     const dt = new Date(t + "T12:00"), g = d.wind_gusts_10m_max[i], r = d.precipitation_sum[i];
-    return `<div class="fc-day"><b>${i === 0 ? "I dag" : DAYS[dt.getDay()][0].toUpperCase() + DAYS[dt.getDay()].slice(1)}</b><span class="fc-ic">${WX_ICON(d.weather_code[i])}</span>
+    return `<div class="fc-day"><b>${i === 0 ? "I dag" : DAYS[dt.getDay()][0].toUpperCase() + DAYS[dt.getDay()].slice(1)}</b><span class="fc-ic" title="${WX_TXT(d.weather_code[i])}">${WX_ICON(d.weather_code[i])}</span>
       <span>${Math.round(d.temperature_2m_min[i])}° / ${Math.round(d.temperature_2m_max[i])}°</span>
       <span style="${g > lim ? "color:var(--port);font-weight:700" : ""}">${Math.round(d.wind_speed_10m_max[i])} (${Math.round(g)}) ${compass(d.wind_direction_10m_dominant[i])}</span>
-      <span class="muted">${r >= .1 ? r.toFixed(1).replace(".", ",") + " mm" : "uppehåll"}</span></div>`;
+      <span class="muted">${WX_TXT(d.weather_code[i])}${r >= .1 ? " " + r.toFixed(1).replace(".", ",") + " mm" : ""}</span></div>`;
   }).join("")}</div><div class="muted">Vind i m/s: högsta medelvind (byar) och riktning under dygnet. Rött = byar över gränsen för ${esc(boat().name)}.</div></div>`;
 }
 function windChart() {
