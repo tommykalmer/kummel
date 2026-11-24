@@ -1107,16 +1107,27 @@ async function openFishIndex() {
   if (cur) wins.push(cur);
   const fmtWin = x => x.b - x.a >= 22 * 3600000 ? "hela dygnet" : `${hm(new Date(x.a))}–${hm(new Date(x.b + 3600000))}`;
   openSheet("Fiskeläge", `
-    <div class="idx-now"><div class="idx-ring" style="--c:${idxColor(now.s)};--p:${now.s}"><b>${now.s}</b></div>
-      <div><h3 style="margin:0">${idxLabel(now.s)} just nu</h3><div class="muted">${wins.length ? "Bäst närmaste dygnet: " + wins.slice(0, 3).map(fmtWin).join(", ") : "Inget tydligt toppläge närmaste dygnet"}</div></div></div>
-    <div class="idx-bars">${ix.map(h => `<i class="${wins.some(w => h.t >= w.a && h.t <= w.b) ? "best" : ""}" style="height:${Math.max(6, h.s)}%;background:${idxColor(h.s)}" title="${hm(new Date(h.t))}: ${h.s}"></i>`).join("")}</div>
-    <div class="idx-axis">${ix.map((h, k) => { const d = new Date(h.t); return d.getHours() % 3 ? "" : `<span style="left:${(k / ix.length * 100).toFixed(2)}%">${pad(d.getHours())}</span>`; }).join("")}</div>
-    <div class="muted" style="font-size:13px">Varje stapel är en timme och börjar vid klockslaget under den. ${wins.length ? "Prickarna visar de bästa timmarna." : ""}</div>
-    <div class="card"><h3>Varför</h3>${now.why.map(([k, t]) => `<div class="idx-why"><b class="${k === "+" ? "up" : k === "−" ? "down" : ""}">${k}</b>${esc(t)}</div>`).join("") || `<div class="muted">Inget särskilt talar för eller emot just nu.</div>`}
+    <div class="idx-now"><div class="idx-ring" id="ix-ring"><b></b></div>
+      <div><h3 style="margin:0" id="ix-head"></h3><div class="muted">${wins.length ? "Bäst närmaste dygnet: " + wins.slice(0, 3).map(fmtWin).join(", ") : "Inget tydligt toppläge närmaste dygnet"}</div></div></div>
+    <div class="idx-bars" role="group" aria-label="Fiskeläge timme för timme">${ix.map((h, k) => `<button data-k="${k}" class="${wins.some(w => h.t >= w.a && h.t <= w.b) ? "best" : ""}" style="height:${Math.max(6, h.s)}%;background:${idxColor(h.s)}" aria-label="${hm(new Date(h.t))}: ${h.s}"></button>`).join("")}</div>
+    <div class="idx-axis">${ix.map((h, k) => { const d = new Date(h.t); return d.getHours() % 3 ? "" : `<span style="left:${((k + .5) / ix.length * 100).toFixed(2)}%">${pad(d.getHours())}</span>`; }).join("")}</div>
+    <div class="muted" style="font-size:13px">Tryck på en stapel för att se fiskeläget den timmen.${wins.length ? " Prickarna visar de bästa timmarna." : ""}</div>
+    <div class="card"><h3 id="ix-whyh">Varför</h3><div id="ix-why"></div>
       ${sst && sst.v != null ? `<div class="idx-why"><b>·</b>Vattnet är ${sst.v.toFixed(1).replace(".", ",")}°</div>` : ""}</div>
     <div class="card"><h3>Dina fångster</h3>${mine ? [mine.press, mine.wind, mine.light].filter(Boolean).map(p => `<div class="idx-why"><b>·</b>${p.n} av ${p.of} vid ${BUCKET_TXT[p.k]}</div>`).join("") + `<div class="muted">Indexet ger extra poäng när läget liknar dina fångster.</div>`
       : `<div class="muted">När du har loggat minst 5 fångster lär sig fiskeläget vad som brukar fungera för dig.</div>`}</div>
     <div class="muted">Fiskeläget bygger på tumregler som många sportfiskare använder, för platsen mitt på kartan. Ingen garanti för napp.</div>`, "fishidx");
+  // välj en timme: ringen, rubriken och "varför" visar den timmen
+  const pick = k => {
+    const h = ix[k], d = new Date(h.t), ring = $("#ix-ring");
+    ring.style.setProperty("--c", idxColor(h.s)); ring.style.setProperty("--p", h.s); ring.querySelector("b").textContent = h.s;
+    $("#ix-head").textContent = k === 0 ? `${idxLabel(h.s)} just nu` : `${idxLabel(h.s)} ${d.toDateString() === new Date().toDateString() ? "i dag" : "i morgon"} kl ${pad(d.getHours())}–${pad((d.getHours() + 1) % 24)}`;
+    $("#ix-whyh").textContent = k === 0 ? "Varför" : `Varför kl ${pad(d.getHours())}`;
+    $("#ix-why").innerHTML = h.why.map(([x, t]) => `<div class="idx-why"><b class="${x === "+" ? "up" : x === "−" ? "down" : ""}">${x}</b>${esc(t)}</div>`).join("") || `<div class="muted">Inget särskilt talar för eller emot den timmen.</div>`;
+    document.querySelectorAll(".idx-bars button").forEach(b => b.classList.toggle("sel", +b.dataset.k === k));
+  };
+  document.querySelectorAll(".idx-bars button").forEach(b => b.onclick = () => { pick(+b.dataset.k); track("fishidx_hour"); });
+  pick(0);
 }
 
 /* ---------- fångstrekord och statistik ---------- */
