@@ -271,8 +271,9 @@ body:has(#navbar:not(.hidden)) #anchorbar,body:has(#wxbar:not(.hidden)) #anchorb
 .idx-now{display:flex;gap:14px;align-items:center}
 .idx-ring{width:74px;height:74px;border-radius:50%;flex:none;display:grid;place-items:center;background:conic-gradient(var(--c) calc(var(--p)*1%),var(--line) 0)}
 .idx-ring b{width:58px;height:58px;border-radius:50%;background:var(--panel);display:grid;place-items:center;font:800 24px var(--f-num)}
-.idx-bars{flex:none;display:flex;align-items:flex-end;gap:2px;height:70px}.idx-bars i{flex:1;border-radius:3px 3px 0 0;min-width:4px}
-.idx-axis{flex:none;display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+.idx-bars{flex:none;display:flex;align-items:flex-end;gap:2px;height:80px;padding-top:10px}.idx-bars i{flex:1;border-radius:3px 3px 0 0;min-width:4px;position:relative}
+.idx-bars i.best::after{content:"";position:absolute;left:50%;top:-8px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--fg)}
+.idx-axis{flex:none;position:relative;height:16px;font-size:11px;color:var(--muted)}.idx-axis span{position:absolute;top:0;border-left:1px solid var(--line);padding-left:2px;line-height:14px}
 .idx-why{display:flex;gap:8px;align-items:baseline;padding:2px 0}.idx-why b{width:14px;text-align:center}.idx-why b.up{color:#2f8f5b}.idx-why b.down{color:#c0392b}
 .lg-row{display:flex;gap:12px;align-items:center;padding:5px 0;border-bottom:1px dashed var(--line)}.lg-row:last-child{border-bottom:0}
 .lg-ic{flex:none;width:44px;height:36px;border-radius:8px;background:#f6f8f9;display:grid;place-items:center}.lg-ic img{max-width:32px;max-height:30px}.lg-ic i{display:block;width:26px;height:18px;border-radius:4px}.lg-ic svg{width:36px}
@@ -415,8 +416,8 @@ label.row{flex-wrap:nowrap;align-items:center}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script src="config.js?v=202611242340"></script>
-<script src="chartstyle.js?v=202611242340"></script>
-<script src="app.js?v=202611242340"></script>
+<script src="config.js?v=202611242355"></script>
+<script src="chartstyle.js?v=202611242355"></script>
+<script src="app.js?v=202611242355"></script>
 </body>
 </html>

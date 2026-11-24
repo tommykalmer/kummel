@@ -1109,8 +1109,9 @@ async function openFishIndex() {
   openSheet("Fiskeläge", `
     <div class="idx-now"><div class="idx-ring" style="--c:${idxColor(now.s)};--p:${now.s}"><b>${now.s}</b></div>
       <div><h3 style="margin:0">${idxLabel(now.s)} just nu</h3><div class="muted">${wins.length ? "Bäst närmaste dygnet: " + wins.slice(0, 3).map(fmtWin).join(", ") : "Inget tydligt toppläge närmaste dygnet"}</div></div></div>
-    <div class="idx-bars">${ix.map(h => `<i style="height:${Math.max(6, h.s)}%;background:${idxColor(h.s)}" title="${hm(new Date(h.t))}: ${h.s}"></i>`).join("")}</div>
-    <div class="idx-axis">${ix.filter((_, k) => k % 6 === 0).map(h => `<span>${hm(new Date(h.t))}</span>`).join("")}</div>
+    <div class="idx-bars">${ix.map(h => `<i class="${wins.some(w => h.t >= w.a && h.t <= w.b) ? "best" : ""}" style="height:${Math.max(6, h.s)}%;background:${idxColor(h.s)}" title="${hm(new Date(h.t))}: ${h.s}"></i>`).join("")}</div>
+    <div class="idx-axis">${ix.map((h, k) => { const d = new Date(h.t); return d.getHours() % 3 ? "" : `<span style="left:${(k / ix.length * 100).toFixed(2)}%">${pad(d.getHours())}</span>`; }).join("")}</div>
+    <div class="muted" style="font-size:13px">Varje stapel är en timme och börjar vid klockslaget under den. ${wins.length ? "Prickarna visar de bästa timmarna." : ""}</div>
     <div class="card"><h3>Varför</h3>${now.why.map(([k, t]) => `<div class="idx-why"><b class="${k === "+" ? "up" : k === "−" ? "down" : ""}">${k}</b>${esc(t)}</div>`).join("") || `<div class="muted">Inget särskilt talar för eller emot just nu.</div>`}
       ${sst && sst.v != null ? `<div class="idx-why"><b>·</b>Vattnet är ${sst.v.toFixed(1).replace(".", ",")}°</div>` : ""}</div>
     <div class="card"><h3>Dina fångster</h3>${mine ? [mine.press, mine.wind, mine.light].filter(Boolean).map(p => `<div class="idx-why"><b>·</b>${p.n} av ${p.of} vid ${BUCKET_TXT[p.k]}</div>`).join("") + `<div class="muted">Indexet ger extra poäng när läget liknar dina fångster.</div>`
