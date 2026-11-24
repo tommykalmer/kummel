@@ -40,7 +40,14 @@ function load() {
   return structuredClone(DEFAULT_STATE);
 }
 let saveT;
-function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }, 200); }
+let persistAsked = false;
+function save() {
+  clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }, 200);
+  // be webbläsaren att inte rensa bort det man sparat (platser, rutter, fångster) när lagringen blir trång
+  if (!persistAsked && (S.places?.length || S.routes?.length || S.catches?.length || S.tracks?.length)) {
+    persistAsked = true; try { navigator.storage?.persist?.(); } catch (e) {}
+  }
+}
 const uid = () => Math.random().toString(36).slice(2, 9);
 const boat = () => S.boats.find(b => b.id === S.boatId) || S.boats[0];
 /* vattenstånd är alltid påslaget (menyn Funktioner togs bort) */
