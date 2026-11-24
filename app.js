@@ -46,8 +46,26 @@ function save() {
   // be webbläsaren att inte rensa bort det man sparat (platser, rutter, fångster) när lagringen blir trång
   if (!persistAsked && (S.places?.length || S.routes?.length || S.catches?.length || S.tracks?.length)) {
     persistAsked = true; try { navigator.storage?.persist?.(); } catch (e) {}
+    // i Safari (inte på hemskärmen) kan sparade saker rensas efter 7 dagar utan besök: tipsa en gång
+    const home = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+    if (!home && !S.a2hsTip && matchMedia("(pointer:coarse)").matches) { S.a2hsTip = 1; setTimeout(() => toast("Tips: lägg Kummel på hemskärmen (Dela → Lägg till på hemskärmen). Då sparas dina platser, rutter och fångster säkrare.", 7000), 1500); }
   }
+  setTimeout(backupDot, 300);
 }
+/* ---------- påminnelse om säkerhetskopia: sällan, bara när det finns något att förlora ---------- */
+const savedCount = () => (S.places?.length || 0) + (S.routes?.length || 0) + (S.catches?.length || 0) + (S.tracks?.length || 0);
+function backupDue() {
+  if (S.bkOff) return null;
+  if (!S.bk) S.bk = { at: Date.now(), n: 0 };   // räkna från första gången
+  const fresh = savedCount() - S.bk.n, days = (Date.now() - S.bk.at) / 86400000, now = new Date();
+  // efter säsongen (oktober–november): en gång, om nya fångster eller turer inte är kopierade
+  const autumn = (now.getMonth() === 9 || now.getMonth() === 10) && S.bk.at < new Date(now.getFullYear(), 8, 1).getTime() && fresh >= 1 && S.bkAutumn !== now.getFullYear();
+  if ((fresh >= 5 && days >= 30) || autumn) return { fresh: Math.max(fresh, 1), since: S.bk.n ? new Date(S.bk.at) : null, autumn };
+  return null;
+}
+function backupDot() { const b = $("#b-menu"); if (b) b.classList.toggle("dot", !!backupDue()); }
+function backupDone() { S.bk = { at: Date.now(), n: savedCount() }; if ((new Date()).getMonth() >= 9) S.bkAutumn = new Date().getFullYear(); save(); }
+const MONTHS = ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december"];
 const uid = () => Math.random().toString(36).slice(2, 9);
 const boat = () => S.boats.find(b => b.id === S.boatId) || S.boats[0];
 /* vattenstånd är alltid påslaget (menyn Funktioner togs bort) */
@@ -2588,6 +2606,8 @@ $("#b-detail").onclick = () => {
 function openMenu() {
   const b = boat();
   openSheet("Meny", `
+    ${(d => d ? `<div class="callout ok bk-nag"><b>${d.autumn ? "Säsongen är slut. Spara en kopia av fångsterna?" : "Dags att säkerhetskopiera?"}</b><div class="muted">${d.fresh} nya saker ${d.since ? "sedan " + MONTHS[d.since.getMonth()] : "som bara finns i den här telefonen"}.</div>
+      <div class="row"><button class="btn pri" id="m-bk">Spara kopia</button><button class="btn" id="m-bkoff">Påminn inte</button></div></div>` : "")(backupDue())}
     <div class="card sel"><h3>${esc(b.name)}</h3><div class="muted">${BTYPES[b.type]} · djupgående ${b.draft} m · ${b.speed} kn</div><div class="row"><button class="btn" id="m-boats">Båtar</button></div></div>
     <div class="list">
       <button class="btn" id="m-shipsearch">Sök fartyg (AIS)</button>
@@ -2606,6 +2626,7 @@ function openMenu() {
     </div>
     <div class="maker">${ALAND_FLAG} Kummel · en produkt från ${MAKER}, ${MAKER_TOWN}</div>`, "menu");
   $("#m-shipsearch").onclick = openShipSearch;
+  if ($("#m-bk")) { $("#m-bk").onclick = openData; $("#m-bkoff").onclick = () => { S.bkOff = 1; save(); backupDot(); openMenu(); toast("Okej. Du hittar säkerhetskopian under Flytta och säkerhetskopiera.", 3000); }; }
   $("#m-boats").onclick = openBoats; $("#m-places").onclick = openPlaces; $("#m-routes").onclick = openRoutes;
   $("#m-log").onclick = openLog; $("#m-catch").onclick = openCatches; $("#m-data").onclick = openData; $("#m-plotter").onclick = openPlotter; $("#m-about").onclick = openAbout; $("#m-welcome").onclick = () => termsOk() ? openTour() : openWelcome(); $("#m-legend").onclick = openLegend; $("#m-anchor").onclick = openAnchor; $("#m-offline").onclick = openOffline;
   $("#m-night").onclick = () => { $("#b-night").click(); $("#m-night").textContent = S.theme === "day" ? "Nattläge: av" : THEMES[S.theme]; };
@@ -2847,13 +2868,13 @@ function openData() {
       <div class="muted">Det som finns i kopian läggs till. Inget du redan har här tas bort eller skrivs över.</div></div>
     <div class="muted" id="d-msg"></div>`, "data");
   const msg = t => { const el = $("#d-msg"); if (el) el.textContent = t; };
-  $("#d-exp").onclick = async () => { msg("Skapar kopia …"); const f = await backupFile(); downloadBlob(f.name, await f.text(), "application/json"); msg(""); track("backup_export", { how: "file" }); };
+  $("#d-exp").onclick = async () => { msg("Skapar kopia …"); const f = await backupFile(); downloadBlob(f.name, await f.text(), "application/json"); msg(""); backupDone(); backupDot(); track("backup_export", { how: "file" }); };
   $("#d-send").onclick = async () => {
     msg("Skapar kopia …"); let f = await backupFile(); msg("");
     if (navigator.canShare && !navigator.canShare({ files: [f] })) f = new File([await f.text()], f.name, { type: "text/plain" });   // vissa webbläsare delar bara "text"-filer
     if (navigator.canShare && navigator.canShare({ files: [f] })) {
-      try { await navigator.share({ files: [f], title: "Kummel-kopia", text: "Öppna Kummel på den andra enheten: Meny → Flytta och säkerhetskopiera → Läs in kopia." }); track("backup_export", { how: "share" }); } catch (e) {}
-    } else { downloadBlob(f.name, await f.text(), "application/json"); toast("Filen är sparad. Flytta den till den andra enheten och läs in den där.", 4000); track("backup_export", { how: "file" }); }
+      try { await navigator.share({ files: [f], title: "Kummel-kopia", text: "Öppna Kummel på den andra enheten: Meny → Flytta och säkerhetskopiera → Läs in kopia." }); track("backup_export", { how: "share" }); backupDone(); backupDot(); } catch (e) {}
+    } else { downloadBlob(f.name, await f.text(), "application/json"); toast("Filen är sparad. Flytta den till den andra enheten och läs in den där.", 4000); backupDone(); backupDot(); track("backup_export", { how: "file" }); }
   };
   $("#d-imp").onchange = async e => {
     const file = e.target.files[0]; if (!file) return;
@@ -3525,3 +3546,4 @@ else if (!openSharedRoute() && navigator.geolocation && navigator.permissions &&
   navigator.permissions.query({ name: "geolocation" }).then(p => { if (p.state === "granted") { startGps(); setFollow(true, true); } }).catch(() => {});
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(r => r.update()).catch(() => {});
 window.addEventListener("beforeunload", e => { if (recording) { e.preventDefault(); e.returnValue = ""; } });
+setTimeout(backupDot, 3000);
