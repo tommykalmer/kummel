@@ -86,6 +86,15 @@ button,input,select,textarea{font:inherit;color:inherit}
 #wxchip{display:flex;align-items:center;gap:8px;background:var(--panel);border:0;border-radius:var(--r);padding:6px 12px;box-shadow:var(--shadow);cursor:pointer;
   font:600 16px/1 var(--f-num);font-variant-numeric:tabular-nums}
 #wxchip .arrow{width:22px;height:22px;transition:transform .4s}
+#wxic{display:flex;align-items:center;gap:4px;font:700 16px var(--f-ui);color:var(--fg);padding-right:8px;border-right:1px solid var(--line);white-space:nowrap}#wxtxt{white-space:nowrap}#wxic:empty{display:none}#wxic i{font-style:normal;font-size:18px;line-height:1}
+#wxchip .chev{width:14px;height:14px;opacity:.55;margin-left:-2px;flex:none}
+@media (max-width:520px){
+  /* smal skärm: väder och temperatur på en rad ovanför vinden, så knappen inte blir bredare */
+  #wxchip{display:grid;grid-template-columns:auto auto auto;grid-template-areas:"ic ic ch" "ar tx ch";column-gap:6px;row-gap:1px;align-items:center}
+  #wxic{grid-area:ic;border:0;padding:0;font-size:13px;gap:4px;color:var(--muted)}#wxic i{font-size:14px}
+  #wxchip .arrow{grid-area:ar;width:18px;height:18px}#wxtxt{grid-area:tx}#wxchip .chev{grid-area:ch;width:12px;height:12px;margin:0}
+}
+@media (max-width:400px){#wxchip{column-gap:4px;padding-left:8px;padding-right:8px}#wxchip .chev{display:none}#wxtxt .u{font-size:11px}}
 #wxchip small{font:500 12px var(--f-ui);color:var(--muted)}
 
 /* rail */
@@ -354,7 +363,7 @@ label.row{flex-wrap:nowrap;align-items:center}
     <button data-mode="fiske" aria-pressed="false">Fiske</button>
   </div>
   <div class="spacer"></div>
-  <button id="wxchip" aria-label="Väder"><svg class="arrow" viewBox="0 0 24 24"><path d="M12 3 18 20 12 16 6 20Z" fill="currentColor"/></svg><span id="wxtxt">–</span><small id="wxsub">väder</small></button>
+  <button id="wxchip" aria-label="Väder och prognos"><span id="wxic"></span><svg class="arrow" viewBox="0 0 24 24"><path d="M12 3 18 20 12 16 6 20Z" fill="currentColor"/></svg><span id="wxtxt">–</span><small id="wxsub">väder</small><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button>
 </div>
 
 <div id="lrail">
@@ -406,8 +415,8 @@ label.row{flex-wrap:nowrap;align-items:center}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script src="config.js?v=202611242330"></script>
-<script src="chartstyle.js?v=202611242330"></script>
-<script src="app.js?v=202611242330"></script>
+<script src="config.js?v=202611242310"></script>
+<script src="chartstyle.js?v=202611242310"></script>
+<script src="app.js?v=202611242310"></script>
 </body>
 </html>

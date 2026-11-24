@@ -1975,7 +1975,7 @@ let wx = null, sunInfo = null, wxT = null, wxKey = "";
 async function fetchWx(lat, lng) {
   const q = `latitude=${lat.toFixed(3)}&longitude=${lng.toFixed(3)}&timezone=auto&forecast_days=3`;
   const [f, m] = await Promise.all([
-    fetch(`https://api.open-meteo.com/v1/forecast?${q.replace("forecast_days=3", "forecast_days=7")}&wind_speed_unit=ms&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,precipitation,weather_code&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation,pressure_msl,weather_code&daily=sunrise,sunset,weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant`).then(r => r.json()),
+    fetch(`https://api.open-meteo.com/v1/forecast?${q.replace("forecast_days=3", "forecast_days=7")}&wind_speed_unit=ms&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,precipitation,weather_code,is_day&hourly=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation,pressure_msl,weather_code&daily=sunrise,sunset,weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant`).then(r => r.json()),
     fetch(`https://marine-api.open-meteo.com/v1/marine?${q}&past_days=1&current=wave_height,sea_surface_temperature&hourly=wave_height,sea_surface_temperature`).then(r => r.ok ? r.json() : null).catch(() => null)
   ]);
   if (f.error) throw new Error(f.reason);
@@ -2001,9 +2001,11 @@ async function loadWx(force) {
 }
 function renderChip() {
   const c = wx.current;
-  $("#wxtxt").textContent = `${c.wind_speed_10m.toFixed(0)} (${c.wind_gusts_10m.toFixed(0)}) m/s`;
+  $("#wxtxt").innerHTML = `${c.wind_speed_10m.toFixed(0)} (${c.wind_gusts_10m.toFixed(0)}) <span class="u">m/s</span>`;
+  // väderikon och temperatur visar att knappen ger hela vädret, inte bara vinden
+  $("#wxic").innerHTML = c.weather_code != null ? `<i>${c.is_day === 0 && c.weather_code <= 2 ? "🌙" : WX_ICON(c.weather_code)}</i>${c.temperature_2m.toFixed(0)}°` : "";
   const s = sstInfo();
-  $("#wxsub").textContent = (S.wxSrc === "map" ? "vid korset · " : "") + (S.mode === "fiske" && s ? `${compass(c.wind_direction_10m)} · vatten ${s.v.toFixed(1)}°` : `${compass(c.wind_direction_10m)} · ${c.temperature_2m.toFixed(0)}°`);
+  $("#wxsub").textContent = (S.wxSrc === "map" ? "vid korset · " : "") + (S.mode === "fiske" && s ? `${compass(c.wind_direction_10m)} · vatten ${s.v.toFixed(1)}°` : `${compass(c.wind_direction_10m)}`);
   $("#wxchip .arrow").style.transform = `rotate(${(c.wind_direction_10m + 180) % 360}deg)`;
   $("#wxchip").style.color = c.wind_gusts_10m > (boat().maxWind || 10) ? "var(--port)" : "";
 }
