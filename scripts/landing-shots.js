@@ -13,6 +13,7 @@ const server = http.createServer((req, res) => {
   else { res.writeHead(200, { "Content-Type": type, "Content-Length": size }); fs.createReadStream(f).pipe(res); }
 }).listen(8766);
 const ONLY = (process.argv[3] || "").split(",").filter(Boolean);
+const LANG = process.argv[4] || "sv";   // sv, fi eller en
 const SHOTS = [
   { name: "sat-dator", dev: { viewport: { width: 1440, height: 860 }, deviceScaleFactor: 1.5 }, view: { lat: 60.093, lng: 19.955, z: 13.4 } },
   { name: "sat-mobil", dev: { ...devices["iPhone 13"], deviceScaleFactor: 2 }, view: { lat: 60.098, lng: 19.968, z: 12.5 }, groups: { satdepth: false } },
@@ -47,7 +48,7 @@ const SHOTS = [
     await c.route("https://www.googletagmanager.com/**", r => r.abort());
     await c.addInitScript(([v, g, base, props, wxm, mode]) => localStorage.setItem("kummel.v1", JSON.stringify({ termsOk: 9, welcomed: 1, stats: 0, v2: 1, v3: 1, autoAck: 1, layersSeen: 1, a2hsTip: 1, bkOff: 1, mode: mode || "tur", view: v, wxMode: wxm || "wind", layers: { base, props, detail: false, detailZoom: 13, soundings: true, groups: g || {} } })), [s.view, s.groups, s.base || "sat", !!s.props, s.wx, s.mode]);
     const p = await c.newPage(); p.on("pageerror", e => console.log("ERR", e.message));
-    await p.goto("http://localhost:8766/index.html"); await p.waitForTimeout(4000);
+    await p.goto("http://localhost:8766/index.html" + (LANG !== "sv" ? "?lang=" + LANG : "")); await p.waitForTimeout(4000);
     await p.evaluate(v => { try { setFollow(false, true); } catch (e) {} map.jumpTo({ center: [v.lng, v.lat], zoom: v.z, bearing: 0 }); }, s.view);
     await p.waitForTimeout(9000);
     if (s.wx) { await p.click("#b-wx"); await p.waitForTimeout(8000); }

@@ -33,7 +33,7 @@ APPLD={"@context":"https://schema.org","@type":"WebApplication","name":"Kummel",
 DISC='<div class="disclaimer"><b>Kummel är inte ett sjökort för navigering.</b> Appen är ett hjälpmedel för planering och överblick och är inte certifierad för navigering. Djup, sjömärken, ruttförslag, ankomsttider och väder kan vara felaktiga eller inaktuella. Använd alltid officiella, uppdaterade sjökort och gott sjömanskap.</div>'
 def band(h='Öppna kartan',p='Kummel är gratis och fungerar direkt i webbläsaren. Ingen nedladdning och inget konto. Lägg den på hemskärmen så öppnas den som en app.'):
     return f'<section class="band"><div class="wrap"><h2>{h}</h2><p>{p}</p><a class="btn" href="/">Öppna Kummel</a></div></section>'
-def page(path,title,desc,body,lds=()):
+def page_sv(path,title,desc,body,lds=()):
     nav=''.join(f'<a href="{u}"{" aria-current=\"page\"" if u==path else ""}>{t}</a>' for u,t in NAV)
     ld=''.join(f'<script type="application/ld+json">{json.dumps(x,ensure_ascii=False)}</script>' for x in lds)
     html=f'''<!doctype html>
@@ -59,9 +59,9 @@ def page(path,title,desc,body,lds=()):
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap">
-<link rel="stylesheet" href="/om/site.css?v=6">
+<link rel="stylesheet" href="/om/site.css?v=7">
 <script src="/config.js" defer></script>
-<script src="/om/site.js?v=1" defer></script>
+<script src="/om/site.js?v=2" defer></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{{"token": "a2d2b8a2b7594062bd448afc0260661d"}}'></script>
 {ld}
 </head>
@@ -78,8 +78,67 @@ def page(path,title,desc,body,lds=()):
 </body>
 </html>
 '''
-    os.makedirs(R+path.strip('/'),exist_ok=True)
-    open(R+path.strip('/')+'/index.html','w').write(html)
+    return html
+
+# ---------------- språk: sidorna byggs på svenska och översätts sedan block för block ----------------
+# Ordlistor: scripts/site-i18n/fi.json och en.json (nyckel = svensk text eller inre HTML i ett block).
+import re, html as H
+PATHS={'/om/':{'fi':'/fi/','en':'/en/'},'/sjokort-aland/':{'fi':'/fi/merikartta/','en':'/en/nautical-chart/'},
+       '/fiske-aland/':{'fi':'/fi/kalastus/','en':'/en/fishing/'},'/vattenstand-aland/':{'fi':'/fi/vedenkorkeus/','en':'/en/water-level/'}}
+LOCALE={'sv':('sv-AX','sv_FI'),'fi':('fi','fi_FI'),'en':('en','en_GB')}
+DICT={l:json.load(open(os.path.join(R,'scripts/site-i18n',l+'.json'))) if os.path.exists(os.path.join(R,'scripts/site-i18n',l+'.json')) else {} for l in ('fi','en')}
+MISSING={'fi':[], 'en':[]}
+BLOCK=re.compile(r'<(title|h1|h2|h3|p|li|summary|figcaption)(\b[^>]*)>(.*?)</\1>', re.S)
+def tr(l, k):
+    k2=k.strip()
+    if not re.search(r'[A-Za-zÅÄÖåäö]{2}', k2): return k
+    if k2 in DICT[l]: return k.replace(k2, DICT[l][k2])
+    if k2 not in MISSING[l]: MISSING[l].append(k2)
+    return k
+def tr_json(l, o):
+    if isinstance(o, dict): return {k: (tr_json(l, v) if k in ('name','text','description','mainEntity','acceptedAnswer','operatingSystem') else v) for k, v in o.items()}
+    if isinstance(o, list): return [tr_json(l, x) for x in o]
+    if isinstance(o, str): return tr(l, o)
+    return o
+def localize(l, path, html):
+    # 1) hela block (rubriker, stycken, listpunkter, frågor) med inre HTML som nyckel
+    keep=[]
+    def blk(m):
+        if '<ul' in m.group(3) or '<details' in m.group(3): return m.group(0)
+        keep.append(tr(l, m.group(3))); return f'<{m.group(1)}{m.group(2)}>\x01{len(keep)-1}\x02</{m.group(1)}>'
+    html=BLOCK.sub(blk, html)
+    # 2) attribut med text
+    html=re.sub(r'(\s(?:alt|aria-label)=")([^"]*)(")', lambda m: m.group(1)+tr(l, m.group(2))+m.group(3), html)
+    html=re.sub(r'(<meta (?:name="description"|property="og:(?:title|description)") content=")([^"]*)(")', lambda m: m.group(1)+tr(l, m.group(2))+m.group(3), html)
+    # 3) JSON-LD
+    html=re.sub(r'(<script type="application/ld\+json">)(.*?)(</script>)', lambda m: m.group(1)+json.dumps(tr_json(l, json.loads(m.group(2))),ensure_ascii=False)+m.group(3), html, flags=re.S)
+    # 4) resterande textbitar (knappar, länkar, korta etiketter) – inte inuti script/style
+    parts=re.split(r'(<script\b.*?</script>|<style\b.*?</style>)', html, flags=re.S)
+    for i in range(0, len(parts), 2):
+        parts[i]=re.sub(r'>([^<>]*[A-Za-zÅÄÖåäö][^<>]*)<', lambda m: '>'+tr(l, m.group(1))+'<', parts[i])
+    html=''.join(parts)
+    html=re.sub('\x01(\\d+)\x02', lambda m: keep[int(m.group(1))], html)   # blocken tillbaka
+    # 5) adresser och språk
+    for sv, o in PATHS.items(): html=html.replace(f'href="{sv}"', f'href="{o[l]}"').replace(f'href="{sv}#', f'href="{o[l]}#').replace(f'{SITE}{sv}"', f'{SITE}{o[l]}"')
+    html=html.replace('"inLanguage": "sv"', f'"inLanguage": "{l}"')
+    html=html.replace('href="/"', f'href="/?lang={l}"').replace('<html lang="sv-AX">', f'<html lang="{LOCALE[l][0]}">').replace('content="sv_FI"', f'content="{LOCALE[l][1]}"')
+    # skärmbilder på språket om de finns
+    html=re.sub(r'/om/img/([\w-]+)\.webp', lambda m: f'/om/img/{l}/{m.group(1)}.webp' if os.path.exists(os.path.join(R,'om/img',l,m.group(1)+'.webp')) else m.group(0), html)
+    return html
+def alts(path):
+    o=PATHS[path]; u={'sv':path,'fi':o['fi'],'en':o['en']}
+    return u, ''.join(f'<link rel="alternate" hreflang="{h}" href="{SITE}{u[l]}">' for l,h in (('sv','sv'),('fi','fi'),('en','en'))) + f'<link rel="alternate" hreflang="x-default" href="{SITE}{u["en"]}">'
+def langnav(u, cur):
+    return '<span class="langs">' + ''.join(f'<a href="{u[l]}" hreflang="{l}" lang="{l}"{" aria-current=\"true\"" if l==cur else ""}>{n}</a>' for l,n in (('sv','SV'),('fi','FI'),('en','EN'))) + '</span>'
+def page(path,title,desc,body,lds=()):
+    html=page_sv(path,title,desc,body,lds)
+    u, links = alts(path)
+    for l in ('sv','fi','en'):
+        h=localize(l, path, html) if l!='sv' else html
+        h=h.replace('<nav class="nav">', '<nav class="nav">'+langnav(u,l),1)
+        h=h.replace('<meta property="og:type"', links+'\n<meta property="og:type"',1)
+        os.makedirs(R+u[l].strip('/'),exist_ok=True)
+        open(R+u[l].strip('/')+'/index.html','w').write(h)
 
 # ---------------- /om/ ----------------
 qs=[("Kostar Kummel något?","Nej. Kummel är gratis och kräver inget konto. Du öppnar den på www.kummel.app i webbläsaren på mobil, iPad eller dator."),
@@ -214,7 +273,7 @@ body=f'''<section class="hero"><div class="wrap">
 <p class="lead">Kummels fiskeläge visar branta kanter, stenar och vattentemperatur på sjökortet, ger ett fiskeläge efter väder och måne, och sparar fångsten med plats och väder på ett tryck. Gratis, i mobilen.</p>
 <div class="cta"><a class="btn" href="/">Öppna Kummel</a><a class="btn sec" href="/om/">Alla funktioner</a></div>
 <div class="facts"><span>Branta kanter</span><span>Fiskeläge</span><span>Fångstlogg med foto</span><span>Dina platser stannar i din telefon</span></div></div>
-<div class="hero-shot" style="padding-bottom:48px"><img src="/om/img/fangst.webp" width="540" height="675" style="max-width:360px;border-radius:18px;box-shadow:0 30px 60px rgba(0,0,0,.4)" alt="Delad fångstbild från Kummel: havsöring 2,1 kg, 58 cm, med väder och vattentemperatur" fetchpriority="high"></div>
+<div class="hero-shot" style="padding-bottom:48px"><img src="/om/img/fangst.webp" width="540" height="675" style="max-width:min(360px,100%);border-radius:18px;box-shadow:0 30px 60px rgba(0,0,0,.4)" alt="Delad fångstbild från Kummel: havsöring 2,1 kg, 58 cm, med väder och vattentemperatur" fetchpriority="high"></div>
 </div></section>
 <section><div class="wrap">
 {feature('Sjökortet','Se var djupet ändras','I fiskeläget markeras branta kanter, alltså ställen där djupet ändras snabbt, med orange linjer. Tillsammans med stenar, grund och djupkurvor ser du direkt var det är värt att lägga ett kast eller en dragrutt.',['Branta kanter framhävda','Stenar, grund och djupsiffror','Flygfoto med djupområden ovanpå','Spara egna platser med ett långt tryck'],'fiskekarta','Branta kanter i fiskeläget')}
@@ -237,7 +296,7 @@ body=f'''<section class="hero"><div class="wrap">
 <p class="lead">Aktuellt vattenstånd med prognos, vind och byar, regn, våghöjd och vattentemperatur över hela skärgården, och en prognos för sju dygn med lufttryck och temperatur. Allt på samma karta som sjökortet.</p>
 <div class="cta"><a class="btn" href="/">Öppna Kummel</a><a class="btn sec" href="/om/">Alla funktioner</a></div>
 <div class="facts"><span>Meteorologiska institutet</span><span>Prognos sju dygn</span><span>Lufttryck</span><span>Gratis</span></div></div>
-<div class="hero-shot"><img class="desk" src="/om/img/vattenstand.webp" width="585" height="996" style="max-width:330px;border-radius:26px 26px 0 0" alt="Vattenstånd i Kummel" fetchpriority="high"></div>
+<div class="hero-shot"><img class="desk" src="/om/img/vattenstand.webp" width="585" height="996" style="max-width:min(330px,100%);border-radius:26px 26px 0 0" alt="Vattenstånd i Kummel" fetchpriority="high"></div>
 </div></section>
 <section><div class="wrap">
 {feature('Vattenstånd','Hur mycket vatten är det just nu?','Kummel visar vattenståndet från närmaste mareograf, hur det har ändrats det senaste dygnet och prognosen framåt. Sjökortets djup gäller medelvattenstånd, och Kummel räknar om grundvarningarna efter dagens nivå.',['Uppmätt vattenstånd och trend','Prognos med lägsta och högsta nivå','Grundvarningar som räknar med vattenståndet','"Just nu ca X m" när du trycker på vattnet'],'vattenstand','Vattenstånd med diagram och prognos')}
@@ -248,4 +307,7 @@ body=f'''<section class="hero"><div class="wrap">
 <section class="alt"><div class="wrap" style="max-width:820px"><h2>Frågor om vattenstånd och väder</h2>{faq(qs)}</div></section>
 {band()}'''
 page('/vattenstand-aland/','Vattenstånd Åland och sjöväder – Kummel','Aktuellt vattenstånd på Åland, i Åboland och Nyland med prognos från Meteorologiska institutet, och sjöväder med vind, byar, regn, våghöjd och vattentemperatur över skärgården.',body,[APPLD,faqld(qs)])
+for l in ('fi','en'):
+    json.dump(MISSING[l], open(os.path.join(R,'scripts/site-i18n',f'missing-{l}.json'),'w'), ensure_ascii=False, indent=1)
+    print(l, 'saknar', len(MISSING[l]), 'texter')
 print('ok')

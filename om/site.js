@@ -26,7 +26,13 @@
   else if (v !== 0 && GA) {
     setTimeout(function () {
       var d = document.createElement("div"); d.className = "consent";
-      d.innerHTML = '<div><b>Får Kummel räkna besök?</b><span>Anonym statistik över hur sidorna och appen används hjälper oss att göra Kummel bättre. Inga positioner skickas.</span></div><div class="consent-b"><button class="btn" data-c="1">Ja, gärna</button><button class="btn sec" data-c="0">Nej tack</button></div>';
+      var T = {
+        sv: ["Får Kummel räkna besök?", "Anonym statistik över hur sidorna och appen används hjälper oss att göra Kummel bättre. Inga positioner skickas.", "Ja, gärna", "Nej tack"],
+        fi: ["Saako Kummel laskea käyntejä?", "Nimetön tilasto sivujen ja sovelluksen käytöstä auttaa meitä parantamaan Kummelia. Sijainteja ei lähetetä.", "Kyllä, mielelläni", "Ei kiitos"],
+        en: ["May Kummel count visits?", "Anonymous statistics on how the pages and the app are used help us make Kummel better. No positions are sent.", "Yes, sure", "No thanks"]
+      }[(document.documentElement.lang || "sv").slice(0, 2)] || null;
+      if (!T) T = ["Får Kummel räkna besök?", "Anonym statistik över hur sidorna och appen används hjälper oss att göra Kummel bättre. Inga positioner skickas.", "Ja, gärna", "Nej tack"];
+      d.innerHTML = '<div><b>' + T[0] + '</b><span>' + T[1] + '</span></div><div class="consent-b"><button class="btn" data-c="1">' + T[2] + '</button><button class="btn sec" data-c="0">' + T[3] + '</button></div>';
       d.addEventListener("click", function (e) { var b = e.target.closest("[data-c]"); if (!b) return; var y = b.getAttribute("data-c") === "1"; setStats(y ? 1 : 0); d.remove(); if (y) start(); });
       document.body.appendChild(d);
     }, 1500);

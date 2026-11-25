@@ -129,3 +129,18 @@ footer nav{display:flex;flex-direction:column;gap:6px}
 .consent .btn.sec{color:#fff}
 .nav a.btn,.nav a.btn:hover{color:var(--ink)}
 .consent{border:1px solid rgba(255,255,255,.18)}
+
+/* språkval i sidhuvudet */
+.langs{display:flex;gap:2px;margin-right:6px;background:rgba(255,255,255,.08);border-radius:999px;padding:3px}
+.nav .langs a{display:inline-block!important;padding:5px 8px;border-radius:999px;font:700 13px/1 var(--f-head);letter-spacing:.06em;color:#b8cad6}
+.nav .langs a[aria-current]{background:#fff;color:var(--ink)}
+@media (max-width:760px){.langs{margin-left:auto;margin-right:0}.top .wrap{gap:10px}.top .btn{padding:8px 12px;font-size:14px}}
+@media (max-width:380px){.brand{font-size:18px}.brand svg{width:26px;height:26px}}
+@media (max-width:480px){
+  .top .wrap{gap:8px;padding:0 14px}
+  .brand{font-size:18px;gap:7px}.brand svg{width:26px;height:26px}
+  .nav{gap:8px}.nav .langs a{padding:4px 6px;font-size:12px}
+  .top .btn{padding:7px 10px;font-size:13px}
+}
+.hero .wrap > *{min-width:0}.hero-shot img{max-width:100%}
+@media (max-width:400px){.top .btn{display:none}}

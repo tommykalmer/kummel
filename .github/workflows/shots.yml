@@ -6,6 +6,10 @@ on:
         description: "Bara dessa bilder (kommaseparerat, tomt = alla)"
         required: false
         default: ""
+      lang:
+        description: "Språk i appen: sv, fi eller en (fi/en sparas i om/img/fi/ och om/img/en/)"
+        required: false
+        default: "sv"
 permissions:
   contents: write
 jobs:
@@ -21,21 +25,24 @@ jobs:
           npx playwright install --with-deps chromium
           sudo apt-get install -y fonts-noto-color-emoji   # väderikoner och månfas som i telefonen
           pip install pillow
-      - run: node scripts/landing-shots.js shots-raw "${{ inputs.only }}"
+      - run: node scripts/landing-shots.js shots-raw "${{ inputs.only }}" "${{ inputs.lang }}"
       - name: Konvertera till webp
+        env: { LANG_IN: "${{ inputs.lang }}" }
         run: |
           python3 - <<'PY'
           from PIL import Image
           import glob, os
+          lang = os.environ.get('LANG_IN', 'sv'); d = 'om/img' if lang == 'sv' else f'om/img/{lang}'; os.makedirs(d, exist_ok=True)
           for f in glob.glob('shots-raw/*.png'):
               n = os.path.basename(f)[:-4]; im = Image.open(f).convert('RGB')
               w = 1600 if 'dator' in n else 585
-              im.resize((w, int(im.height * w / im.width)), Image.LANCZOS).save(f'om/img/{n}.webp', 'WEBP', quality=80, method=6)
+              im.resize((w, int(im.height * w / im.width)), Image.LANCZOS).save(f'{d}/{n}.webp', 'WEBP', quality=80, method=6)
               print(n, im.size)
           PY
       - uses: actions/upload-artifact@v4
         with: { name: shots-raw, path: shots-raw }
       - run: |
           git config user.name "kummel-bot"; git config user.email "kummel-bot@users.noreply.github.com"
-          git add om/img/*.webp; git commit -m "Skärmbilder till landningssidan" || exit 0
+          python3 scripts/build-site.py   # sidorna pekar på bilderna på rätt språk
+          git add om fi en sjokort-aland fiske-aland vattenstand-aland; git commit -m "Skärmbilder till landningssidan" || exit 0
           git pull --rebase origin main; git push origin HEAD:main
