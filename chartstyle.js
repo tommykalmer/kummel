@@ -52,7 +52,7 @@ const KummelChart = (() => {
   const WMTS = layer => `https://julkinen.traficom.fi/rasteripalvelu/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${encodeURIComponent(layer)}&STYLE=&FORMAT=image%2Fpng&TILEMATRIXSET=WGS84_Pseudo-Mercator&TILEMATRIX=WGS84_Pseudo-Mercator%3A{z}&TILEROW={y}&TILECOL={x}`;
   const FI = [19, 59.3, 32, 70.2];
   const rasterSources = () => ({
-    "tr-coast": { type: "raster", tiles: [WMTS("Traficom:Rannikkokartat public")], tileSize: 256, minzoom: 10, maxzoom: 15, bounds: FI, attribution: "Sjökort: Traficom" },
+    "tr-coast": { type: "raster", tiles: [WMTS("Traficom:Rannikkokartat public")], tileSize: 256, minzoom: 10, maxzoom: 15, bounds: FI, attribution: (window.KUMMEL_I18N || {})["Sjökort: Traficom"] || "Sjökort: Traficom" },
     "tr-sea": { type: "raster", tiles: [WMTS("Traficom:Merikarttasarjat public")], tileSize: 256, minzoom: 10, maxzoom: 15, bounds: FI },
     "tr-harbour": { type: "raster", tiles: [WMTS("Traficom:Satamakartat")], tileSize: 256, minzoom: 14, maxzoom: 16, bounds: FI }
   });
@@ -128,7 +128,7 @@ const KummelChart = (() => {
         }, paint: { "text-color": C.nav, "text-halo-color": C.halo, "text-halo-width": 1.5, "icon-opacity": ["case", ["==", ["get", "st"], 2], .45, 1] } },
       { id: "pilot", type: "symbol", source: MK, filter: ["==", ["get", "L"], "pilot"], layout: { "text-field": "Lots", "text-font": FONT_B, "text-size": 11 }, paint: { "text-color": C.magenta, "text-halo-color": C.halo, "text-halo-width": 2 } },
       { id: "signs", type: "symbol", source: MK, filter: ["==", ["get", "L"], "signs"], layout: { "icon-image": "sign", "icon-size": .8, "text-field": ["case", ["has", "val"], ["to-string", ["get", "val"]], ""], "text-font": FONT_B, "text-size": 9 }, paint: { "text-color": C.red } },
-      { id: "faults", type: "symbol", source: MK, filter: ["==", ["get", "L"], "faults"], layout: { "icon-image": "fault", "icon-allow-overlap": true, "text-field": "Fel på sjömärke", "text-font": FONT_B, "text-size": 10, "text-anchor": "top", "text-offset": [0, 1.2], "text-optional": true }, paint: { "text-color": C.red, "text-halo-color": C.halo, "text-halo-width": 2 } },
+      { id: "faults", type: "symbol", source: MK, filter: ["==", ["get", "L"], "faults"], layout: { "icon-image": "fault", "icon-allow-overlap": true, "text-field": (window.KUMMEL_I18N || {})["Fel på sjömärke"] || "Fel på sjömärke", "text-font": FONT_B, "text-size": 10, "text-anchor": "top", "text-offset": [0, 1.2], "text-optional": true }, paint: { "text-color": C.red, "text-halo-color": C.halo, "text-halo-width": 2 } },
 
       /* detaljkort från Traficom (inskannade sjökort med grynnor och stenar) när man zoomar in.
          Ligger över vektorkortet; där bladen saknas syns vektorkortet igenom. */

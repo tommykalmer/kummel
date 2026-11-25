@@ -2,3 +2,5 @@ __pycache__/
 build/
 data/*.pmtiles
 data/marks.geojson
+scripts/i18n/node_modules/
+scripts/i18n/keys.json

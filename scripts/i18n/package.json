@@ -1,0 +1,1 @@
+{ "name": "kummel-i18n", "private": true, "dependencies": { "acorn": "^8.11.0", "acorn-walk": "^8.3.0" } }

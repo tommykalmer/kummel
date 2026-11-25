@@ -419,8 +419,19 @@ label.row{flex-wrap:nowrap;align-items:center}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js"></script>
 <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
-<script src="config.js?v=202611251530"></script>
-<script src="chartstyle.js?v=202611251530"></script>
-<script src="app.js?v=202611251530"></script>
+<script>
+/* språk: sparat val, ?lang= i adressen, annars webbläsarens språk (svenska, finska, annars engelska) */
+(function () {
+  var ok = { sv: 1, fi: 1, en: 1 }, l = new URLSearchParams(location.search).get("lang");
+  if (!ok[l]) { try { l = (JSON.parse(localStorage.getItem("kummel.v1")) || {}).lang; } catch (e) {} }
+  if (!ok[l]) { l = "en"; var a = navigator.languages || [navigator.language || ""];
+    for (var i = 0; i < a.length; i++) { var c = String(a[i]).slice(0, 2).toLowerCase(); if (ok[c]) { l = c; break; } } }
+  window.KUMMEL_LANG = l; document.documentElement.lang = l === "sv" ? "sv-AX" : l;
+  if (l !== "sv") document.write('<script src="lang/' + l + '.js?v=202611260100"><\/script>');
+})();
+</script>
+<script src="config.js?v=202611260100"></script>
+<script src="chartstyle.js?v=202611260100"></script>
+<script src="app.js?v=202611260100"></script>
 </body>
 </html>

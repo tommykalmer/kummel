@@ -4,6 +4,28 @@
    Kartmotor: MapLibre GL + PMTiles. Sjökortsstil: chartstyle.js
    Data: Traficom (CC BY 4.0, ej för navigering), OpenStreetMap, Open-Meteo.
    ========================================================= */
+/* ---------- språk: svenska (källa), finska, engelska ----------
+   Texter i koden är svenska och märks med Tr`...`. Översättningen slås upp i lang/fi.js eller lang/en.js
+   med den svenska texten som nyckel, där ${...} blir {0}, {1} … */
+const LANG = window.KUMMEL_LANG || "sv", I18N = window.KUMMEL_I18N || {};
+const LOC = { sv: "sv-FI", fi: "fi-FI", en: "en-GB" }[LANG], DEC = LANG === "en" ? "." : ",";
+function Tr(strs, ...v) {
+  const key = strs.reduce((a, x, i) => a + "{" + (i - 1) + "}" + x);
+  const t = I18N[key];
+  if (t == null) return strs.reduce((a, x, i) => a + v[i - 1] + x);
+  return v.length ? t.replace(/\{(\d+)\}/g, (_, i) => v[+i]) : t;
+}
+const Lx = x => (x && I18N[x]) || x;   // text som kommer från data (t.ex. sparad fiskart)
+/* fasta texter i index.html: översätts en gång när appen startar */
+if (LANG !== "sv") {
+  const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let n; (n = w.nextNode());) {
+    const k = n.nodeValue.trim(); if (!k || !I18N[k] || n.parentNode.closest("noscript,script,style")) continue;
+    n.nodeValue = n.nodeValue.replace(k, I18N[k]);
+  }
+  document.querySelectorAll("[title],[aria-label],[placeholder]").forEach(el => ["title", "aria-label", "placeholder"].forEach(at => { const v = el.getAttribute(at); if (v && I18N[v]) el.setAttribute(at, I18N[v]); }));
+  if (I18N["Kummel – sjökort för Åland, Åboland och Nyland"]) document.title = I18N["Kummel – sjökort för Åland, Åboland och Nyland"];
+}
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const NM = 1852, KN = 1.943844, R_NM = 3440.065;
@@ -16,17 +38,18 @@ const DEFAULT_STATE = {
   layers: { base: "chart", detail: false, detailZoom: 13, soundings: true, groups: {} },
   theme: "day",
   fishDepth: [4, 12],
-  boats: [{ id: "b1", name: "Min båt", type: "motor", length: 6.5, beam: 2.4, draft: 0.6, air: 2.0, speed: 20, fuel: 18, margin: 0.5, maxWind: 10 }],
+  boats: [{ id: "b1", name: Tr`Min båt`, type: "motor", length: 6.5, beam: 2.4, draft: 0.6, air: 2.0, speed: 20, fuel: 18, margin: 0.5, maxWind: 10 }],
   boatId: "b1",
   places: [], routes: [], tracks: [], catches: [], v2: 1, v3: 1
 };
 /* Ålands flagga, liten, för Om Kummel och välkomstrutan */
-const ALAND_FLAG = `<svg class="flag" viewBox="0 0 26 17" aria-label="Ålands flagga"><rect width="26" height="17" fill="#0053a5"/><rect x="7" width="5" height="17" fill="#ffce00"/><rect y="6" width="26" height="5" fill="#ffce00"/><rect x="8.5" width="2" height="17" fill="#d21034"/><rect y="7.5" width="26" height="2" fill="#d21034"/></svg>`;
-const MAKER = "AsterIQ Ab", MAKER_TOWN = "Mariehamn", MAKER_ID = "3553529-1", CONTACT = "kontakt@kummel.app";   // FO-nummer
+const ALAND_FLAG = Tr`<svg class="flag" viewBox="0 0 26 17" aria-label="Ålands flagga"><rect width="26" height="17" fill="#0053a5"/><rect x="7" width="5" height="17" fill="#ffce00"/><rect y="6" width="26" height="5" fill="#ffce00"/><rect x="8.5" width="2" height="17" fill="#d21034"/><rect y="7.5" width="26" height="2" fill="#d21034"/></svg>`;
+const MAKER = "AsterIQ Ab", MAKER_TOWN = Tr`Mariehamn`, MAKER_ID = "3553529-1", CONTACT = "kontakt@kummel.app";   // FO-nummer
 const SITE = "www.kummel.app", SITE_URL = "https://www.kummel.app/";   // appens adress, visas på delade bilder m.m.
 let draftCatch = null;
 let wl = null;   // vattenstånd {cm, at, station, km, obs:[{t,v}], fc:[{t,v}]}   // fångst som inte är sparad än (Fisk! utan att trycka Spara)
 let S = load();
+if (new URLSearchParams(location.search).get("lang") === LANG) S.lang = LANG;   // kom från en sida på ett visst språk
 function load() {
   try {
     const s = JSON.parse(localStorage.getItem(KEY));
@@ -48,7 +71,7 @@ function save() {
     persistAsked = true; try { navigator.storage?.persist?.(); } catch (e) {}
     // i Safari (inte på hemskärmen) kan sparade saker rensas efter 7 dagar utan besök: tipsa en gång
     const home = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
-    if (!home && !S.a2hsTip && matchMedia("(pointer:coarse)").matches) { S.a2hsTip = 1; setTimeout(() => toast("Tips: lägg Kummel på hemskärmen (Dela → Lägg till på hemskärmen). Då sparas dina platser, rutter och fångster säkrare.", 7000), 1500); }
+    if (!home && !S.a2hsTip && matchMedia("(pointer:coarse)").matches) { S.a2hsTip = 1; setTimeout(() => toast(Tr`Tips: lägg Kummel på hemskärmen (Dela → Lägg till på hemskärmen). Då sparas dina platser, rutter och fångster säkrare.`, 7000), 1500); }
   }
   setTimeout(backupDot, 300);
 }
@@ -65,7 +88,10 @@ function backupDue() {
 }
 function backupDot() { const b = $("#b-menu"); if (b) b.classList.toggle("dot", !!backupDue()); }
 function backupDone() { S.bk = { at: Date.now(), n: savedCount() }; if ((new Date()).getMonth() >= 9) S.bkAutumn = new Date().getFullYear(); save(); }
-const MONTHS = ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december"];
+const MONTHS = {
+  fi: ["tammikuun", "helmikuun", "maaliskuun", "huhtikuun", "toukokuun", "kesäkuun", "heinäkuun", "elokuun", "syyskuun", "lokakuun", "marraskuun", "joulukuun"],
+  en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+}[LANG] || ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december"];
 const uid = () => Math.random().toString(36).slice(2, 9);
 const boat = () => S.boats.find(b => b.id === S.boatId) || S.boats[0];
 /* vattenstånd är alltid påslaget (menyn Funktioner togs bort) */
@@ -105,9 +131,13 @@ const fmtPos = ll => `${ddm(ll.lat, "N", "S", 2)}<br>${ddm(ll.lng, "E", "W", 3)}
 const fmtPosTxt = ll => `${ddm(ll.lat, "N", "S", 2)} ${ddm(ll.lng, "E", "W", 3)}`;
 const fmtDur = h => { const m = Math.round(h * 60); return m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, "0")} min`; };
 const pad = n => String(n).padStart(2, "0");
-const DAYS = ["sön", "mån", "tis", "ons", "tor", "fre", "lör"];
+const DAYS = { fi: ["su", "ma", "ti", "ke", "to", "pe", "la"], en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] }[LANG] || ["sön", "mån", "tis", "ons", "tor", "fre", "lör"];
 const hm = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-const compass = d => ["N", "NNO", "NO", "ONO", "O", "OSO", "SO", "SSO", "S", "SSV", "SV", "VSV", "V", "VNV", "NV", "NNV"][Math.round(d / 22.5) % 16];
+const COMPASS = {
+  fi: ["P", "PKO", "KO", "IKO", "I", "IKA", "KA", "EKA", "E", "ELO", "LO", "LLO", "L", "LLU", "LU", "PLU"],
+  en: ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
+}[LANG] || ["N", "NNO", "NO", "ONO", "O", "OSO", "SO", "SSO", "S", "SSV", "SV", "VSV", "V", "VNV", "NV", "NNV"];
+const compass = d => COMPASS[Math.round(d / 22.5) % 16];
 const ll = o => ({ lat: o.lat, lng: o.lng });
 const lnglat = p => [p.lng, p.lat];
 
@@ -137,7 +167,7 @@ function mmlSources() {
   if (!mmlKey()) return {};
   return {
     "mml-orto": { type: "raster", tiles: [MML("ortokuva", "jpg")], tileSize: ORTO_TILE, maxzoom: 18, bounds: [19, 59.3, 32, 70.2], attribution: "Flygbild © Maanmittauslaitos" },
-    "mml-prop": { type: "raster", tiles: [MML("kiinteistojaotus", "png")], tileSize: 256, minzoom: 12, maxzoom: 16, bounds: [19, 59.3, 32, 70.2], attribution: "Fastighetsgränser © Maanmittauslaitos" }
+    "mml-prop": { type: "raster", tiles: [MML("kiinteistojaotus", "png")], tileSize: 256, minzoom: 12, maxzoom: 16, bounds: [19, 59.3, 32, 70.2], attribution: Tr`Fastighetsgränser © Maanmittauslaitos` }
   };
 }
 function baseStyle() {
@@ -151,9 +181,9 @@ function baseStyle() {
       ...KummelChart.rasterSources(),
       ofm: { type: "vector", url: "https://tiles.openfreemap.org/planet", attribution: "OpenFreeMap © OpenStreetMap" },
       marks: { type: "geojson", data: tileUrl("marks") },
-      rocks: { type: "vector", url: "pmtiles://" + tileUrl("rocks"), attribution: "Stenar: Maanmittauslaitos" },
+      rocks: { type: "vector", url: "pmtiles://" + tileUrl("rocks"), attribution: Tr`Stenar: Maanmittauslaitos` },
       lines: { type: "vector", url: "pmtiles://" + tileUrl("lines") },
-      chart: { type: "vector", url: CHART_URL, attribution: "Källa: Traficom (CC BY 4.0). Ej för navigering." }
+      chart: { type: "vector", url: CHART_URL, attribution: Tr`Källa: Traficom (CC BY 4.0). Ej för navigering.` }
     },
     layers: [
       { id: "bg", type: "background", paint: { "background-color": KummelChart.colors().land } },
@@ -261,10 +291,10 @@ map.on("style.load", () => { // inte "load": den väntar på alla källor, och e
   renderAis();
   if (nav) { setData("route", { type: "FeatureCollection", features: nav.pts.slice(1).map((p, k) => ({ type: "Feature", properties: { label: "" }, geometry: { type: "LineString", coordinates: [lnglat(nav.pts[k]), lnglat(p)] } })) }); updateNav(gps || ll(map.getCenter())); }
 });
-map.on("error", e => console.warn("Karta:", String(e && e.error && e.error.message || e)));
+map.on("error", e => console.warn(Tr`Karta:`, String(e && e.error && e.error.message || e)));
 /* finns sjökortsfilen? annars gatukarta för stunden (sparas inte som val) */
 new pmtiles.PMTiles(CHART_URL.replace("pmtiles://", "")).getHeader().catch(() => {
-  toast("Sjökortet kunde inte laddas. Visar gatukarta tills vidare.", 4000);
+  toast(Tr`Sjökortet kunde inte laddas. Visar gatukarta tills vidare.`, 4000);
   chartMissing = true; applyLayers();
 });
 let chartMissing = false;
@@ -279,8 +309,8 @@ const dz = () => +S.layers.detailZoom || 13;
 function renderSatLegend(on) {
   const el = $("#satlegend"); if (!el) return;
   el.hidden = !on; if (!on) return;
-  const n = needDepth().toFixed(1).replace(".", ",") + (wlM() && Math.abs(wl.cm) >= 3 ? ` (vattenst. ${fmtCm(wl.cm)})` : "");
-  el.innerHTML = `<b>Djup</b><span><i style="background:#ff5a5a"></i>under ${n} m</span><span><i style="background:#7fd6ff"></i>till 3 m</span><span><i style="background:#3d9ed6"></i>3–6 m</span><span><i style="background:#1f5f9a"></i>6–10 m</span><span><i style="background:transparent;border:1px solid #fff"></i>över 10 m</span>`;
+  const n = needDepth().toFixed(1).replace(".", DEC) + (wlM() && Math.abs(wl.cm) >= 3 ? ` (vattenst. ${fmtCm(wl.cm)})` : "");
+  el.innerHTML = Tr`<b>Djup</b><span><i style="background:#ff5a5a"></i>under ${n} m</span><span><i style="background:#7fd6ff"></i>till 3 m</span><span><i style="background:#3d9ed6"></i>3–6 m</span><span><i style="background:#1f5f9a"></i>6–10 m</span><span><i style="background:transparent;border:1px solid #fff"></i>över 10 m</span>`;
   requestAnimationFrame(() => document.documentElement.style.setProperty("--legend-h", el.offsetHeight + "px"));
 }
 function applyLayers() {
@@ -313,13 +343,13 @@ function applyLayers() {
 
 /* ---------- places (markers) ---------- */
 const CATS = {
-  hamn: { e: "⚓", c: "#1d6fa3", n: "Hamn" },
+  hamn: { e: "⚓", c: "#1d6fa3", n: Tr`Hamn` },
   ankring: { e: "⛵", c: "#0f2a3d", n: "Ankring / naturhamn" },
-  bad: { e: "🏊", c: "#2f8f5b", n: "Bad" },
-  fiske: { e: "🎣", c: "#c9921b", n: "Fiskeplats" },
-  service: { e: "⛽", c: "#7a4fb0", n: "Service" },
+  bad: { e: "🏊", c: "#2f8f5b", n: Tr`Bad` },
+  fiske: { e: "🎣", c: "#c9921b", n: Tr`Fiskeplats` },
+  service: { e: "⛽", c: "#7a4fb0", n: Tr`Service` },
   fara: { e: "⚠️", c: "#d64545", n: "Varning / grund" },
-  ovrigt: { e: "📍", c: "#5d6b73", n: "Övrigt" }
+  ovrigt: { e: "📍", c: "#5d6b73", n: Tr`Övrigt` }
 };
 let placeMarkers = [];
 function drawPlaces() {
@@ -354,7 +384,7 @@ map.on("click", e => {
   const p = best.properties, v = +p.v, dv = +p.dv, s = +p.s;
   e.preventDefault();
   steepPop = new maplibregl.Popup({ closeButton: false, maxWidth: "240px" }).setLngLat(e.lngLat)
-    .setHTML(`<div style="font:600 13px var(--f-ui);color:#14232e"><b>Brant</b><br>Djupet ökar från ${v} m till ${v + dv} m på ungefär ${Math.max(1, Math.round(dv / s))} m.<div style="font-weight:400;color:#5d6b73;margin-top:4px">Branter och kanter är ofta bra ställen för gädda, abborre och gös.</div></div>`).addTo(map);
+    .setHTML(Tr`<div style="font:600 13px var(--f-ui);color:#14232e"><b>Brant</b><br>Djupet ökar från ${v} m till ${v + dv} m på ungefär ${Math.max(1, Math.round(dv / s))} m.<div style="font-weight:400;color:#5d6b73;margin-top:4px">Branter och kanter är ofta bra ställen för gädda, abborre och gös.</div></div>`).addTo(map);
   const pop = steepPop; pop.getElement().addEventListener("click", ev => { ev.stopPropagation(); pop.remove(); if (steepPop === pop) steepPop = null; });
   setTimeout(() => { pop.remove(); if (steepPop === pop) steepPop = null; }, 9000);
 });
@@ -366,13 +396,13 @@ map.on("click", "signs", e => {
   e.preventDefault();
   const p = e.features[0].properties, nm = p.name && p.name !== "?" ? p.name : "";
   const cable = +p.lt === 31 || +p.lt === 32;   // kabel- och ledningstavlor (ägs av elbolag, kommuner m.fl.)
-  const head = p.val ? `Fartbegränsning ${Math.round(p.val)} km/h` : cable ? "Kabel eller ledning på botten" : "Vattentrafikmärke";
-  const rows = [p.t1, p.t2].filter(Boolean).map(t => `<div>Tilläggstavla: <b>${esc(t)}</b></div>`).join("")
+  const head = p.val ? Tr`Fartbegränsning ${Math.round(p.val)} km/h` : cable ? Tr`Kabel eller ledning på botten` : Tr`Vattentrafikmärke`;
+  const rows = [p.t1, p.t2].filter(Boolean).map(t => Tr`<div>Tilläggstavla: <b>${esc(t)}</b></div>`).join("")
     + (p.loc ? `<div>${esc(p.loc)}</div>` : "") + (nm ? `<div>${esc(nm)}</div>` : "")
-    + (p.own ? `<div class="muted">Ägare: ${esc(p.own)}</div>` : "");
+    + (p.own ? Tr`<div class="muted">Ägare: ${esc(p.own)}</div>` : "");
   if (signPop) signPop.remove();
   signPop = new maplibregl.Popup({ closeButton: false, maxWidth: "260px", offset: 12 }).setLngLat(e.features[0].geometry.coordinates)
-    .setHTML(`<div class="sign-pop"><b>${head}</b>${rows}<div class="muted">${p.val ? "Gäller i området runt märket." : cable ? "Ankra eller tråla inte i närheten. Läs skylten på plats." : "Förbud, begränsning eller anvisning. Läs skylten på plats."} Källa: Väylävirasto.</div></div>`).addTo(map);
+    .setHTML(Tr`<div class="sign-pop"><b>${head}</b>${rows}<div class="muted">${p.val ? Tr`Gäller i området runt märket.` : cable ? Tr`Ankra eller tråla inte i närheten. Läs skylten på plats.` : Tr`Förbud, begränsning eller anvisning. Läs skylten på plats.`} Källa: Väylävirasto.</div></div>`).addTo(map);
   const pop = signPop; pop.getElement().addEventListener("click", ev => { ev.stopPropagation(); pop.remove(); });
   setTimeout(() => pop.remove(), 9000);
 });
@@ -382,7 +412,7 @@ map.on("mouseenter", "catches", () => map.getCanvas().style.cursor = "pointer");
 map.on("mouseleave", "catches", () => map.getCanvas().style.cursor = "");
 
 /* ---------- modes ---------- */
-const MODES = { tur: "Båttur", fiske: "Fiske" };
+const MODES = { tur: Tr`Båttur`, fiske: Tr`Fiske` };
 function setMode(m) {
   if (S.mode && S.mode !== m) track("mode_change", { mode: m });
   if (!MODES[m]) m = "tur";   // äldre sparade lägen (segling, paddling) blir Båttur
@@ -394,7 +424,7 @@ function setMode(m) {
   refreshCatches(); updateFishZone();
   if (wx) renderChip();
 }
-document.querySelectorAll(".modes button").forEach(b => b.onclick = () => { setMode(b.dataset.mode); toast(`Läge: ${MODES[b.dataset.mode]}`, 1400); });
+document.querySelectorAll(".modes button").forEach(b => b.onclick = () => { setMode(b.dataset.mode); toast(Tr`Läge: ${MODES[b.dataset.mode]}`, 1400); });
 
 /* ---------- sheet ---------- */
 let sheetView = null;
@@ -502,7 +532,7 @@ let dragSt = 0;
 function updateCross() {
   if (gps && follow) return;
   $("#g-pos").innerHTML = fmtPos(map.getCenter());
-  $("#g-poslbl").textContent = "Kors";
+  $("#g-poslbl").textContent = Tr`Kors`;
 }
 map.on("move", () => { updateCross(); $("#north").style.transform = `rotate(${-map.getBearing()}deg)`; $("#b-north").classList.toggle("hidden", Math.abs(map.getBearing()) < 1 && !courseUp); });
 map.on("moveend", () => { const c = map.getCenter(); S.view = { lat: c.lat, lng: c.lng, z: map.getZoom(), bearing: map.getBearing() }; save(); scheduleWx(); });
@@ -532,7 +562,7 @@ map.on("rotatestart", e => { if (e.originalEvent) { lastTouch = Date.now(); if (
 $("#b-zin").onclick = () => map.easeTo({ zoom: map.getZoom() + 1, duration: 250, ...(follow && gps ? { center: lnglat(gps) } : {}) });
 $("#b-zout").onclick = () => map.easeTo({ zoom: map.getZoom() - 1, duration: 250, ...(follow && gps ? { center: lnglat(gps) } : {}) });
 $("#b-north").onclick = () => {
-  if (courseUp) { courseUp = false; map.easeTo({ bearing: 0 }); toast("Norr upp", 1200); }
+  if (courseUp) { courseUp = false; map.easeTo({ bearing: 0 }); toast(Tr`Norr upp`, 1200); }
   else map.easeTo({ bearing: 0 });
 };
 
@@ -561,13 +591,13 @@ function stopGps() { if (watchId !== null) { try { navigator.geolocation.clearWa
 function gpsStale() { return !lastFix || Date.now() - lastFix.t > 15000; }
 function restartGps() { stopGps(); startGps(); }
 function startGps() {
-  if (!("geolocation" in navigator)) { toast("Den här enheten saknar platstjänster."); return; }
+  if (!("geolocation" in navigator)) { toast(Tr`Den här enheten saknar platstjänster.`); return; }
   if (watchId !== null) return;
   watchId = navigator.geolocation.watchPosition(onFix, err => {
-    if (err.code === 1) { stopGps(); toast("Platsåtkomst nekad. Tillåt plats för sidan: Inställningar → Integritet → Platstjänster → Safari-webbplatser (eller webbläsaren du använder).", 6000); return; }
+    if (err.code === 1) { stopGps(); toast(Tr`Platsåtkomst nekad. Tillåt plats för sidan: Inställningar → Integritet → Platstjänster → Safari-webbplatser (eller webbläsaren du använder).`, 6000); return; }
     // ingen position än: be om en snabb, grövre position (wifi/mobilnät) och försök igen
     navigator.geolocation.getCurrentPosition(onFix, () => {}, { enableHighAccuracy: false, maximumAge: 60000, timeout: 10000 });
-    if (Date.now() - gpsErrT > 30000) { gpsErrT = Date.now(); toast("Söker GPS-position … Det går snabbast utomhus.", 3000); }
+    if (Date.now() - gpsErrT > 30000) { gpsErrT = Date.now(); toast(Tr`Söker GPS-position … Det går snabbast utomhus.`, 3000); }
     if (gpsStale()) setTimeout(() => { if (gpsStale()) restartGps(); }, 5000);
   }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 });
   keepAwake();
@@ -611,7 +641,7 @@ function onCompass(e) {
 }
 async function setCompass(on) {
   if (on && window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function") {
-    try { if (await DeviceOrientationEvent.requestPermission() !== "granted") { toast("Kompassen fick inte användas. Tillåt rörelse och orientering för sidan.", 4000); return false; } } catch (e) { return false; }
+    try { if (await DeviceOrientationEvent.requestPermission() !== "granted") { toast(Tr`Kompassen fick inte användas. Tillåt rörelse och orientering för sidan.`, 4000); return false; } } catch (e) { return false; }
   }
   window.removeEventListener("deviceorientationabsolute", onCompass); window.removeEventListener("deviceorientation", onCompass);
   if (on) window.addEventListener("ondeviceorientationabsolute" in window ? "deviceorientationabsolute" : "deviceorientation", onCompass);
@@ -633,7 +663,7 @@ function onFix(p) {
   $("#g-sog").textContent = gps.sog.toFixed(1);
   $("#g-cog").textContent = cog != null ? String(Math.round(cog)).padStart(3, "0") : "–";
   if (first && follow) map.jumpTo({ center: lnglat(pos), zoom: Math.max(map.getZoom(), 13) });
-  if (!follow && followWanted && gps.sog > 1.5 && (gps.acc || 0) < 50 && Date.now() - lastTouch > 20000) { setFollow(true); toast("Följer båten igen", 1500); }
+  if (!follow && followWanted && gps.sog > 1.5 && (gps.acc || 0) < 50 && Date.now() - lastTouch > 20000) { setFollow(true); toast(Tr`Följer båten igen`, 1500); }
   if (follow) { followBoat(false); $("#g-pos").innerHTML = fmtPos(pos); $("#g-poslbl").textContent = "GPS"; }
   $("#b-follow").classList.toggle("hidden", follow || !followWanted);
   if (recording) addTrackPoint(pos, t, gps.sog);
@@ -648,13 +678,13 @@ $("#b-locate").onclick = () => {
   if (!follow) {
     setFollow(true);
     if (gps) map.easeTo({ center: lnglat(gps), zoom: Math.max(map.getZoom(), 13) });
-    else toast("Söker GPS-position …");
-    toast("Kartan följer båten. Tryck igen för kurs upp.", 2200);
-  } else if (!courseUp) { courseUp = true; setFollow(true); toast("Kurs upp: kartan vrids efter båtens kurs", 2000); }
-  else { followWanted = false; setFollow(false); map.easeTo({ bearing: 0 }); toast("Fri karta", 1200); }
+    else toast(Tr`Söker GPS-position …`);
+    toast(Tr`Kartan följer båten. Tryck igen för kurs upp.`, 2200);
+  } else if (!courseUp) { courseUp = true; setFollow(true); toast(Tr`Kurs upp: kartan vrids efter båtens kurs`, 2000); }
+  else { followWanted = false; setFollow(false); map.easeTo({ bearing: 0 }); toast(Tr`Fri karta`, 1200); }
 };
 $("#b-follow").onclick = () => setFollow(true);
-$("#nav-stop").onclick = () => stopNav("Navigeringen avslutad");
+$("#nav-stop").onclick = () => stopNav(Tr`Navigeringen avslutad`);
 $("#nav-rr-yes").onclick = reroute;
 $("#nav-rr-no").onclick = () => { if (nav) nav.snooze = Date.now() + 5 * 60000; $("#nav-reroute").classList.add("hidden"); };
 document.querySelector(".nav-eta").onclick = setArrivalSheet;
@@ -669,7 +699,7 @@ function depthAlarm(pos) {
   const min = Math.min(...hits.map(f => KummelChart.minDepthOf(f)).filter(v => v != null));
   if (isFinite(min) && min < needDepth()) {
     lastAlarm = Date.now();
-    toast(`Grunt framåt: ${min.toFixed(1)} m enligt kartan inom 3 min. ${boat().name} behöver ${boatNeed().toFixed(1)} m${wlM() ? ` (vattenstånd ${fmtCm(wl.cm)})` : ""}.`, 6000);
+    toast(Tr`Grunt framåt: ${min.toFixed(1)} m enligt kartan inom 3 min. ${boat().name} behöver ${boatNeed().toFixed(1)} m${wlM() ? Tr` (vattenstånd ${fmtCm(wl.cm)})` : ""}.`, 6000);
     try { navigator.vibrate && navigator.vibrate([300, 150, 300]); } catch (e) {}
   }
 }
@@ -689,14 +719,14 @@ $("#b-rec").onclick = () => {
     startGps();
     recording = true; curTrack = { id: uid(), start: Date.now(), pts: [], max: 0, mode: S.mode, boat: boat().name };
     setLive();
-    $("#b-rec").classList.add("on"); $("#b-rec span").textContent = "Stoppa";
+    $("#b-rec").classList.add("on"); $("#b-rec span").textContent = Tr`Stoppa`;
     if (!follow) setFollow(true);
-    toast("Spårinspelning startad. Håll skärmen på.");
+    toast(Tr`Spårinspelning startad. Håll skärmen på.`);
   } else {
-    recording = false; $("#b-rec").classList.remove("on"); $("#b-rec span").textContent = "Spela in";
+    recording = false; $("#b-rec").classList.remove("on"); $("#b-rec span").textContent = Tr`Spela in`;
     curTrack.end = Date.now(); curTrack.nm = trackNm(curTrack.pts);
-    if (curTrack.pts.length > 1) { S.tracks.unshift(curTrack); save(); toast(`Tur sparad: ${curTrack.nm.toFixed(1)} nm`); }
-    else toast("För kort tur för att sparas.");
+    if (curTrack.pts.length > 1) { S.tracks.unshift(curTrack); save(); toast(Tr`Tur sparad: ${curTrack.nm.toFixed(1)} nm`); }
+    else toast(Tr`För kort tur för att sparas.`);
     curTrack = null; setLive();
   }
 };
@@ -716,7 +746,7 @@ function updateMob() {
   if (!mob) return;
   const here = gps || ll(map.getCenter());
   const d = distNm(here, mob) * NM, b = bearing(here, mob), secs = Math.round((Date.now() - mob.t) / 1000);
-  openSheet("Man överbord", `
+  openSheet(Tr`Man överbord`, Tr`
     <div class="callout bad"><div class="big">${Math.round(d)} m</div><div>Styr <b class="num">${String(Math.round(b)).padStart(3, "0")}°</b> (${compass(b)}) · markerad för ${Math.floor(secs / 60)} min ${secs % 60} s sedan</div></div>
     <div class="muted">${fmtPosTxt(mob)}</div>
     <div class="muted">Larma 112 eller VHF kanal 16 vid nödläge.</div>
@@ -727,17 +757,17 @@ setInterval(() => { if (mob && sheetView === "mob") updateMob(); }, 5000);
 
 /* ---------- places ---------- */
 function placeForm(p) {
-  return `
+  return Tr`
     <label class="f">Namn<input id="pf-name" value="${esc(p.name)}" placeholder="t.ex. Lugna viken"></label>
     <label class="f">Typ<select id="pf-cat">${Object.entries(CATS).map(([k, c]) => `<option value="${k}" ${k === p.cat ? "selected" : ""}>${c.e} ${c.n}</option>`).join("")}</select></label>
     <label class="f">Anteckning<textarea id="pf-note" rows="3" placeholder="t.ex. Bra skydd vid sydvästlig vind, 3 m djup vid berget">${esc(p.note)}</textarea></label>
-    <div class="muted">${fmtPosTxt(p)}${p.depth != null ? ` · djup enligt sjökortet ${p.depth}` : ""}</div>
+    <div class="muted">${fmtPosTxt(p)}${p.depth != null ? Tr` · djup enligt sjökortet ${p.depth}` : ""}</div>
     <div class="private-note">🔒 Sparas bara i din telefon. Ingen annan ser den, inte heller vi som gör Kummel.</div>
     <div class="row"><button class="btn pri" id="pf-save">Spara</button>${p.id ? `<button class="btn warn" id="pf-del">Ta bort</button><button class="btn" id="pf-nav">Rutt hit</button>` : ""}</div>`;
 }
 function newPlace(pos) {
   const p = { lat: pos.lat, lng: pos.lng, name: "", cat: S.mode === "fiske" ? "fiske" : "ankring", note: "", depth: depthAt(pos) };
-  openSheet("Ny plats", placeForm(p), "place"); bindPlaceForm(p);
+  openSheet(Tr`Ny plats`, placeForm(p), "place"); bindPlaceForm(p);
 }
 function openPlace(id) {
   const p = S.places.find(x => x.id === id); if (!p) return;
@@ -747,7 +777,7 @@ function bindPlaceForm(p) {
   $("#pf-save").onclick = () => {
     p.name = $("#pf-name").value.trim() || CATS[$("#pf-cat").value].n; p.cat = $("#pf-cat").value; p.note = $("#pf-note").value.trim();
     if (!p.id) { p.id = uid(); p.created = Date.now(); S.places.push(p); }
-    save(); drawPlaces(); closeSheet(); toast("Platsen sparad");
+    save(); drawPlaces(); closeSheet(); toast(Tr`Platsen sparad`);
   };
   const del = $("#pf-del"); if (del) del.onclick = () => { S.places = S.places.filter(x => x.id !== p.id); save(); drawPlaces(); closeSheet(); };
   const nav = $("#pf-nav"); if (nav) nav.onclick = () => routeFromMe(ll(p));
@@ -833,12 +863,12 @@ function newPastCatch() {
   const now = new Date(Date.now() - 60 * 60000), pad2 = n => String(n).padStart(2, "0");
   const local = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}T${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
   if (S.mode !== "fiske") setMode("fiske");
-  openSheet("Fångst i efterhand", `
+  openSheet(Tr`Fångst i efterhand`, Tr`
     <div class="callout">Flytta kartan så att <b>korset</b> står där du fick fisken. Du kan dra i kartan medan den här rutan är öppen.</div>
     <div class="muted" id="pc-pos">${fmtPosTxt(ll(map.getCenter()))}</div>
     <label class="f">När<input type="datetime-local" id="pc-t" value="${local}" max="${local.slice(0, 10)}T23:59"></label>
     <div class="grid2">
-      <label class="f">Art<select id="pc-sp"><option value="">Välj</option>${SPECIES.map(s => `<option>${s}</option>`).join("")}</select></label>
+      <label class="f">Art<select id="pc-sp"><option value="">Välj</option>${SPECIES.map(s => `<option value="${s}">${Lx(s)}</option>`).join("")}</select></label>
       <label class="f">Vikt (kg)<input id="pc-kg" inputmode="decimal"></label>
       <label class="f">Längd (cm)<input id="pc-len" inputmode="decimal"></label>
       <label class="row f-chk"><input type="checkbox" id="pc-rel"> Catch &amp; release</label>
@@ -854,24 +884,24 @@ function newPastCatch() {
   $("#pc-save").onclick = async () => {
     map.off("move", upd);
     const t = new Date($("#pc-t").value).getTime();
-    if (!isFinite(t) || t > Date.now() + 60000) { toast("Ange en tidpunkt som har varit."); return; }
+    if (!isFinite(t) || t > Date.now() + 60000) { toast(Tr`Ange en tidpunkt som har varit.`); return; }
     const pos = ll(map.getCenter());
     const c = { id: uid(), t, ...pos, depth: depthAt(pos), species: $("#pc-sp").value, kg: $("#pc-kg").value, len: $("#pc-len").value, released: $("#pc-rel").checked, lure: $("#pc-lure").value, note: $("#pc-note").value, wx: null, past: true };
     S.catches.push(c); S.catches.sort((x, y) => y.t - x.t); save(); refreshCatches(); track("catch_saved", { species: c.species || "okand", past: 1 });
-    toast("Fångsten är sparad"); openCatch(c.id);
-    try { c.wx = await wxAt(pos, t); save(); if (sheetView === "catch:" + c.id) openCatch(c.id); } catch (e) { toast("Vädret för den tiden kunde inte hämtas."); }
+    toast(Tr`Fångsten är sparad`); openCatch(c.id);
+    try { c.wx = await wxAt(pos, t); save(); if (sheetView === "catch:" + c.id) openCatch(c.id); } catch (e) { toast(Tr`Vädret för den tiden kunde inte hämtas.`); }
   };
 }
 function openCatch(id) {
   const c = findCatch(id); if (!c) return;
   const draft = c === draftCatch;
   const d = new Date(c.t), w = c.wx;
-  openSheet("Fångst", `
+  openSheet(Tr`Fångst`, Tr`
     <div class="pos-line"><div class="muted">${DAYS[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1} kl ${hm(d)} · ${fmtPosTxt(c)}${c.depth ? ` · djup ${c.depth}` : ""}</div><button class="btn sm" id="cf-move">Flytta</button></div>
     <div class="ph-box" id="cf-ph"><span class="muted">Inget foto</span></div>
-    <label class="btn ph-btn">${c.photo ? "Byt foto" : "📷 Lägg till foto"}<input type="file" id="cf-file" accept="image/*" hidden></label>
+    <label class="btn ph-btn">${c.photo ? Tr`Byt foto` : Tr`📷 Lägg till foto`}<input type="file" id="cf-file" accept="image/*" hidden></label>
     <div class="grid2">
-      <label class="f">Art<select id="cf-sp"><option value="">Välj</option>${SPECIES.map(s => `<option ${s === c.species ? "selected" : ""}>${s}</option>`).join("")}</select></label>
+      <label class="f">Art<select id="cf-sp"><option value="">Välj</option>${SPECIES.map(s => `<option value="${s}" ${s === c.species ? "selected" : ""}>${Lx(s)}</option>`).join("")}</select></label>
       <label class="f">Vikt (kg)<input id="cf-kg" inputmode="decimal" value="${esc(c.kg)}"></label>
       <label class="f">Längd (cm)<input id="cf-len" inputmode="decimal" value="${esc(c.len || "")}"></label>
       <label class="row f-chk"><input type="checkbox" id="cf-rel" ${c.released ? "checked" : ""}> Catch &amp; release</label>
@@ -884,26 +914,26 @@ function openCatch(id) {
         <div><b>${Math.round(w.p)}</b><span>Tryck ${w.pTrend == null ? "" : w.pTrend > 0.5 ? "↑ stiger" : w.pTrend < -0.5 ? "↓ faller" : "→ stabilt"}</span></div>
         <div><b>${w.sst != null ? w.sst.toFixed(1) + "°" : "–"}</b><span>Vatten</span></div>
         <div><b>${w.temp.toFixed(0)}°</b><span>Luft</span></div>
-        <div><b>${w.moon.icon}</b><span>${w.moon.name}</span></div></div>` : `<div class="muted">Hämtar väder … (sparas automatiskt när nätet finns)</div>`}
+        <div><b>${w.moon.icon}</b><span>${w.moon.name}</span></div></div>` : Tr`<div class="muted">Hämtar väder … (sparas automatiskt när nätet finns)</div>`}
     </div>
     <div class="private-note">🔒 Sparas bara i din telefon. Ingen annan ser den, inte heller vi som gör Kummel.</div>
-    ${draft ? `<div class="row"><button class="btn pri" id="cf-save">Spara fångst</button><button class="btn" id="cf-share">Spara och dela</button><button class="btn" id="cf-del">Avbryt</button></div>
+    ${draft ? Tr`<div class="row"><button class="btn pri" id="cf-save">Spara fångst</button><button class="btn" id="cf-share">Spara och dela</button><button class="btn" id="cf-del">Avbryt</button></div>
       <div class="muted">Fångsten hamnar på kartan och i fångstloggen när du sparar.</div>`
-    : `<div class="row"><button class="btn pri" id="cf-save">Spara</button><button class="btn" id="cf-share">Dela fångst</button><button class="btn warn" id="cf-del">Ta bort</button></div>`}`, "catch:" + c.id);
+    : Tr`<div class="row"><button class="btn pri" id="cf-save">Spara</button><button class="btn" id="cf-share">Dela fångst</button><button class="btn warn" id="cf-del">Ta bort</button></div>`}`, "catch:" + c.id);
   if (c.photo && $("#sheet").classList.contains("compact")) setSheetState($("#sheet"), 2);   // med foto: visa hela panelen
   const read = () => { catchForm(c); save(); };
-  if (c.photo) photoGet(c.id).then(b => { const el = $("#cf-ph"); if (b && el && sheetView === "catch:" + c.id) { el.innerHTML = ""; const im = new Image(); im.src = URL.createObjectURL(b); im.alt = "Foto på fångsten"; el.appendChild(im);
+  if (c.photo) photoGet(c.id).then(b => { const el = $("#cf-ph"); if (b && el && sheetView === "catch:" + c.id) { el.innerHTML = ""; const im = new Image(); im.src = URL.createObjectURL(b); im.alt = Tr`Foto på fångsten`; el.appendChild(im);
     im.onclick = () => { const o = document.createElement("div"); o.className = "ph-full"; const big = new Image(); big.src = im.src; o.appendChild(big); o.onclick = () => o.remove(); document.body.appendChild(o); }; } });
   $("#cf-file").onchange = async e => {
     const f = e.target.files[0]; if (!f) return;
-    try { read(); await photoPut(c.id, await shrinkPhoto(f)); c.photo = 1; save(); openCatch(c.id); toast("Fotot är sparat", 1500); }
-    catch (err) { toast("Fotot kunde inte sparas."); }
+    try { read(); await photoPut(c.id, await shrinkPhoto(f)); c.photo = 1; save(); openCatch(c.id); toast(Tr`Fotot är sparat`, 1500); }
+    catch (err) { toast(Tr`Fotot kunde inte sparas.`); }
   };
-  $("#cf-save").onclick = () => { read(); commitDraft(c); save(); refreshCatches(); closeSheet(); toast("Fångsten är sparad"); };
+  $("#cf-save").onclick = () => { read(); commitDraft(c); save(); refreshCatches(); closeSheet(); toast(Tr`Fångsten är sparad`); };
   $("#cf-share").onclick = () => { read(); const was = draft; commitDraft(c); openShare(c.id, was); };
   $("#cf-move").onclick = () => { read(); moveCatch(c); };
   $("#cf-del").onclick = () => {
-    if (draft) { closeSheet(); toast("Fångsten sparades inte", 1500); return; }
+    if (draft) { closeSheet(); toast(Tr`Fångsten sparades inte`, 1500); return; }
     S.catches = S.catches.filter(x => x.id !== c.id); photoDel(c.id); save(); refreshCatches(); closeSheet();
   };
 }
@@ -912,18 +942,18 @@ function openCatch(id) {
 function moveCatch(c) {
   const from = { lat: c.lat, lng: c.lng };
   leaveFollow(); map.easeTo({ center: lnglat(c), zoom: Math.max(map.getZoom(), 15), duration: 400 });
-  openSheet("Flytta fångsten", `
+  openSheet(Tr`Flytta fångsten`, Tr`
     <div class="callout">Dra kartan så att <b>korset</b> står exakt där du fick fisken.</div>
     <div class="muted" id="mv-pos">${fmtPosTxt(c)}</div>
     <div class="row"><button class="btn pri" id="mv-ok">Spara platsen</button><button class="btn" id="mv-cancel">Avbryt</button></div>`, "movecatch");
   setSheetState($("#sheet"), 1);
   document.body.classList.add("plan");   // visar korset tydligt
-  const upd = () => { const el = $("#mv-pos"); if (el && sheetView === "movecatch") el.textContent = fmtPosTxt(ll(map.getCenter())) + " · " + Math.round(distNm(from, ll(map.getCenter())) * NM) + " m från förut"; };
+  const upd = () => { const el = $("#mv-pos"); if (el && sheetView === "movecatch") el.textContent = fmtPosTxt(ll(map.getCenter())) + " · " + Math.round(distNm(from, ll(map.getCenter())) * NM) + Tr` m från förut`; };
   map.on("move", upd);
   const done = () => { map.off("move", upd); document.body.classList.remove("plan"); };
   $("#mv-ok").onclick = () => {
     const p = ll(map.getCenter()); c.lat = +p.lat.toFixed(6); c.lng = +p.lng.toFixed(6); c.depth = depthAt(p);
-    done(); save(); refreshCatches(); track("catch_moved"); toast("Fångsten är flyttad", 1500); openCatch(c.id);
+    done(); save(); refreshCatches(); track("catch_moved"); toast(Tr`Fångsten är flyttad`, 1500); openCatch(c.id);
   };
   $("#mv-cancel").onclick = () => { done(); openCatch(c.id); };
 }
@@ -956,9 +986,9 @@ async function catchCard(c, where) {
   g.fillStyle = "#0f2a3d"; g.fillRect(0, 0, W, H);
   // räkna ut textens höjd först, så att fotot lämnar plats och inget krockar med foten
   const L = 72, d = new Date(c.t), w = c.wx;
-  const size = [c.kg && `${String(c.kg).replace(".", ",")} kg`, c.len && `${String(c.len).replace(".", ",")} cm`].filter(Boolean).join("  ·  ");
-  const facts = [`${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()} kl ${hm(d)}`];
-  if (w) { facts.push(`Vind ${w.wind.toFixed(0)} m/s ${compass(w.dir)}`); if (w.sst != null) facts.push(`Vatten ${w.sst.toFixed(1).replace(".", ",")}°`); if (w.pTrend != null) facts.push(w.pTrend < -0.5 ? "Fallande tryck" : w.pTrend > 0.5 ? "Stigande tryck" : "Stabilt tryck"); facts.push(`${w.moon.icon} ${w.moon.name}`); }
+  const size = [c.kg && `${String(c.kg).replace(".", DEC)} kg`, c.len && `${String(c.len).replace(".", DEC)} cm`].filter(Boolean).join("  ·  ");
+  const facts = [Tr`${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()} kl ${hm(d)}`];
+  if (w) { facts.push(`Vind ${w.wind.toFixed(0)} m/s ${compass(w.dir)}`); if (w.sst != null) facts.push(`Vatten ${w.sst.toFixed(1).replace(".", DEC)}°`); if (w.pTrend != null) facts.push(w.pTrend < -0.5 ? Tr`Fallande tryck` : w.pTrend > 0.5 ? Tr`Stigande tryck` : Tr`Stabilt tryck`); facts.push(`${w.moon.icon} ${w.moon.name}`); }
   if (c.lure) facts.push(c.lure);
   g.font = `500 36px ${F}`;
   let lines = 1, lx = L; facts.forEach((t, i) => { const tw = g.measureText((i ? "  ·  " : "") + t).width; if (lx + tw > W - L && lx > L) { lines++; lx = L + g.measureText(t).width; } else lx += tw; });
@@ -982,7 +1012,7 @@ async function catchCard(c, where) {
   g.fillStyle = sh; g.fillRect(0, PH - 260, W, 260);
   let y = PH + 20;
   g.fillStyle = "#fff"; g.font = `800 96px ${F}`; g.textBaseline = "alphabetic";
-  g.fillText(c.species || "Fångst", L, y + 70);
+  g.fillText(Lx(c.species) || Tr`Fångst`, L, y + 70);
   y += 150;
   if (size) { g.fillStyle = "#f2c14e"; g.font = `800 64px ${F}`; g.fillText(size, L, y); }
   if (c.released) {
@@ -1002,21 +1032,21 @@ async function catchCard(c, where) {
   g.translate(50, 51); g.scale(.84, .84); g.translate(-50, -51);
   g.fillStyle = "#0053a5"; g.fill(new Path2D("M50 16 L80 84 L20 84 Z")); g.fillStyle = "#ffce00"; g.fillRect(18, 63, 64, 9); g.fillStyle = "#d21034"; g.fillRect(18, 65.6, 64, 3.8); g.restore();
   g.fillStyle = "#fff"; g.font = `800 44px ${F}`; g.fillText("Kummel", L + 66, fyB - 10);
-  g.fillStyle = "#93a5ae"; g.font = `500 26px ${F}`; g.fillText("sjökort och fiske i skärgården", L + 66, fyB + 26);
+  g.fillStyle = "#93a5ae"; g.font = `500 26px ${F}`; g.fillText(Tr`sjökort och fiske i skärgården`, L + 66, fyB + 26);
   g.fillStyle = "#f2c14e"; g.font = `800 42px ${F}`; g.fillText(SITE, W - L - g.measureText(SITE).width, fyB + 8);   // adressen syns för den som blir nyfiken
   return cv;
 }
 async function openShare(id, justSaved) {
   const c = findCatch(id); if (!c) return;
   const sel = S.shareWhere || "aland";
-  openSheet("Dela fångst", `
+  openSheet(Tr`Dela fångst`, Tr`
     <div class="share-prev" id="sh-prev"><span class="muted">Skapar bild …</span></div>
     <label class="f">Plats på bilden<select id="sh-where">
       <option value="none" ${sel === "none" ? "selected" : ""}>Visa ingen plats</option>
       <option value="aland" ${sel === "aland" ? "selected" : ""}>Bara "${regionName(c)}"</option>
       <option value="exact" ${sel === "exact" ? "selected" : ""}>Exakt position (avslöjar platsen)</option></select></label>
     <div class="row"><button class="btn pri" id="sh-go">Dela</button><button class="btn" id="sh-save">Spara i Bilder</button><button class="btn" id="sh-back">Tillbaka</button></div>
-    <div class="muted">${justSaved ? "Fångsten är sparad i din fångstlogg. " : ""}Bilden skapas i telefonen. Inget laddas upp av Kummel.</div>`, "share");
+    <div class="muted">${justSaved ? Tr`Fångsten är sparad i din fångstlogg. ` : ""}Bilden skapas i telefonen. Inget laddas upp av Kummel.</div>`, "share");
   let cv = null;
   const where = () => ({ none: "", aland: regionName(c), exact: fmtPosTxt(c) })[$("#sh-where").value];
   const draw = async () => {
@@ -1030,15 +1060,15 @@ async function openShare(id, justSaved) {
   $("#sh-go").onclick = async () => {
     track("catch_shared", { where: $("#sh-where").value });
     const f = new File([await blob()], name, { type: "image/jpeg" });
-    const text = `${c.species || "Fångst"}${c.kg ? " " + c.kg + " kg" : ""}${c.len ? " " + c.len + " cm" : ""} 🎣\nLoggad med Kummel: ${SITE}`;
+    const text = Tr`${Lx(c.species) || Tr`Fångst`}${c.kg ? " " + c.kg + " kg" : ""}${c.len ? " " + c.len + " cm" : ""} 🎣\nLoggad med Kummel: ${SITE}`;
     if (navigator.canShare && navigator.canShare({ files: [f] })) { try { await navigator.share({ files: [f], text }); } catch (e) {} }
-    else { saveImg(f, name); toast("Bilden är sparad. Dela den från bilderna i telefonen.", 3500); }
+    else { saveImg(f, name); toast(Tr`Bilden är sparad. Dela den från bilderna i telefonen.`, 3500); }
   };
   /* "Spara i Bilder": webbappar får inte skriva direkt till bildbiblioteket, men telefonens delningsmeny har "Spara bild" som lägger den i Bilder */
   $("#sh-save").onclick = async () => {
     const f = new File([await blob()], name, { type: "image/jpeg" });
     if (navigator.canShare && navigator.canShare({ files: [f] })) {
-      toast("Välj \"Spara bild\" i menyn som öppnas", 3500);
+      toast(Tr`Välj "Spara bild" i menyn som öppnas`, 3500);
       try { await navigator.share({ files: [f] }); } catch (e) {}
     } else saveImg(f, name);
   };
@@ -1046,12 +1076,12 @@ async function openShare(id, justSaved) {
 }
 function saveImg(b, name) { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); }
 
-const MOON_FIX = { "Tilltagande": "Tilltagande måne", "Avtagande": "Avtagande måne", "Första kvarteret": "Halvmåne, tilltagande", "Sista kvarteret": "Halvmåne, avtagande" };
+const MOON_FIX = { "Tilltagande": Tr`Tilltagande måne`, "Avtagande": Tr`Avtagande måne`, "Första kvarteret": Tr`Halvmåne, tilltagande`, "Sista kvarteret": Tr`Halvmåne, avtagande` };
 S.catches.forEach(c => { if (c.wx && c.wx.moon && MOON_FIX[c.wx.moon.name]) c.wx.moon.name = MOON_FIX[c.wx.moon.name]; });   // äldre fångster
 function moonPhase(d) {
   const syn = 29.530588853, ref = Date.UTC(2000, 0, 6, 18, 14);
   const age = (((d - ref) / 86400000) % syn + syn) % syn, f = age / syn;
-  const names = [["🌑", "Nymåne"], ["🌒", "Tilltagande måne"], ["🌓", "Halvmåne, tilltagande"], ["🌔", "Tilltagande måne"], ["🌕", "Fullmåne"], ["🌖", "Avtagande måne"], ["🌗", "Halvmåne, avtagande"], ["🌘", "Avtagande måne"]];
+  const names = [["🌑", Tr`Nymåne`], ["🌒", Tr`Tilltagande måne`], ["🌓", Tr`Halvmåne, tilltagande`], ["🌔", Tr`Tilltagande måne`], ["🌕", Tr`Fullmåne`], ["🌖", Tr`Avtagande måne`], ["🌗", Tr`Halvmåne, avtagande`], ["🌘", Tr`Avtagande måne`]];
   const [icon, name] = names[Math.round(f * 8) % 8];
   return { icon, name, age: +age.toFixed(1) };
 }
@@ -1077,9 +1107,9 @@ function bLight(t, lat, lng) {
   if (Math.abs(t - s.rise) < h) return "gryning"; if (Math.abs(t - s.set) < h) return "skymning";
   return t > s.rise && t < s.set ? "dag" : "natt";
 }
-const BUCKET_TXT = { fallsnabbt: "snabbt fallande tryck", faller: "fallande tryck", stabilt: "stabilt tryck", stiger: "stigande tryck", stigersnabbt: "snabbt stigande tryck",
-  stilla: "stilla väder", lagom: "lagom vind (2–7 m/s)", frisk: "frisk vind (7–11 m/s)", hård: "hård vind",
-  gryning: "gryningen", skymning: "skymningen", dag: "dagtid", natt: "natten" };
+const BUCKET_TXT = { fallsnabbt: Tr`snabbt fallande tryck`, faller: Tr`fallande tryck`, stabilt: Tr`stabilt tryck`, stiger: Tr`stigande tryck`, stigersnabbt: Tr`snabbt stigande tryck`,
+  stilla: Tr`stilla väder`, lagom: Tr`lagom vind (2–7 m/s)`, frisk: Tr`frisk vind (7–11 m/s)`, hård: Tr`hård vind`,
+  gryning: Tr`gryningen`, skymning: Tr`skymningen`, dag: Tr`dagtid`, natt: Tr`natten` };
 /* vad som har fungerat för just dig: vanligaste hinken per faktor, när det finns minst 5 fångster med väder */
 function myPatterns() {
   const cs = S.catches.filter(c => c.wx); if (cs.length < 5) return null;
@@ -1098,24 +1128,24 @@ function fishIndex(w) {
     let s = 45;
     const pt = i >= 3 ? H.pressure_msl[i] - H.pressure_msl[i - 3] : null, bp = bPress(pt);
     const pv = { fallsnabbt: -5, faller: 20, stabilt: 10, stiger: 0, stigersnabbt: -10 }[bp] ?? 0; s += pv;
-    if (bp === "faller") why.push(["+", "Fallande lufttryck, fisken brukar äta inför ett väderomslag"]);
-    else if (bp === "stabilt") why.push(["+", "Stabilt lufttryck"]);
-    else if (bp === "stigersnabbt") why.push(["−", "Snabbt stigande tryck, ofta trögt efter en front"]);
-    else if (bp === "fallsnabbt") why.push(["−", "Mycket snabbt fallande tryck, ostadigt väder på väg"]);
+    if (bp === "faller") why.push(["+", Tr`Fallande lufttryck, fisken brukar äta inför ett väderomslag`]);
+    else if (bp === "stabilt") why.push(["+", Tr`Stabilt lufttryck`]);
+    else if (bp === "stigersnabbt") why.push(["−", Tr`Snabbt stigande tryck, ofta trögt efter en front`]);
+    else if (bp === "fallsnabbt") why.push(["−", Tr`Mycket snabbt fallande tryck, ostadigt väder på väg`]);
     const ws = H.wind_speed_10m[i], bw = bWind(ws);
     s += { stilla: 5, lagom: 15, frisk: 0, hård: -20 }[bw];
-    if (bw === "lagom") why.push(["+", "Lagom vind som rör om i vattnet"]); else if (bw === "hård") why.push(["−", `Hård vind (${ws.toFixed(0)} m/s)`]); else if (bw === "stilla") why.push(["·", "Nästan stilla"]);
+    if (bw === "lagom") why.push(["+", Tr`Lagom vind som rör om i vattnet`]); else if (bw === "hård") why.push(["−", Tr`Hård vind (${ws.toFixed(0)} m/s)`]); else if (bw === "stilla") why.push(["·", Tr`Nästan stilla`]);
     const bl = bLight(t, w.lat, w.lng);
     s += { gryning: 20, skymning: 20, dag: 0, natt: -5 }[bl];
-    if (bl === "gryning" || bl === "skymning") why.push(["+", `${bl === "gryning" ? "Gryning" : "Skymning"}, ofta bästa tiden`]);
-    const m = moonPhase(new Date(t)); if (m.age < 2 || m.age > 27.5 || Math.abs(m.age - 14.8) < 2) { s += 5; why.push(["+", `${m.icon} ${m.age < 2 || m.age > 27.5 ? "Nymåne" : "Fullmåne"}`]); }
+    if (bl === "gryning" || bl === "skymning") why.push(["+", Tr`${bl === "gryning" ? Tr`Gryning` : Tr`Skymning`}, ofta bästa tiden`]);
+    const m = moonPhase(new Date(t)); if (m.age < 2 || m.age > 27.5 || Math.abs(m.age - 14.8) < 2) { s += 5; why.push(["+", `${m.icon} ${m.age < 2 || m.age > 27.5 ? Tr`Nymåne` : Tr`Fullmåne`}`]); }
     let mineHit = 0;
-    if (mine) { if (mine.press && mine.press.k === bp) mineHit++; if (mine.wind && mine.wind.k === bw) mineHit++; if (mine.light && mine.light.k === bl) mineHit++; s += mineHit * 4; if (mineHit >= 2) why.push(["+", "Liknar läget när du brukar få fisk"]); }
+    if (mine) { if (mine.press && mine.press.k === bp) mineHit++; if (mine.wind && mine.wind.k === bw) mineHit++; if (mine.light && mine.light.k === bl) mineHit++; s += mineHit * 4; if (mineHit >= 2) why.push(["+", Tr`Liknar läget när du brukar få fisk`]); }
     out.push({ t, s: Math.max(0, Math.min(100, Math.round(s))), why });
   }
   return out;
 }
-const idxLabel = s => s >= 70 ? "Mycket bra" : s >= 55 ? "Bra" : s >= 40 ? "Medel" : "Svagt";
+const idxLabel = s => s >= 70 ? Tr`Mycket bra` : s >= 55 ? Tr`Bra` : s >= 40 ? Tr`Medel` : Tr`Svagt`;
 const idxColor = s => s >= 70 ? "#2f8f5b" : s >= 55 ? "#7cb342" : s >= 40 ? "#e2a90c" : "#c0563b";
 function idxBadge() {
   const b = $("#b-idx .badge"); if (!b) return;
@@ -1124,33 +1154,33 @@ function idxBadge() {
 }
 $("#b-idx").onclick = openFishIndex;
 async function openFishIndex() {
-  if (!wx) { openSheet("Fiskeläge", `<div class="muted">Hämtar väder …</div>`, "fishidx"); await loadWx(true); }
+  if (!wx) { openSheet(Tr`Fiskeläge`, Tr`<div class="muted">Hämtar väder …</div>`, "fishidx"); await loadWx(true); }
   const ix = fishIndex(wx);
-  if (!ix || !ix.length) { openSheet("Fiskeläge", `<div class="muted">Vädret kunde inte hämtas. Fiskeläget behöver nät.</div>`, "fishidx"); return; }
+  if (!ix || !ix.length) { openSheet(Tr`Fiskeläge`, Tr`<div class="muted">Vädret kunde inte hämtas. Fiskeläget behöver nät.</div>`, "fishidx"); return; }
   const now = ix[0], sst = sstInfo(), mine = myPatterns();
   // bästa sammanhängande fönster idag och i morgon
   const wins = []; let cur = null, top = Math.max(...ix.map(h => h.s)), lim = Math.max(60, top - 8);
   ix.forEach(h => { if (h.s >= lim) { if (!cur) cur = { a: h.t, b: h.t, s: h.s }; else { cur.b = h.t; cur.s = Math.max(cur.s, h.s); } } else if (cur) { wins.push(cur); cur = null; } });
   if (cur) wins.push(cur);
-  const fmtWin = x => x.b - x.a >= 22 * 3600000 ? "hela dygnet" : `${hm(new Date(x.a))}–${hm(new Date(x.b + 3600000))}`;
-  openSheet("Fiskeläge", `
+  const fmtWin = x => x.b - x.a >= 22 * 3600000 ? Tr`hela dygnet` : `${hm(new Date(x.a))}–${hm(new Date(x.b + 3600000))}`;
+  openSheet(Tr`Fiskeläge`, Tr`
     <div class="idx-now"><div class="idx-ring" id="ix-ring"><b></b></div>
-      <div><h3 style="margin:0" id="ix-head"></h3><div class="muted">${wins.length ? "Bäst närmaste dygnet: " + wins.slice(0, 3).map(fmtWin).join(", ") : "Inget tydligt toppläge närmaste dygnet"}</div></div></div>
+      <div><h3 style="margin:0" id="ix-head"></h3><div class="muted">${wins.length ? Tr`Bäst närmaste dygnet: ` + wins.slice(0, 3).map(fmtWin).join(", ") : Tr`Inget tydligt toppläge närmaste dygnet`}</div></div></div>
     <div class="idx-bars" role="group" aria-label="Fiskeläge timme för timme">${ix.map((h, k) => `<button data-k="${k}" class="${wins.some(w => h.t >= w.a && h.t <= w.b) ? "best" : ""}" style="height:${Math.max(6, h.s)}%;background:${idxColor(h.s)}" aria-label="${hm(new Date(h.t))}: ${h.s}"></button>`).join("")}</div>
     <div class="idx-axis">${ix.map((h, k) => { const d = new Date(h.t); return d.getHours() % 3 ? "" : `<span style="left:${((k + .5) / ix.length * 100).toFixed(2)}%">${pad(d.getHours())}</span>`; }).join("")}</div>
-    <div class="muted" style="font-size:13px">Tryck på en stapel för att se fiskeläget den timmen.${wins.length ? " Prickarna visar de bästa timmarna." : ""}</div>
+    <div class="muted" style="font-size:13px">Tryck på en stapel för att se fiskeläget den timmen.${wins.length ? Tr` Prickarna visar de bästa timmarna.` : ""}</div>
     <div class="card"><h3 id="ix-whyh">Varför</h3><div id="ix-why"></div>
-      ${sst && sst.v != null ? `<div class="idx-why"><b>·</b>Vattnet är ${sst.v.toFixed(1).replace(".", ",")}°</div>` : ""}</div>
-    <div class="card"><h3>Dina fångster</h3>${mine ? [mine.press, mine.wind, mine.light].filter(Boolean).map(p => `<div class="idx-why"><b>·</b>${p.n} av ${p.of} vid ${BUCKET_TXT[p.k]}</div>`).join("") + `<div class="muted">Indexet ger extra poäng när läget liknar dina fångster.</div>`
-      : `<div class="muted">När du har loggat minst 5 fångster lär sig fiskeläget vad som brukar fungera för dig.</div>`}</div>
+      ${sst && sst.v != null ? Tr`<div class="idx-why"><b>·</b>Vattnet är ${sst.v.toFixed(1).replace(".", DEC)}°</div>` : ""}</div>
+    <div class="card"><h3>Dina fångster</h3>${mine ? [mine.press, mine.wind, mine.light].filter(Boolean).map(p => Tr`<div class="idx-why"><b>·</b>${p.n} av ${p.of} vid ${BUCKET_TXT[p.k]}</div>`).join("") + Tr`<div class="muted">Indexet ger extra poäng när läget liknar dina fångster.</div>`
+      : Tr`<div class="muted">När du har loggat minst 5 fångster lär sig fiskeläget vad som brukar fungera för dig.</div>`}</div>
     <div class="muted">Fiskeläget bygger på tumregler som många sportfiskare använder, för platsen mitt på kartan. Ingen garanti för napp.</div>`, "fishidx");
   // välj en timme: ringen, rubriken och "varför" visar den timmen
   const pick = k => {
     const h = ix[k], d = new Date(h.t), ring = $("#ix-ring");
     ring.style.setProperty("--c", idxColor(h.s)); ring.style.setProperty("--p", h.s); ring.querySelector("b").textContent = h.s;
-    $("#ix-head").textContent = k === 0 ? `${idxLabel(h.s)} just nu` : `${idxLabel(h.s)} ${d.toDateString() === new Date().toDateString() ? "i dag" : "i morgon"} kl ${pad(d.getHours())}–${pad((d.getHours() + 1) % 24)}`;
-    $("#ix-whyh").textContent = k === 0 ? "Varför" : `Varför kl ${pad(d.getHours())}`;
-    $("#ix-why").innerHTML = h.why.map(([x, t]) => `<div class="idx-why"><b class="${x === "+" ? "up" : x === "−" ? "down" : ""}">${x}</b>${esc(t)}</div>`).join("") || `<div class="muted">Inget särskilt talar för eller emot den timmen.</div>`;
+    $("#ix-head").textContent = k === 0 ? Tr`${idxLabel(h.s)} just nu` : Tr`${idxLabel(h.s)} ${d.toDateString() === new Date().toDateString() ? Tr`i dag` : Tr`i morgon`} kl ${pad(d.getHours())}–${pad((d.getHours() + 1) % 24)}`;
+    $("#ix-whyh").textContent = k === 0 ? Tr`Varför` : Tr`Varför kl ${pad(d.getHours())}`;
+    $("#ix-why").innerHTML = h.why.map(([x, t]) => `<div class="idx-why"><b class="${x === "+" ? "up" : x === "−" ? "down" : ""}">${x}</b>${esc(t)}</div>`).join("") || Tr`<div class="muted">Inget särskilt talar för eller emot den timmen.</div>`;
     document.querySelectorAll(".idx-bars button").forEach(b => b.classList.toggle("sel", +b.dataset.k === k));
   };
   document.querySelectorAll(".idx-bars button").forEach(b => b.onclick = () => { pick(+b.dataset.k); track("fishidx_hour"); });
@@ -1158,11 +1188,11 @@ async function openFishIndex() {
 }
 
 /* ---------- fångstrekord och statistik ---------- */
-const fmt1 = v => String(Math.round(v * 10) / 10).replace(".", ",");
+const fmt1 = v => String(Math.round(v * 10) / 10).replace(".", DEC);
 function catchStats() {
   const num = v => parseFloat(String(v || "").replace(",", ".")) || 0, rec = {}, yr = new Date().getFullYear(), season = {};
   S.catches.forEach(c => {
-    const sp = c.species || "Okänd art", kg = num(c.kg), len = num(c.len);
+    const sp = Lx(c.species) || Tr`Okänd art`, kg = num(c.kg), len = num(c.len);
     const r = rec[sp] || (rec[sp] = { n: 0, kg: 0, len: 0, kgC: null, lenC: null });
     r.n++; if (kg > r.kg) { r.kg = kg; r.kgC = c; } if (len > r.len) { r.len = len; r.lenC = c; }
     if (new Date(c.t).getFullYear() === yr) season[sp] = (season[sp] || 0) + 1;
@@ -1179,7 +1209,7 @@ function updateFishZone() {
 $("#b-depth").onclick = () => {
   fishOn = true; updateFishZone();
   const [a, b] = S.fishDepth;
-  openSheet("Djupintervall", `
+  openSheet(Tr`Djupintervall`, Tr`
     <div class="muted">Markerar vatten mellan två djup på sjökortet, t.ex. där abborre eller gös brukar stå.</div>
     <div class="grid2">
       <label class="f">Från (m)<input id="fd-a" type="number" min="0" max="60" step="1" inputmode="numeric" value="${a}"></label>
@@ -1199,7 +1229,7 @@ function routeFromMe(to) {
   const go = from => { endPickStart(); startPlanning([from, to]); autoRoute(from, to); };
   if (gps && Date.now() - (gps.t || 0) < 120000) return go(ll(gps));
   if (!navigator.geolocation) return askStart(to, go);
-  const t = document.createElement("div"); t.className = "toast"; t.textContent = "Hämtar din position …"; document.body.appendChild(t);
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = Tr`Hämtar din position …`; document.body.appendChild(t);
   navigator.geolocation.getCurrentPosition(
     q => { t.remove(); go({ lat: q.coords.latitude, lng: q.coords.longitude }); },
     () => { t.remove(); askStart(to, go); },   // t.ex. på datorn: låt användaren välja start på kartan
@@ -1210,7 +1240,7 @@ let pickStart = null;
 function askStart(to, go) {
   endPickStart(); closeSheet(); closeWpMenu();
   const bar = document.createElement("div"); bar.className = "pickbar";
-  bar.innerHTML = `<div><b>Var startar rutten?</b><span>Din position är inte känd. Tryck på kartan där du startar.</span></div>
+  bar.innerHTML = Tr`<div><b>Var startar rutten?</b><span>Din position är inte känd. Tryck på kartan där du startar.</span></div>
     <div class="pickbar-b"><button class="btn" data-a="x">Använd korset</button><button class="btn sec" data-a="no">Avbryt</button></div>`;
   document.body.appendChild(bar);
   const mk = new maplibregl.Marker({ element: Object.assign(document.createElement("div"), { className: "pick-to", textContent: "B" }) }).setLngLat(lnglat(to)).addTo(map);
@@ -1224,7 +1254,7 @@ function startPlanning(initial) {
   planning = true; wps = (initial || []).map(ll);
   document.body.classList.add("plan"); $("#b-route").setAttribute("aria-pressed", "true");
   renderRoute();
-  if (!initial) toast("Tryck på kartan för att lägga till punkter", 2200);
+  if (!initial) toast(Tr`Tryck på kartan för att lägga till punkter`, 2200);
 }
 function stopPlanning(keep) {
   closeWpMenu();
@@ -1239,10 +1269,10 @@ map.on("click", e => {
     const hits = map.queryRenderedFeatures(e.point, { layers: ["depare-sat"].filter(id => map.getLayer(id)) });
     if (hits.length) {
       const p = hits[0].properties, lo = p.d1 ?? 0, hi = p.d2;
-      const txt = lo < 0 ? "Torrfallande" : hi != null ? `${String(lo).replace(".", ",")}–${String(hi).replace(".", ",")} m` : `över ${String(lo).replace(".", ",")} m`;
-      const warn = lo < needDepth() ? `<div style="color:#d22b2b;font-weight:600">För grunt för ${esc(boat().name)}</div>` : "";
-      const nowTxt = wlM() && Math.abs(wl.cm) >= 3 && lo >= 0 ? `<div style="font-size:12px;color:#14232e">Just nu ca ${String(Math.max(0, lo + wl.cm / 100).toFixed(1)).replace(".", ",")}${hi != null ? "–" + String((hi + wl.cm / 100).toFixed(1)).replace(".", ",") : ""} m (vattenstånd ${fmtCm(wl.cm)})</div>` : "";
-      depthPop = new maplibregl.Popup({ closeButton: false, offset: 10, className: "wp-pop" }).setLngLat(e.lngLat).setHTML(`<div style="font:600 15px var(--f-ui);color:#14232e">Djup ${txt}</div>${nowTxt}${warn}<div style="font-size:11px;color:#5d6b73">Enligt sjökortet. Stenar kan finnas.</div>`).addTo(map);
+      const txt = lo < 0 ? Tr`Torrfallande` : hi != null ? `${String(lo).replace(".", DEC)}–${String(hi).replace(".", DEC)} m` : Tr`över ${String(lo).replace(".", DEC)} m`;
+      const warn = lo < needDepth() ? Tr`<div style="color:#d22b2b;font-weight:600">För grunt för ${esc(boat().name)}</div>` : "";
+      const nowTxt = wlM() && Math.abs(wl.cm) >= 3 && lo >= 0 ? Tr`<div style="font-size:12px;color:#14232e">Just nu ca ${String(Math.max(0, lo + wl.cm / 100).toFixed(1)).replace(".", DEC)}${hi != null ? "–" + String((hi + wl.cm / 100).toFixed(1)).replace(".", DEC) : ""} m (vattenstånd ${fmtCm(wl.cm)})</div>` : "";
+      depthPop = new maplibregl.Popup({ closeButton: false, offset: 10, className: "wp-pop" }).setLngLat(e.lngLat).setHTML(Tr`<div style="font:600 15px var(--f-ui);color:#14232e">Djup ${txt}</div>${nowTxt}${warn}<div style="font-size:11px;color:#5d6b73">Enligt sjökortet. Stenar kan finnas.</div>`).addTo(map);
       const pop = depthPop, el = pop.getElement();
       el.style.cursor = "pointer"; el.addEventListener("click", ev => { ev.stopPropagation(); pop.remove(); if (depthPop === pop) depthPop = null; });
       setTimeout(() => { pop.remove(); if (depthPop === pop) depthPop = null; }, 8000);
@@ -1265,7 +1295,7 @@ function closeWpMenu() { if (wpMenu) { wpMenu.remove(); wpMenu = null; } }
 function openWpMenu(i) {
   closeWpMenu();
   const box = document.createElement("div"); box.className = "wp-menu";
-  box.innerHTML = `<b>Punkt ${i + 1}</b><button class="btn warn" data-a="del">Ta bort</button>${i > 0 && i < wps.length - 1 ? "" : ""}<button class="btn" data-a="close">Stäng</button>`;
+  box.innerHTML = Tr`<b>Punkt ${i + 1}</b><button class="btn warn" data-a="del">Ta bort</button>${i > 0 && i < wps.length - 1 ? "" : ""}<button class="btn" data-a="close">Stäng</button>`;
   box.querySelector('[data-a="del"]').onclick = () => { wps.splice(i, 1); wpsOff.splice(Math.max(0, i - 1), 1); if (autoInfo) autoInfo = { ...autoInfo, edited: true }; closeWpMenu(); renderRoute(); };
   box.querySelector('[data-a="close"]').onclick = closeWpMenu;
   wpMenu = new maplibregl.Popup({ closeButton: false, offset: 18, className: "wp-pop" }).setLngLat(lnglat(wps[i])).setDOMContent(box).addTo(map);
@@ -1314,25 +1344,25 @@ function renderRoute() {
   const dark = sunInfo && st.h ? darkCheck(eta) : "";
   const sh = routeShallow();
   const shTxt = !sh ? "" : sh.depth < needDepth()
-    ? `<div class="callout bad">Rutten passerar <b>${sh.depth} m</b> djup. ${esc(b.name)} behöver ${needDepth().toFixed(1)} m. <button class="btn" id="rt-show">Visa</button></div>`
-    : `<div class="callout ok">Minsta djup längs synlig del av rutten: ${sh.depth} m.</div>`;
-  openSheet(wps.length > 1 ? `Rutt ${st.nm.toFixed(1)} nm · ${fmtDur(st.h)}` : "Planera rutt", `
+    ? Tr`<div class="callout bad">Rutten passerar <b>${sh.depth} m</b> djup. ${esc(b.name)} behöver ${needDepth().toFixed(1)} m. <button class="btn" id="rt-show">Visa</button></div>`
+    : Tr`<div class="callout ok">Minsta djup längs synlig del av rutten: ${sh.depth} m.</div>`;
+  openSheet(wps.length > 1 ? Tr`Rutt ${st.nm.toFixed(1)} nm · ${fmtDur(st.h)}` : Tr`Planera rutt`, Tr`
     <div class="row" style="justify-content:space-between">
       <div><div class="big">${st.nm.toFixed(1)} <small style="font-size:16px">nm</small></div><div class="muted">${wps.length} punkter · ${esc(b.name)} i ${b.speed} kn</div></div>
-      <div style="text-align:right"><div class="big">${st.h ? fmtDur(st.h) : "–"}</div><div class="muted">${st.h ? "Framme ca " + hm(eta) : "Tryck på kartan"}</div></div>
+      <div style="text-align:right"><div class="big">${st.h ? fmtDur(st.h) : "–"}</div><div class="muted">${st.h ? Tr`Framme ca ` + hm(eta) : Tr`Tryck på kartan`}</div></div>
     </div>
-    ${st.fuel ? `<div class="muted">Beräknad bränsleåtgång: <b class="num">${st.fuel.toFixed(0)} l</b> (${b.fuel} l/h)</div>` : ""}
-    ${wps.length >= 2 && !autoInfo ? `<button class="btn pri" id="rt-auto">Föreslå rutt längs farleder</button><div class="muted">Använder första och sista punkten som start och mål.</div>` : ""}
-    ${wps.length >= 2 ? `<div class="muted">Dra i en punkt för att flytta den. Tryck på linjen för att lägga till en punkt där, eller på en punkt för att ta bort den.</div>` : ""}
-    ${wps.length < 2 ? `<div class="muted">Tryck ut start och mål, och låt appen föreslå vägen längs farlederna. Eller tryck ut hela rutten själv.</div>` : ""}
-    ${autoInfo ? `<div class="callout ${autoInfo.offNm > .3 ? "bad" : "ok"}">${autoInfo.edited ? "Justerat ruttförslag. Kontrollera dina ändringar mot sjökortet. " : ""}${autoInfo.direct ? "Ruttförslag direkt i vattnet, utan farled (målet ligger nära)." : `Ruttförslag längs farleder: <b>${autoInfo.onNm.toFixed(1)} nm i farled</b>${autoInfo.minDraft ? `, minsta farledsdjup ${autoInfo.minDraft.toFixed(1)} m` : ""}${autoInfo.unknownNm > .1 ? `, varav ${autoInfo.unknownNm.toFixed(1)} nm med okänt farledsdjup` : ""}.`}${autoInfo.landEnd || autoInfo.landStart ? ` <b>${autoInfo.landEnd ? "B" : "Starten"} ligger på land enligt sjökortet</b>, rutten går till närmaste vatten (${autoInfo.landEnd || autoInfo.landStart} m därifrån). Biten över land är bara en rak linje.` : ""}${autoInfo.shallowNm > .01 ? ` <b>${autoInfo.shallowNm.toFixed(2)} nm ritas inte</b>: där är det grundare än din båt behöver enligt sjökortet, och små holmar, uddar och stenar saknas ofta i datan. Appen kan inte föreslå någon säker väg där. Navigera själv, med sikt och flygbild.` : ""}${autoInfo.offNm > .02 ? ` <b>${autoInfo.offNm.toFixed(2)} nm utanför farled</b> (orange)${autoInfo.unchecked ? ": appen hittade ingen väg i tillräckligt djupt vatten där, rita den själv" : autoInfo.shallow ? ": vägen dit passerar vatten som enligt sjökortet kan vara grundare än din båt behöver, kör försiktigt och kontrollera" : ": vägen går runt land och kända grund men stenar finns inte i datan, kontrollera mot sjökortet"}.` : ""}</div>` : ""}
+    ${st.fuel ? Tr`<div class="muted">Beräknad bränsleåtgång: <b class="num">${st.fuel.toFixed(0)} l</b> (${b.fuel} l/h)</div>` : ""}
+    ${wps.length >= 2 && !autoInfo ? Tr`<button class="btn pri" id="rt-auto">Föreslå rutt längs farleder</button><div class="muted">Använder första och sista punkten som start och mål.</div>` : ""}
+    ${wps.length >= 2 ? Tr`<div class="muted">Dra i en punkt för att flytta den. Tryck på linjen för att lägga till en punkt där, eller på en punkt för att ta bort den.</div>` : ""}
+    ${wps.length < 2 ? Tr`<div class="muted">Tryck ut start och mål, och låt appen föreslå vägen längs farlederna. Eller tryck ut hela rutten själv.</div>` : ""}
+    ${autoInfo ? `<div class="callout ${autoInfo.offNm > .3 ? "bad" : "ok"}">${autoInfo.edited ? Tr`Justerat ruttförslag. Kontrollera dina ändringar mot sjökortet. ` : ""}${autoInfo.direct ? Tr`Ruttförslag direkt i vattnet, utan farled (målet ligger nära).` : Tr`Ruttförslag längs farleder: <b>${autoInfo.onNm.toFixed(1)} nm i farled</b>${autoInfo.minDraft ? Tr`, minsta farledsdjup ${autoInfo.minDraft.toFixed(1)} m` : ""}${autoInfo.unknownNm > .1 ? Tr`, varav ${autoInfo.unknownNm.toFixed(1)} nm med okänt farledsdjup` : ""}.`}${autoInfo.landEnd || autoInfo.landStart ? Tr` <b>${autoInfo.landEnd ? "B" : Tr`Starten`} ligger på land enligt sjökortet</b>, rutten går till närmaste vatten (${autoInfo.landEnd || autoInfo.landStart} m därifrån). Biten över land är bara en rak linje.` : ""}${autoInfo.shallowNm > .01 ? Tr` <b>${autoInfo.shallowNm.toFixed(2)} nm ritas inte</b>: där är det grundare än din båt behöver enligt sjökortet, och små holmar, uddar och stenar saknas ofta i datan. Appen kan inte föreslå någon säker väg där. Navigera själv, med sikt och flygbild.` : ""}${autoInfo.offNm > .02 ? Tr` <b>${autoInfo.offNm.toFixed(2)} nm utanför farled</b> (orange)${autoInfo.unchecked ? Tr`: appen hittade ingen väg i tillräckligt djupt vatten där, rita den själv` : autoInfo.shallow ? Tr`: vägen dit passerar vatten som enligt sjökortet kan vara grundare än din båt behöver, kör försiktigt och kontrollera` : Tr`: vägen går runt land och kända grund men stenar finns inte i datan, kontrollera mot sjökortet`}.` : ""}</div>` : ""}
     ${shTxt}${dark}${routeWindNote()}
-    <div>${st.legs.map((l, i) => wpsOff[i] === 2 ? `<div class="leg"><span class="pill">${i + 1}→${i + 2}</span><span class="muted" style="grid-column:span 3">Grunt, ingen väg ritad (${l.d.toFixed(2)} nm fågelvägen)</span></div>` : `<div class="leg"><span class="pill">${i + 1}→${i + 2}</span><span>${compass(l.brg)}</span><span class="num">${String(Math.round(l.brg)).padStart(3, "0")}°</span><span class="num">${l.d.toFixed(2)} nm</span></div>`).join("") || `<div class="muted">Tryck på kartan för att lägga till punkter.</div>`}</div>
-    ${wps.length > 1 ? `<div class="card"><h3>Ankomsttid</h3>
+    <div>${st.legs.map((l, i) => wpsOff[i] === 2 ? Tr`<div class="leg"><span class="pill">${i + 1}→${i + 2}</span><span class="muted" style="grid-column:span 3">Grunt, ingen väg ritad (${l.d.toFixed(2)} nm fågelvägen)</span></div>` : `<div class="leg"><span class="pill">${i + 1}→${i + 2}</span><span>${compass(l.brg)}</span><span class="num">${String(Math.round(l.brg)).padStart(3, "0")}°</span><span class="num">${l.d.toFixed(2)} nm</span></div>`).join("") || Tr`<div class="muted">Tryck på kartan för att lägga till punkter.</div>`}</div>
+    ${wps.length > 1 ? Tr`<div class="card"><h3>Ankomsttid</h3>
       <label class="f">Vill vara framme kl<span class="row" style="flex-wrap:nowrap"><input type="time" id="rt-arr" value="${S.arrTime || ""}" style="flex:1"><button class="btn" id="rt-arr-clr" type="button">Ingen tid</button></span></label>
       <div id="rt-arrout" class="muted"></div>
       <button class="btn pri" id="rt-go">Starta navigering</button></div>` : ""}
-    ${wps.length > 1 ? `<label class="f">Namn på rutten<input id="rt-name" value="${esc(routeName)}" placeholder="t.ex. Hem – Kökar"></label>` : ""}
+    ${wps.length > 1 ? Tr`<label class="f">Namn på rutten<input id="rt-name" value="${esc(routeName)}" placeholder="t.ex. Hem – Kökar"></label>` : ""}
     <div class="row"><button class="btn" id="rt-undo">Ångra</button><button class="btn" id="rt-rev">Vänd</button><button class="btn pri" id="rt-save">Spara rutt</button><button class="btn" id="rt-share">Dela</button><button class="btn warn" id="rt-clear">Rensa</button></div>
     <div class="muted">Kontrollera alltid djup och faror mot sjökortet längs hela rutten.</div>`, "route");
   const arr = $("#rt-arr");
@@ -1348,18 +1378,18 @@ function renderRoute() {
   const au = $("#rt-auto"); if (au) au.onclick = () => autoRoute(wps[0], wps[wps.length - 1]);
   const show = $("#rt-show"); if (show) show.onclick = () => { leaveFollow(); map.easeTo({ center: lnglat(sh.at), zoom: Math.max(map.getZoom(), 14) }); };
   const nm = $("#rt-name"); if (nm) nm.oninput = () => { routeName = nm.value; };
-  $("#rt-save").textContent = routeId ? "Spara ändringar" : "Spara rutt";
+  $("#rt-save").textContent = routeId ? Tr`Spara ändringar` : Tr`Spara rutt`;
   $("#rt-save").onclick = () => {
-    if (wps.length < 2) { toast("Lägg till minst två punkter."); return; }
+    if (wps.length < 2) { toast(Tr`Lägg till minst två punkter.`); return; }
     track("route_saved", { points: wps.length, auto: autoInfo ? 1 : 0 });
     const name = (routeName || "").trim() || `Rutt ${new Date().getDate()}.${new Date().getMonth() + 1} (${st.nm.toFixed(1)} nm)`;
     const pts = wps.map(p => [+p.lat.toFixed(6), +p.lng.toFixed(6)]), old = routeId && S.routes.find(r => r.id === routeId);
     if (old) { old.name = name; old.pts = pts; old.updated = Date.now(); }
     else { routeId = uid(); S.routes.unshift({ id: routeId, name, pts, created: Date.now() }); }
-    routeName = name; save(); toast(`Rutten "${name}" är sparad`); renderRoute();
+    routeName = name; save(); toast(Tr`Rutten "${name}" är sparad`); renderRoute();
   };
   $("#rt-share").onclick = () => {
-    if (wps.length < 2) { toast("Lägg till minst två punkter."); return; }
+    if (wps.length < 2) { toast(Tr`Lägg till minst två punkter.`); return; }
     const pts = wps.map(p => [+p.lat.toFixed(6), +p.lng.toFixed(6)]);
     shareRoute({ id: routeId || uid(), name: (routeName || "").trim() || `Rutt (${st.nm.toFixed(1)} nm)`, pts });
   };
@@ -1826,14 +1856,14 @@ async function computeAutoRoute0(from, to) {
     if (st) { r.pts.push(ll(to)); r.off.push(true); r.info.landEnd = Math.round(st.m); }
     return r;
   }
-  let G; try { G = await loadFairways(); } catch (e) { return { err: "Farledsnätet kunde inte laddas. Försök igen om en stund." }; }
+  let G; try { G = await loadFairways(); } catch (e) { return { err: Tr`Farledsnätet kunde inte laddas. Försök igen om en stund.` }; }
   const b = boat(), ok = d => d === 0 || d / 10 >= (+b.draft || 0), need = needDepth();
   const S0 = await connectCands(G, from, ok, need), T0 = await connectCands(G, to, ok, need);
-  if (!S0.length || !T0.length) return { err: "Hittade ingen farled i närheten." };
+  if (!S0.length || !T0.length) return { err: Tr`Hittade ingen farled i närheten.` };
   // hela resan räknas: anslutning + farled + anslutning, så rutten inte går förbi målet och tillbaka
   const { dist, prev } = fwSearchMulti(G, S0, ok, T0.map(t => t.node));
   let best = null; for (const t of T0) { const c = dist[t.node] + t.cost; if (isFinite(c) && (!best || c < best.c)) best = { t, c }; }
-  if (!best) return { err: `Ingen sammanhängande farled där djupet räcker för ${b.name} (${b.draft} m).` };
+  if (!best) return { err: Tr`Ingen sammanhängande farled där djupet räcker för ${b.name} (${b.draft} m).` };
   const path = []; for (let u = best.t.node; u !== -1; u = prev[u]) path.push(u); path.reverse();
   let cs = S0.find(s => s.node === path[0]), ct = best.t;
   let mid = simplify(path.map(G.pt), 30);
@@ -1870,16 +1900,16 @@ async function computeAutoRoute0(from, to) {
 async function autoRoute(from, to) {
   if (!S.autoAck) return autoDisclaimer(() => autoRoute(from, to));
   if (!from || !to) return;
-  toast("Räknar ut rutten…", 2500);
+  toast(Tr`Räknar ut rutten…`, 2500);
   const r = await computeAutoRoute(from, to);
   if (r.err) { toast(r.err, 4500); return; }
   wps = r.pts; wpsOff = r.off; autoInfo = r.info;
   track("route_suggested", { nm: Math.round((r.info && r.info.nm) || 0) });
   if (!planning) startPlanning(wps); else renderRoute();
-  if (r.info.offNm > 3 && !r.info.direct) toast("Långt till närmaste farled. Rita den biten själv.", 4000);
+  if (r.info.offNm > 3 && !r.info.direct) toast(Tr`Långt till närmaste farled. Rita den biten själv.`, 4000);
 }
 function autoDisclaimer(next) {
-  openSheet("Ruttförslag", `
+  openSheet(Tr`Ruttförslag`, Tr`
     <div>Appen föreslår en väg längs <b>officiella farleder</b> där farledsdjupet räcker för din båt. Sträckan mellan din start eller ditt mål och närmaste farled ritas <b style="color:#e07b00">orange</b>: där finns ingen kontroll alls.</div>
     <div class="callout bad">Förslaget är ett hjälpmedel, inte en garanti. Kartdatan kan sakna stenar, grund, broar och kraftledningar, och farledernas djup kan ha ändrats. Du som förare ansvarar alltid för att kontrollera rutten mot officiella sjökort och för att navigera säkert.</div>
     <button class="btn pri" id="ad-ok">Jag förstår, visa förslaget</button>`, "disclaimer");
@@ -1894,12 +1924,12 @@ function arrTarget() {
   return t;
 }
 function arrivalPlan(nm, h) {
-  const t = arrTarget(); if (!t || !nm) return "Ange en tid så räknar appen ut när du behöver åka.";
+  const t = arrTarget(); if (!t || !nm) return Tr`Ange en tid så räknar appen ut när du behöver åka.`;
   const b = boat(), left = (t - Date.now()) / 3600000, need = nm / Math.max(left, .01);
-  const dep = new Date(t - h * 3600000), dayTxt = t.toDateString() === new Date().toDateString() ? "" : "i morgon ";
+  const dep = new Date(t - h * 3600000), dayTxt = t.toDateString() === new Date().toDateString() ? "" : Tr`i morgon `;
   if (left <= 0) return `<span class="pill bad">Tiden har passerat</span>`;
-  if (dep > Date.now()) return `I ${b.speed} kn: <b>åk senast ${dayTxt}${hm(dep)}</b> (om ${fmtDur((dep - Date.now()) / 3600000)}). ${need >= 1 ? `Åker du nu räcker ${need.toFixed(1)} kn.` : ""}`;
-  return need > b.speed * 1.3 ? `<span class="pill bad">Hinns inte</span> Det kräver ${need.toFixed(1)} kn från nu, marschfarten är ${b.speed} kn.` : `Åk nu och håll <b>${need.toFixed(1)} kn</b> för att vara framme ${dayTxt}${hm(t)}.`;
+  if (dep > Date.now()) return Tr`I ${b.speed} kn: <b>åk senast ${dayTxt}${hm(dep)}</b> (om ${fmtDur((dep - Date.now()) / 3600000)}). ${need >= 1 ? Tr`Åker du nu räcker ${need.toFixed(1)} kn.` : ""}`;
+  return need > b.speed * 1.3 ? Tr`<span class="pill bad">Hinns inte</span> Det kräver ${need.toFixed(1)} kn från nu, marschfarten är ${b.speed} kn.` : Tr`Åk nu och håll <b>${need.toFixed(1)} kn</b> för att vara framme ${dayTxt}${hm(t)}.`;
 }
 
 /* ---------- aktiv navigering längs rutt ---------- */
@@ -1915,7 +1945,7 @@ function startNav(pts) {
   $("#navbar").classList.remove("hidden");
   setData("route", { type: "FeatureCollection", features: pts.slice(1).map((p, k) => ({ type: "Feature", properties: { label: "" }, geometry: { type: "LineString", coordinates: [lnglat(pts[k]), lnglat(p)] } })) });
   updateNav(gps || ll(map.getCenter()));
-  toast("Navigering startad", 1500);
+  toast(Tr`Navigering startad`, 1500);
 }
 function stopNav(msg) {
   nav = null; $("#navbar").classList.add("hidden"); setData("navto", EMPTY); setData("route", EMPTY);
@@ -1938,24 +1968,24 @@ function updateNav(pos) {
   const p0 = P[nav.i - 1], d13 = distNm(p0, pos) / R_NM, xte = Math.asin(Math.sin(d13) * Math.sin(rad(bearing(p0, pos) - bearing(p0, next)))) * R_NM * NM;
   const brg = bearing(pos, next), t = arrTarget();
   let late = "";
-  if (t) { const diff = Math.round((eta - t) / 60000); late = Math.abs(diff) <= 2 ? `<span class="pill ok">I tid</span>` : diff > 0 ? `<span class="pill bad">${fmtDur(diff / 60)} sen</span>` : `<span class="pill ok">${fmtDur(-diff / 60)} före</span>`; }
-  $("#nav-to").textContent = nav.i === P.length - 1 ? "Till målet" : `Till punkt ${nav.i + 1} av ${P.length}`;
+  if (t) { const diff = Math.round((eta - t) / 60000); late = Math.abs(diff) <= 2 ? `<span class="pill ok">I tid</span>` : diff > 0 ? `<span class="pill bad">${fmtDur(diff / 60)} sen</span>` : Tr`<span class="pill ok">${fmtDur(-diff / 60)} före</span>`; }
+  $("#nav-to").textContent = nav.i === P.length - 1 ? Tr`Till målet` : Tr`Till punkt ${nav.i + 1} av ${P.length}`;
   $("#nav-brg").textContent = String(Math.round(brg)).padStart(3, "0") + "°";
   $("#nav-dtw").textContent = d < .3 ? `${Math.round(d * NM)} m` : `${d.toFixed(2)} nm`;
   $("#nav-eta").textContent = hm(eta);
-  $("#nav-rest").innerHTML = `${rest.toFixed(1)} nm kvar · ${fmtDur(h)} i ${spd.toFixed(1)} kn ${late}`;
-  $("#nav-xte").textContent = Math.abs(xte) > 25 ? `Ur kurs ${Math.round(Math.abs(xte))} m åt ${xte > 0 ? "styrbord" : "babord"}` : "";
+  $("#nav-rest").innerHTML = Tr`${rest.toFixed(1)} nm kvar · ${fmtDur(h)} i ${spd.toFixed(1)} kn ${late}`;
+  $("#nav-xte").textContent = Math.abs(xte) > 25 ? Tr`Ur kurs ${Math.round(Math.abs(xte))} m åt ${xte > 0 ? Tr`styrbord` : Tr`babord`}` : "";
   setData("navto", lineFC([lnglat(pos), lnglat(next)]));
   // fartrådgivare: vilken fart ger ankomst exakt på önskad tid
   let adv = "";
   if (t) {
     const left = (t - Date.now()) / 3600000, need = rest / Math.max(left, .005);
-    if (left <= 0) adv = "Önskad ankomsttid har passerat.";
-    else if (need > b.speed * 1.3) adv = `Hinns inte: det kräver ${need.toFixed(1)} kn.`;
-    else if (need < 2) adv = `Gott om tid: du är framme ${hm(t)} även i låg fart.`;
+    if (left <= 0) adv = Tr`Önskad ankomsttid har passerat.`;
+    else if (need > b.speed * 1.3) adv = Tr`Hinns inte: det kräver ${need.toFixed(1)} kn.`;
+    else if (need < 2) adv = Tr`Gott om tid: du är framme ${hm(t)} även i låg fart.`;
     else {
       const cur = nav.sog && nav.sog > 1 ? nav.sog : null, diff = cur != null ? need - cur : null;
-      adv = `Håll <b>${need.toFixed(1)} kn</b> för att vara framme ${hm(t)}` + (diff == null ? "" : Math.abs(diff) < .5 ? " · du ligger rätt" : diff > 0 ? ` · öka ${diff.toFixed(1)} kn` : ` · du kan sänka ${(-diff).toFixed(1)} kn och spara bränsle`);
+      adv = Tr`Håll <b>${need.toFixed(1)} kn</b> för att vara framme ${hm(t)}` + (diff == null ? "" : Math.abs(diff) < .5 ? Tr` · du ligger rätt` : diff > 0 ? Tr` · öka ${diff.toFixed(1)} kn` : Tr` · du kan sänka ${(-diff).toFixed(1)} kn och spara bränsle`);
     }
   }
   $("#nav-adv").innerHTML = adv;
@@ -1965,7 +1995,7 @@ function updateNav(pos) {
   if (off > 900 && gps) {
     nav.offSince = nav.offSince || Date.now();
     if (Date.now() - nav.offSince > 30000 && Date.now() > (nav.snooze || 0)) {
-      $("#nav-reroute-txt").textContent = `Du är ${(off / NM).toFixed(1)} nm från rutten.`;
+      $("#nav-reroute-txt").textContent = Tr`Du är ${(off / NM).toFixed(1)} nm från rutten.`;
       $("#nav-reroute").classList.remove("hidden");
     }
   } else { nav.offSince = null; $("#nav-reroute").classList.add("hidden"); }
@@ -1981,10 +2011,10 @@ async function reroute() {
   $("#nav-reroute").classList.add("hidden");
   const r = await computeAutoRoute(ll(gps), nav.pts[nav.pts.length - 1]);
   if (r.err) { toast(r.err, 4000); nav.snooze = Date.now() + 5 * 60000; return; }
-  startNav(r.pts); toast("Rutten är omräknad", 1800);
+  startNav(r.pts); toast(Tr`Rutten är omräknad`, 1800);
 }
 function setArrivalSheet() {
-  openSheet("Ankomsttid", `
+  openSheet(Tr`Ankomsttid`, Tr`
     <label class="f">Vill vara framme kl<input type="time" id="na-t" value="${S.arrTime || ""}"></label>
     <div class="muted">Navigeringsraden visar då vilken fart som ger ankomst på minuten, och om du kan sänka farten för att spara bränsle.</div>
     <div class="row"><button class="btn pri" id="na-ok">Klar</button><button class="btn" id="na-clr">Ingen önskad tid</button></div>`, "arrival");
@@ -1998,11 +2028,11 @@ function routeWindNote() {
   const i0 = hourIndex(wx), i1 = Math.min(wx.hourly.time.length - 1, i0 + Math.ceil(st.h));
   let maxG = 0; for (let i = i0; i <= i1; i++) maxG = Math.max(maxG, wx.hourly.wind_gusts_10m[i]);
   const lim = boat().maxWind || 10;
-  return maxG > lim ? `<div class="callout bad">Byvind upp till <b>${maxG.toFixed(0)} m/s</b> under turen, över din gräns på ${lim} m/s.</div>` : `<div class="callout ok">Byvind högst ${maxG.toFixed(0)} m/s under turen.</div>`;
+  return maxG > lim ? Tr`<div class="callout bad">Byvind upp till <b>${maxG.toFixed(0)} m/s</b> under turen, över din gräns på ${lim} m/s.</div>` : Tr`<div class="callout ok">Byvind högst ${maxG.toFixed(0)} m/s under turen.</div>`;
 }
 function darkCheck(eta) {
   const ss = sunInfo.sunset.find(s => s.toDateString() === eta.toDateString());
-  return ss && eta > ss ? `<div class="callout bad">Du är framme ${fmtDur((eta - ss) / 3600000)} efter solnedgången (${hm(ss)}).</div>` : "";
+  return ss && eta > ss ? Tr`<div class="callout bad">Du är framme ${fmtDur((eta - ss) / 3600000)} efter solnedgången (${hm(ss)}).</div>` : "";
 }
 $("#b-route").onclick = () => {
   if (planning) { stopPlanning(false); closeWpMenu(); if (sheetView === "route" || sheetView === "disclaimer") closeSheet(); }
@@ -2036,7 +2066,7 @@ async function loadWx(force) {
     if (sheetView === "wx") openWx();
     if (sheetView === "fishidx") openFishIndex();
     loadWaterNear(c);
-  } catch (e) { $("#wxtxt").textContent = "–"; $("#wxsub").textContent = "inget väder"; }
+  } catch (e) { $("#wxtxt").textContent = "–"; $("#wxsub").textContent = Tr`inget väder`; }
 }
 function renderChip() {
   const c = wx.current;
@@ -2044,17 +2074,17 @@ function renderChip() {
   // väderikon och temperatur visar att knappen ger hela vädret, inte bara vinden
   $("#wxic").innerHTML = c.weather_code != null ? `<i>${c.is_day === 0 && c.weather_code <= 2 ? "🌙" : WX_ICON(c.weather_code)}</i>${c.temperature_2m.toFixed(0)}°` : "";
   const s = sstInfo();
-  $("#wxsub").textContent = (S.wxSrc === "map" ? "vid korset · " : "") + (S.mode === "fiske" && s ? `${compass(c.wind_direction_10m)} · vatten ${s.v.toFixed(1)}°` : `${compass(c.wind_direction_10m)}`);
+  $("#wxsub").textContent = (S.wxSrc === "map" ? Tr`vid korset · ` : "") + (S.mode === "fiske" && s ? `${compass(c.wind_direction_10m)} · vatten ${s.v.toFixed(1)}°` : `${compass(c.wind_direction_10m)}`);
   $("#wxchip .arrow").style.transform = `rotate(${(c.wind_direction_10m + 180) % 360}deg)`;
   $("#wxchip").style.color = c.wind_gusts_10m > (boat().maxWind || 10) ? "var(--port)" : "";
 }
 /* vattentemperatur: uppmätt vid närmaste station om den finns inom ca 25 km, annars modell */
 let waterNear = null;
 function sstInfo() {
-  if (waterNear && Date.now() - waterNear.at < 3 * 3600000) return { v: waterNear.v, d: modelTrend(), src: `uppmätt vid station ${waterNear.km.toFixed(0)} km bort` };
-  const mh = wx?.marine?.hourly; if (!mh?.sea_surface_temperature) { const c = wx?.marine?.current?.sea_surface_temperature; return c != null ? { v: c, d: null, src: "modell" } : null; }
+  if (waterNear && Date.now() - waterNear.at < 3 * 3600000) return { v: waterNear.v, d: modelTrend(), src: Tr`uppmätt vid station ${waterNear.km.toFixed(0)} km bort` };
+  const mh = wx?.marine?.hourly; if (!mh?.sea_surface_temperature) { const c = wx?.marine?.current?.sea_surface_temperature; return c != null ? { v: c, d: null, src: Tr`modell` } : null; }
   const i = Math.max(0, mh.time.findIndex(t => new Date(t).getTime() > Date.now()) - 1), v = mh.sea_surface_temperature[i];
-  return v == null ? null : { v, d: modelTrend(), src: "modell" };
+  return v == null ? null : { v, d: modelTrend(), src: Tr`modell` };
 }
 function modelTrend() {
   const mh = wx?.marine?.hourly; if (!mh?.sea_surface_temperature) return null;
@@ -2062,7 +2092,7 @@ function modelTrend() {
   const a = mh.sea_surface_temperature[i], b = i >= 24 ? mh.sea_surface_temperature[i - 24] : null;
   return a != null && b != null ? a - b : null;
 }
-const trendTxt = d => d == null ? "" : Math.abs(d) < .3 ? "stabilt senaste dygnet" : `${d > 0 ? "+" : "−"}${Math.abs(d).toFixed(1)}° senaste dygnet`;
+const trendTxt = d => d == null ? "" : Math.abs(d) < .3 ? Tr`stabilt senaste dygnet` : Tr`${d > 0 ? "+" : "−"}${Math.abs(d).toFixed(1)}° senaste dygnet`;
 /* öppen data från Meteorologiska institutet, "simple"-formatet: senaste värdet per station och parameter */
 async function fmiSimple(query, params, box, minutes) {
   const start = new Date(Date.now() - minutes * 60000).toISOString().slice(0, 16) + ":00Z";
@@ -2100,37 +2130,37 @@ function weatherWindow() {
   const fmt = i => { const d = new Date(h.time[i]); return (d.toDateString() === new Date().toDateString() ? "" : DAYS[d.getDay()] + " ") + pad(d.getHours()) + ":00"; };
   if (ok(i0)) {
     let j = i0; while (j < end && ok(j)) j++;
-    if (j >= end) return { cls: "ok", txt: `Byvinden håller sig under ${lim} m/s de närmaste två dygnen.` };
+    if (j >= end) return { cls: "ok", txt: Tr`Byvinden håller sig under ${lim} m/s de närmaste två dygnen.` };
     let mx = 0; for (let k = j; k < Math.min(end, j + 6); k++) mx = Math.max(mx, h.wind_gusts_10m[k]);
-    return { cls: "ok", txt: `Lugnt nu, till ca <b>${fmt(j)}</b>. Därefter byvind upp mot ${mx.toFixed(0)} m/s.` };
+    return { cls: "ok", txt: Tr`Lugnt nu, till ca <b>${fmt(j)}</b>. Därefter byvind upp mot ${mx.toFixed(0)} m/s.` };
   }
   let j = i0; while (j < end && !ok(j)) j++;
-  if (j >= end) return { cls: "bad", txt: `Byvind över ${lim} m/s hela den kommande perioden. Inget bra väderfönster i sikte.` };
+  if (j >= end) return { cls: "bad", txt: Tr`Byvind över ${lim} m/s hela den kommande perioden. Inget bra väderfönster i sikte.` };
   let k = j; while (k < end && ok(k)) k++;
-  return { cls: "bad", txt: `Blåsigt nu. Nästa lugna fönster: <b>${fmt(j)}–${k >= end ? "framåt" : fmt(k)}</b> (byar under ${lim} m/s).` };
+  return { cls: "bad", txt: Tr`Blåsigt nu. Nästa lugna fönster: <b>${fmt(j)}–${k >= end ? Tr`framåt` : fmt(k)}</b> (byar under ${lim} m/s).` };
 }
 /* ---------- prognos: flikar för vind, lufttryck, temperatur, regn och vattenstånd + 7 dygn ---------- */
-const FC_TABS = [["wind", "Vind"], ["p", "Tryck"], ["t", "Temp"], ["rain", "Regn"], ["wl", "Vattenstånd"]];
+const FC_TABS = [["wind", Tr`Vind`], ["p", Tr`Tryck`], ["t", Tr`Temp`], ["rain", Tr`Regn`], ["wl", Tr`Vattenstånd`]];
 const fcTab = () => FC_TABS.some(t => t[0] === S.fcTab) ? S.fcTab : "wind";
 function fcChart() {
   const t = fcTab(), h = wx.hourly, i0 = hourIndex(wx), n = Math.min(48, h.time.length - i0);
   const note = txt => `<div class="muted" style="margin-bottom:4px">${txt}</div>`;
-  if (t === "wind") return note("Kommande 48 h · stapel = medelvind, streck = byar, röd linje = din gräns") + `<div class="chart">${windChart()}</div>`;
+  if (t === "wind") return note(Tr`Kommande 48 h · stapel = medelvind, streck = byar, röd linje = din gräns`) + `<div class="chart">${windChart()}</div>`;
   if (t === "wl") {
-    if (!wl) return note("Hämtar vattenstånd …");
+    if (!wl) return note(Tr`Hämtar vattenstånd …`);
     const lo = wl.fc.length ? wl.fc.reduce((m, p) => p.v < m.v ? p : m) : null, hi = wl.fc.length ? wl.fc.reduce((m, p) => p.v > m.v ? p : m) : null;
-    return note(`Nu ${fmtCm(wl.cm)} i ${esc(wl.station)} · heldragen = uppmätt, streckad = prognos`) + `<div class="chart">${wlChart()}</div>` +
-      (lo ? `<div class="muted">Lägst ${fmtCm(lo.v)}, högst ${fmtCm(hi.v)} de närmaste dygnen. Källa: Meteorologiska institutet.</div>` : "");
+    return note(Tr`Nu ${fmtCm(wl.cm)} i ${esc(wl.station)} · heldragen = uppmätt, streckad = prognos`) + `<div class="chart">${wlChart()}</div>` +
+      (lo ? Tr`<div class="muted">Lägst ${fmtCm(lo.v)}, högst ${fmtCm(hi.v)} de närmaste dygnen. Källa: Meteorologiska institutet.</div>` : "");
   }
   const xs = [...Array(n)].map((_, k) => i0 + k);
   if (t === "rain") {
     const v = xs.map(i => h.precipitation[i] || 0), sum = v.reduce((a, b) => a + b, 0);
-    return note(`Nederbörd mm per timme · totalt ${sum.toFixed(1).replace(".", ",")} mm kommande 48 h`) + `<div class="chart">${hourChart(xs, v, { bars: true, unit: "mm", min: 0, max: Math.max(2, ...v), col: "#3a86c8" })}</div>`;
+    return note(Tr`Nederbörd mm per timme · totalt ${sum.toFixed(1).replace(".", DEC)} mm kommande 48 h`) + `<div class="chart">${hourChart(xs, v, { bars: true, unit: "mm", min: 0, max: Math.max(2, ...v), col: "#3a86c8" })}</div>`;
   }
   if (t === "p") {
     const v = xs.map(i => h.pressure_msl[i]), d = v[Math.min(23, v.length - 1)] - v[0];
-    const trend = d > 3 ? "stiger tydligt, ofta bättre väder på väg" : d > 1 ? "stiger" : d < -3 ? "faller tydligt, ofta mer vind och sämre väder på väg" : d < -1 ? "faller" : "stabilt";
-    return note(`Lufttryck hPa · ${trend} (${d >= 0 ? "+" : ""}${d.toFixed(1)} hPa kommande 24 h)`) + `<div class="chart">${hourChart(xs, v, { unit: "hPa", col: "#7a5cc2", step: 2 })}</div>`;
+    const trend = d > 3 ? Tr`stiger tydligt, ofta bättre väder på väg` : d > 1 ? "stiger" : d < -3 ? Tr`faller tydligt, ofta mer vind och sämre väder på väg` : d < -1 ? "faller" : "stabilt";
+    return note(Tr`Lufttryck hPa · ${trend} (${d >= 0 ? "+" : ""}${d.toFixed(1)} hPa kommande 24 h)`) + `<div class="chart">${hourChart(xs, v, { unit: "hPa", col: "#7a5cc2", step: 2 })}</div>`;
   }
   const v = xs.map(i => h.temperature_2m[i]);
   return note("Lufttemperatur °C kommande 48 h") + `<div class="chart">${hourChart(xs, v, { unit: "°", col: "#d6763a", step: 2, zero: true })}</div>`;
@@ -2150,17 +2180,17 @@ function hourChart(xs, v, o) {
   xs.forEach((i, k) => { const d = new Date(h.time[i]); if (d.getHours() % 6 === 0) s += `<text x="${padL + k * bw}" y="${H - 4}" fill="var(--muted)">${d.getHours() === 0 ? DAYS[d.getDay()] : pad(d.getHours())}</text>`; });
   return s + `</svg>`;
 }
-const WX_TXT = c => c === 0 ? "Klart" : c === 1 ? "Mest klart" : c === 2 ? "Halvklart" : c === 3 ? "Mulet" : c <= 48 ? "Dimma" : c <= 57 ? "Duggregn" : c <= 67 ? "Regn" : c <= 77 ? "Snö" : c <= 82 ? "Regnskurar" : c <= 86 ? "Snöbyar" : "Åska";
+const WX_TXT = c => c === 0 ? Tr`Klart` : c === 1 ? Tr`Mest klart` : c === 2 ? Tr`Halvklart` : c === 3 ? Tr`Mulet` : c <= 48 ? Tr`Dimma` : c <= 57 ? Tr`Duggregn` : c <= 67 ? Tr`Regn` : c <= 77 ? Tr`Snö` : c <= 82 ? Tr`Regnskurar` : c <= 86 ? Tr`Snöbyar` : Tr`Åska`;
 const WX_ICON = c => c === 0 ? "☀️" : c <= 2 ? "⛅" : c === 3 ? "☁️" : c <= 48 ? "🌫️" : c <= 57 ? "🌦️" : c <= 67 ? "🌧️" : c <= 77 ? "🌨️" : c <= 82 ? "🌧️" : c <= 86 ? "🌨️" : "⛈️";
 function dailyHtml() {
   const d = wx.daily; if (!d?.weather_code) return "";
   const lim = boat().maxWind || 10;
-  return `<div class="card"><h3>Kommande 7 dygn</h3><div class="fc-days">${d.time.map((t, i) => {
+  return Tr`<div class="card"><h3>Kommande 7 dygn</h3><div class="fc-days">${d.time.map((t, i) => {
     const dt = new Date(t + "T12:00"), g = d.wind_gusts_10m_max[i], r = d.precipitation_sum[i];
-    return `<div class="fc-day"><b>${i === 0 ? "I dag" : DAYS[dt.getDay()][0].toUpperCase() + DAYS[dt.getDay()].slice(1)}</b><span class="fc-ic" title="${WX_TXT(d.weather_code[i])}">${WX_ICON(d.weather_code[i])}</span>
+    return `<div class="fc-day"><b>${i === 0 ? Tr`I dag` : DAYS[dt.getDay()][0].toUpperCase() + DAYS[dt.getDay()].slice(1)}</b><span class="fc-ic" title="${WX_TXT(d.weather_code[i])}">${WX_ICON(d.weather_code[i])}</span>
       <span>${Math.round(d.temperature_2m_min[i])}° / ${Math.round(d.temperature_2m_max[i])}°</span>
       <span style="${g > lim ? "color:var(--port);font-weight:700" : ""}">${Math.round(d.wind_speed_10m_max[i])} (${Math.round(g)}) ${compass(d.wind_direction_10m_dominant[i])}</span>
-      <span class="muted">${WX_TXT(d.weather_code[i])}${r >= .1 ? " " + r.toFixed(1).replace(".", ",") + " mm" : ""}</span></div>`;
+      <span class="muted">${WX_TXT(d.weather_code[i])}${r >= .1 ? " " + r.toFixed(1).replace(".", DEC) + " mm" : ""}</span></div>`;
   }).join("")}</div><div class="muted">Vind i m/s: högsta medelvind (byar) och riktning under dygnet. Rött = byar över gränsen för ${esc(boat().name)}.</div></div>`;
 }
 function windChart() {
@@ -2184,16 +2214,16 @@ function windChart() {
   return s + `</svg>`;
 }
 function openWx() {
-  if (!wx) { openSheet("Väder", `<div class="muted">Hämtar väder …</div>`, "wx"); loadWx(true); return; }
+  if (!wx) { openSheet(Tr`Väder`, Tr`<div class="muted">Hämtar väder …</div>`, "wx"); loadWx(true); return; }
   const c = wx.current, m = wx.marine?.current, b = boat(), win = weatherWindow();
   const today = new Date().toDateString();
   const sr = sunInfo.sunrise.find(d => d.toDateString() === today), ss = sunInfo.sunset.find(d => d.toDateString() === today);
   const i0 = hourIndex(wx), pTrend = i0 >= 3 ? wx.hourly.pressure_msl[i0] - wx.hourly.pressure_msl[i0 - 3] : 0;
   const moon = moonPhase(new Date()), age = Math.round((Date.now() - wx.at) / 60000), sst = sstInfo();
   const where = S.wxSrc === "map" ? "map" : "me";
-  openSheet("Väder", `
+  openSheet(Tr`Väder`, Tr`
     <div class="wxb-modes wx-where" role="group" aria-label="Var vädret gäller"><button data-wsrc="me" aria-pressed="${where === "me"}">Där jag är</button><button data-wsrc="map" aria-pressed="${where === "map"}">Vid korset på kartan</button></div>
-    ${where === "map" ? `<div class="muted">Flytta kartan så att korset står där du vill se vädret. Vindrutan uppe till höger visar samma plats.</div>` : !gps ? `<div class="muted">Din position är inte känd än, så vädret gäller kartans mitt tills GPS:en hittar dig.</div>` : ""}
+    ${where === "map" ? Tr`<div class="muted">Flytta kartan så att korset står där du vill se vädret. Vindrutan uppe till höger visar samma plats.</div>` : !gps ? Tr`<div class="muted">Din position är inte känd än, så vädret gäller kartans mitt tills GPS:en hittar dig.</div>` : ""}
     <div class="wx-now">
       <svg viewBox="0 0 24 24" width="56" height="56" style="transform:rotate(${(c.wind_direction_10m + 180) % 360}deg)"><path d="M12 2 19 21 12 16.5 5 21Z" fill="var(--accent)"/></svg>
       <div><div class="big">${c.wind_speed_10m.toFixed(1)} <small style="font-size:16px">m/s</small></div>
@@ -2211,7 +2241,7 @@ function openWx() {
     <div class="wxb-modes fc-tabs" role="tablist" aria-label="Prognos">${FC_TABS.map(([k, t]) => `<button data-fct="${k}" aria-pressed="${fcTab() === k}">${t}</button>`).join("")}</div>
     <div id="fc-chart">${fcChart()}</div>
     ${dailyHtml()}
-    ${S.mode === "fiske" ? `<div class="card"><h3>Fiskeförhållanden</h3>${sst ? `<div><b>Vattnet ${sst.v.toFixed(1)}°</b>${sst.d != null ? `, ${trendTxt(sst.d)}` : ""} <span class="muted">(${sst.src})</span></div>` : ""}<div>${moon.icon} ${moon.name} · Tryck ${pTrend > .5 ? "stigande" : pTrend < -.5 ? "fallande" : "stabilt"} (${pTrend >= 0 ? "+" : ""}${pTrend.toFixed(1)} hPa/3 h)</div></div>` : ""}
+    ${S.mode === "fiske" ? Tr`<div class="card"><h3>Fiskeförhållanden</h3>${sst ? `<div><b>Vattnet ${sst.v.toFixed(1)}°</b>${sst.d != null ? `, ${trendTxt(sst.d)}` : ""} <span class="muted">(${sst.src})</span></div>` : ""}<div>${moon.icon} ${moon.name} · Tryck ${pTrend > .5 ? "stigande" : pTrend < -.5 ? "fallande" : "stabilt"} (${pTrend >= 0 ? "+" : ""}${pTrend.toFixed(1)} hPa/3 h)</div></div>` : ""}
     <div class="muted">Prognos för ${fmtPosTxt({ lat: wx.lat, lng: wx.lng })} · uppdaterad för ${age} min sedan. Källa: Open-Meteo.</div>
     <button class="btn" id="wx-ref">Uppdatera</button>`, "wx");
   $("#wx-ref").onclick = () => loadWx(true);
@@ -2262,7 +2292,7 @@ async function loadWxGrid() {
     wxGrid = { at: Date.now(), pts, F, M, t0: hourIndex(F[0]) };
     wxGridKey = key;
     renderWxLayer();
-  } catch (e) { toast("Sjövädret kunde inte hämtas just nu."); }
+  } catch (e) { toast(Tr`Sjövädret kunde inte hämtas just nu.`); }
 }
 /* vind och regn i en punkt: viktat medel av de närmaste prognospunkterna (för korset och för tryck på kartan) */
 function wxAt(ll) {
@@ -2277,10 +2307,10 @@ function wxAt(ll) {
   if (!sw) return null;
   return { w: ws / sw, g: gs / sw, d: (Math.atan2(su, sv) * 180 / Math.PI + 360) % 360, r: rs / sw };
 }
-const fmtRain = r => r < .05 ? "uppehåll" : `${r < 1 ? r.toFixed(1).replace(".", ",") : Math.round(r)} mm regn/h`;
+const fmtRain = r => r < .05 ? Tr`uppehåll` : Tr`${r < 1 ? r.toFixed(1).replace(".", DEC) : Math.round(r)} mm regn/h`;
 function wxReadout() {
   const v = wxAt(ll(map.getCenter())); if (!v) return "";
-  return `Vid korset: ${Math.round(v.w)} m/s (byar ${Math.round(v.g)}) från ${compass(v.d)} · ${fmtRain(v.r)}${wxStep === 0 ? "" : " · prognos"}`;
+  return Tr`Vid korset: ${Math.round(v.w)} m/s (byar ${Math.round(v.g)}) från ${compass(v.d)} · ${fmtRain(v.r)}${wxStep === 0 ? "" : " · prognos"}`;
 }
 function renderWxLayer() {
   if (!wxOn || !wxGrid) return;
@@ -2306,8 +2336,8 @@ function renderWxLayer() {
     if (fs.length) { $("#sst-lo").textContent = lo.toFixed(1) + "°"; $("#sst-hi").textContent = hi.toFixed(1) + "°"; }
   } else setData("wxsst", EMPTY);
   const t = new Date(H.time[i]);
-  $("#wxb-time").textContent = wxStep === 0 ? "Nu" : `${t.toDateString() === new Date().toDateString() ? "Idag" : DAYS[t.getDay()]} ${pad(t.getHours())}:00`;
-  $("#wxb-sub").textContent = water ? `Vattentemperatur vid ytan${wxStep === 0 ? "" : " · prognos"}` : flow ? wxReadout() : `Vind m/s (byar) och våghöjd · ${wxObs.length && wxStep === 0 ? "kuststationer uppmätta" : "prognos"}`;
+  $("#wxb-time").textContent = wxStep === 0 ? Tr`Nu` : `${t.toDateString() === new Date().toDateString() ? Tr`Idag` : DAYS[t.getDay()]} ${pad(t.getHours())}:00`;
+  $("#wxb-sub").textContent = water ? `Vattentemperatur vid ytan${wxStep === 0 ? "" : " · prognos"}` : flow ? wxReadout() : Tr`Vind m/s (byar) och våghöjd · ${wxObs.length && wxStep === 0 ? Tr`kuststationer uppmätta` : "prognos"}`;
   document.querySelectorAll("[data-wxm]").forEach(b => b.setAttribute("aria-pressed", b.dataset.wxm === wxMode));
   if (flow !== flowCalm) { flowCalm = flow; applyLayers(); }
   $("#wxb-legend-wind").classList.toggle("hidden", water || flow); $("#wxb-legend-water").classList.toggle("hidden", !water); $("#wxb-legend-flow").classList.toggle("hidden", !flow || rain); $("#wxb-legend-rain").classList.toggle("hidden", !rain);
@@ -2356,8 +2386,8 @@ setInterval(() => { if (wxOn) { wxGrid = null; loadWxGrid(); loadWxObs(); } }, 1
 const DT = { headers: { "Digitraffic-User": "Kummel/sjokort" } };
 let aisT = null, aisMeta = {}, aisMetaAt = 0, aisShips = [];
 const SHIPCAT = t => t >= 60 && t < 70 ? "pass" : t >= 70 && t < 80 ? "cargo" : t >= 80 && t < 90 ? "tank" : t === 30 ? "fish" : t === 36 ? "sail" : t === 37 ? "leis" : (t >= 50 && t < 60) || t === 31 || t === 32 || t === 33 ? "serv" : "other";
-const CATNAME = { pass: "Passagerarfartyg", cargo: "Lastfartyg", tank: "Tankfartyg", fish: "Fiskebåt", sail: "Segelbåt", leis: "Fritidsbåt", serv: "Lots, bogserare, räddning", other: "Övrigt" };
-const NAVSTAT = ["Under gång med motor", "För ankar", "Ej manöverduglig", "Begränsad manöverförmåga", "Begränsad av djupgående", "Förtöjd", "På grund", "Fiskar", "Under segel"];
+const CATNAME = { pass: Tr`Passagerarfartyg`, cargo: Tr`Lastfartyg`, tank: Tr`Tankfartyg`, fish: Tr`Fiskebåt`, sail: Tr`Segelbåt`, leis: Tr`Fritidsbåt`, serv: Tr`Lots, bogserare, räddning`, other: Tr`Övrigt` };
+const NAVSTAT = [Tr`Under gång med motor`, Tr`För ankar`, Tr`Ej manöverduglig`, Tr`Begränsad manöverförmåga`, Tr`Begränsad av djupgående`, Tr`Förtöjd`, Tr`På grund`, Tr`Fiskar`, Tr`Under segel`];
 async function loadAisMeta() {
   if (Date.now() - aisMetaAt < 30 * 60000) return;
   aisMetaAt = Date.now();
@@ -2378,7 +2408,7 @@ async function loadAis() {
       return lat == null ? null : { mmsi: p.mmsi ?? f.mmsi, lat, lng, sog: p.sog ?? 0, cog: p.cog ?? 0, hdg: p.heading, nav: p.navStat, t: p.timestampExternal || Date.now() };
     }).filter(Boolean);
     renderAis(); loadAisMeta();
-  } catch (e) { if (!aisShips.length) toast("AIS-data kunde inte hämtas just nu."); }
+  } catch (e) { if (!aisShips.length) toast(Tr`AIS-data kunde inte hämtas just nu.`); }
 }
 function renderAis() {
   if (!S.layers.ais) { setData("ais", EMPTY); setData("aisvec", EMPTY); return; }
@@ -2420,7 +2450,7 @@ function loadShipPhoto(imo, mmsi) {
       const c = await fetchJson("https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&prop=imageinfo&iiprop=url|extmetadata&iiurlwidth=640&titles=" + encodeURIComponent("File:" + file));
       const ii = Object.values(c?.query?.pages || {})[0]?.imageinfo?.[0]; if (!ii?.thumburl) return (shipPhotos[key] = null);
       const md = ii.extmetadata || {};
-      return (shipPhotos[key] = { src: ii.thumburl, page: ii.descriptionurl, by: stripTags(md.Artist?.value).slice(0, 60) || "okänd fotograf", lic: stripTags(md.LicenseShortName?.value) || "fri licens" });
+      return (shipPhotos[key] = { src: ii.thumburl, page: ii.descriptionurl, by: stripTags(md.Artist?.value).slice(0, 60) || Tr`okänd fotograf`, lic: stripTags(md.LicenseShortName?.value) || Tr`fri licens` });
     } catch (e) { return null; }   // nätfel: inget sparas, försök igen nästa gång
     finally { delete shipPhotoP[key]; }
   })());
@@ -2429,17 +2459,17 @@ function shipPhotoHtml(p) {
   return p ? `<figure class="ship-photo"><img src="${esc(p.src)}" alt="Foto av fartyget" loading="lazy"><figcaption>Foto: ${esc(p.by)} · ${esc(p.lic)} · <a href="${esc(p.page)}" target="_blank" rel="noopener">Wikimedia Commons</a></figcaption></figure>` : "";
 }
 // grovt område för delade bilder (avslöjar inte platsen)
-const regionName = p => p.lng < 21.1 ? "Ålands skärgård" : p.lng < 22.75 ? "Åbolands skärgård" : "Nylands skärgård";
+const regionName = p => p.lng < 21.1 ? Tr`Ålands skärgård` : p.lng < 22.75 ? Tr`Åbolands skärgård` : Tr`Nylands skärgård`;
 function openShip(mmsi, refresh) {
   const s = aisShips.find(x => x.mmsi === mmsi); if (!s) return;
   const m = aisMeta[mmsi] || {}, age = Math.round((Date.now() - s.t) / 60000);
   let near = "";
   if (gps) {
     const d = distNm(gps, s), c = cpa(gps, s);
-    near = `<div class="callout ${c.nm < .3 && c.min < 20 ? "bad" : "ok"}">Avstånd ${d.toFixed(2)} nm, bäring ${String(Math.round(bearing(gps, s))).padStart(3, "0")}°.${s.sog > .5 || gps.sog > .5 ? (c.min < 1 ? " Avståndet ökar." : ` Närmaste passage <b>${c.nm.toFixed(2)} nm</b> om ${Math.round(c.min)} min.`) : ""}</div>`;
+    near = Tr`<div class="callout ${c.nm < .3 && c.min < 20 ? "bad" : "ok"}">Avstånd ${d.toFixed(2)} nm, bäring ${String(Math.round(bearing(gps, s))).padStart(3, "0")}°.${s.sog > .5 || gps.sog > .5 ? (c.min < 1 ? Tr` Avståndet ökar.` : Tr` Närmaste passage <b>${c.nm.toFixed(2)} nm</b> om ${Math.round(c.min)} min.`) : ""}</div>`;
   }
   const pkey = m.imo ? "imo" + m.imo : "m" + mmsi;
-  const html = `
+  const html = Tr`
     <div id="shipphoto">${shipPhotoHtml(shipPhotos[pkey])}</div>
     <div class="muted">${CATNAME[SHIPCAT(m.shipType)]}${m.callSign ? " · " + esc(m.callSign) : ""} · MMSI ${mmsi}${m.imo ? " · IMO " + esc(String(m.imo)) : ""}</div>
     <div class="wx-stats">
@@ -2451,9 +2481,9 @@ function openShip(mmsi, refresh) {
     ${s.nav != null && NAVSTAT[s.nav] ? `<div>${NAVSTAT[s.nav]}</div>` : ""}
     ${m.destination ? `<div>Destination: <b>${esc(m.destination)}</b></div>` : ""}
     <div class="row"><a class="btn" href="https://www.vesselfinder.com/vessels/details/${m.imo || mmsi}" target="_blank" rel="noopener">Visa på VesselFinder ↗</a><a class="btn" href="https://www.marinetraffic.com/en/ais/details/ships/mmsi:${mmsi}" target="_blank" rel="noopener">MarineTraffic ↗</a></div>
-    <div class="muted">Position för ${age < 1 ? "mindre än en minut" : age + " min"} sedan. Källa: Digitraffic (Fintraffic).</div>`;
+    <div class="muted">Position för ${age < 1 ? Tr`mindre än en minut` : age + " min"} sedan. Källa: Digitraffic (Fintraffic).</div>`;
   if (refresh && sheetView === "ais:" + mmsi) { $("#sh-body").innerHTML = html; return; }
-  openSheet((m.name || "Fartyg").trim(), html, "ais:" + mmsi);
+  openSheet((m.name || Tr`Fartyg`).trim(), html, "ais:" + mmsi);
   if (!(pkey in shipPhotos)) loadShipPhoto(m.imo, mmsi).then(p => { const el = $("#shipphoto"); if (p && el && sheetView === "ais:" + mmsi) { el.innerHTML = shipPhotoHtml(p); track("ship_photo", {}); } });
 }
 ["ais", "ais-bg"].forEach(l => map.on("click", l, e => { if (e.defaultPrevented) return; e.preventDefault(); openShip(+e.features[0].properties.mmsi); }));
@@ -2470,7 +2500,7 @@ async function loadAisAll() {
   } catch (e) { return false; }
 }
 function openShipSearch() {
-  openSheet("Sök fartyg", `
+  openSheet(Tr`Sök fartyg`, Tr`
     <input id="ss-q" type="search" placeholder="Namn, MMSI eller IMO" autocomplete="off" enterkeyhint="search" style="width:100%">
     <div id="ss-res" class="list"><div class="muted">Hämtar fartygslistan …</div></div>
     <div class="muted">Fartyg som har synts i AIS-nätet i Finland och på Åland det senaste dygnet. Fritidsbåtar har sällan AIS. Källa: Fintraffic / Digitraffic.</div>`, "shipsearch");
@@ -2479,19 +2509,19 @@ function openShipSearch() {
   const norm = x => (x || "").toString().toLowerCase().replace(/[^a-z0-9åäöæøü]/g, "");
   const run = () => {
     const t = norm(q.value);
-    if (t.length < 2) { res.innerHTML = `<div class="muted">Skriv minst två tecken.</div>`; return; }
+    if (t.length < 2) { res.innerHTML = Tr`<div class="muted">Skriv minst två tecken.</div>`; return; }
     const hits = [];
     for (const m of Object.values(aisMeta)) {
       const n = norm(m.name), score = n.startsWith(t) ? 0 : n.includes(t) ? 1 : String(m.mmsi).startsWith(t) || (m.imo && String(m.imo).startsWith(t)) || norm(m.callSign) === t ? 2 : -1;
       if (score >= 0) hits.push([score, n, m]);
     }
     hits.sort((a, b) => a[0] - b[0] || a[1].localeCompare(b[1]));
-    res.innerHTML = hits.length ? hits.slice(0, 25).map(([, , m]) => `<button class="btn ss-hit" data-mmsi="${m.mmsi}"><b>${esc((m.name || "").trim() || "Namn saknas")}</b> <span class="muted">${CATNAME[SHIPCAT(m.shipType)]}${m.destination ? " · mot " + esc(m.destination.trim()) : ""}</span></button>`).join("")
-      : `<div class="muted">Inget fartyg med det namnet har synts det senaste dygnet.</div>`;
+    res.innerHTML = hits.length ? hits.slice(0, 25).map(([, , m]) => `<button class="btn ss-hit" data-mmsi="${m.mmsi}"><b>${esc((m.name || "").trim() || Tr`Namn saknas`)}</b> <span class="muted">${CATNAME[SHIPCAT(m.shipType)]}${m.destination ? " · mot " + esc(m.destination.trim()) : ""}</span></button>`).join("")
+      : Tr`<div class="muted">Inget fartyg med det namnet har synts det senaste dygnet.</div>`;
     res.querySelectorAll("[data-mmsi]").forEach(b => b.onclick = () => findShip(+b.dataset.mmsi));
   };
   q.oninput = run;
-  loadAisAll().then(ok => { if (sheetView !== "shipsearch") return; if (!ok && !Object.keys(aisMeta).length) res.innerHTML = `<div class="muted">Fartygslistan kunde inte hämtas just nu.</div>`; else run(); });
+  loadAisAll().then(ok => { if (sheetView !== "shipsearch") return; if (!ok && !Object.keys(aisMeta).length) res.innerHTML = Tr`<div class="muted">Fartygslistan kunde inte hämtas just nu.</div>`; else run(); });
 }
 async function findShip(mmsi) {
   track("ship_search");
@@ -2506,7 +2536,7 @@ async function findShip(mmsi) {
     openShip(mmsi);
   } catch (e) {
     const m = aisMeta[mmsi] || {};
-    openSheet(esc((m.name || "Fartyg").trim()), `<div class="callout bad">Fartyget har ingen aktuell position i AIS-nätet i Finland, till exempel för att det är för långt bort eller har stängt av sin AIS.</div>
+    openSheet(esc((m.name || Tr`Fartyg`).trim()), Tr`<div class="callout bad">Fartyget har ingen aktuell position i AIS-nätet i Finland, till exempel för att det är för långt bort eller har stängt av sin AIS.</div>
       <div class="row"><a class="btn" target="_blank" rel="noopener" href="https://www.vesselfinder.com/vessels/details/${m.imo || mmsi}">Visa på VesselFinder</a><a class="btn" target="_blank" rel="noopener" href="https://www.marinetraffic.com/en/ais/details/ships/mmsi:${mmsi}">Visa på MarineTraffic</a></div>
       <button class="btn" id="ss-back">Tillbaka till sökningen</button>`, "shipsearch-miss");
     $("#ss-back").onclick = openShipSearch;
@@ -2520,27 +2550,27 @@ function setAis(on) {
 map.on("moveend", () => { if (S.layers.ais) { clearTimeout(loadAis.t); loadAis.t = setTimeout(loadAis, 800); } });
 
 /* ---------- boats ---------- */
-const BTYPES = { motor: "Motorbåt", segel: "Segelbåt", rib: "RIB", kajak: "Kajak / kanot", ovrig: "Annan" };
+const BTYPES = { motor: Tr`Motorbåt`, segel: Tr`Segelbåt`, rib: "RIB", kajak: "Kajak / kanot", ovrig: Tr`Annan` };
 const BDEF = { motor: { speed: 20, fuel: 18, maxWind: 10, draft: .6 }, segel: { speed: 5.5, fuel: 1.5, maxWind: 13, draft: 1.6 }, rib: { speed: 28, fuel: 25, maxWind: 9, draft: .5 }, kajak: { speed: 3, fuel: 0, maxWind: 6, draft: .2 }, ovrig: { speed: 6, fuel: 3, maxWind: 8, draft: .8 } };
 function boatChanged() { renderBoatIcon(); if (mapReady) { KummelChart.setNeed(map, needDepth()); renderSatLegend(S.layers.base === "sat" && (S.layers.groups || {}).satdepth !== false); } if (wx) renderChip(); }
 function openBoats() {
-  openSheet("Båtar", `
-    <div class="list">${S.boats.map(b => `<div class="card ${b.id === S.boatId ? "sel" : ""}">
+  openSheet(Tr`Båtar`, Tr`
+    <div class="list">${S.boats.map(b => Tr`<div class="card ${b.id === S.boatId ? "sel" : ""}">
       <h3>${esc(b.name)}</h3><div class="muted">${BTYPES[b.type]} · ${b.length} m · djupgående ${b.draft} m (+${b.margin} m marginal) · höjd ${b.air} m · ${b.speed} kn</div>
-      <div class="row">${b.id === S.boatId ? `<span class="pill ok">Aktiv</span>` : `<button class="btn" data-use="${b.id}">Använd</button>`}<button class="btn" data-edit="${b.id}">Ändra</button></div></div>`).join("")}</div>
+      <div class="row">${b.id === S.boatId ? `<span class="pill ok">Aktiv</span>` : Tr`<button class="btn" data-use="${b.id}">Använd</button>`}<button class="btn" data-edit="${b.id}">Ändra</button></div></div>`).join("")}</div>
     <div class="muted">Sjökortet markerar vatten som är grundare än den aktiva båtens djupgående plus marginal.</div>
     <button class="btn pri" id="bt-new">Lägg till båt</button>`, "boats");
-  document.querySelectorAll("[data-use]").forEach(x => x.onclick = () => { S.boatId = x.dataset.use; save(); boatChanged(); openBoats(); toast(`Aktiv båt: ${boat().name}`); });
+  document.querySelectorAll("[data-use]").forEach(x => x.onclick = () => { S.boatId = x.dataset.use; save(); boatChanged(); openBoats(); toast(Tr`Aktiv båt: ${boat().name}`); });
   document.querySelectorAll("[data-edit]").forEach(x => x.onclick = () => editBoat(x.dataset.edit));
   $("#bt-new").onclick = () => editBoat(null);
 }
 function editBoat(id) {
   const b = id ? S.boats.find(x => x.id === id) : { name: "", type: "motor", length: 6, beam: 2.3, air: 2, ...BDEF.motor, margin: 0.5 };
   const n = (k, lbl, step = "0.1") => `<label class="f">${lbl}<input type="number" step="${step}" inputmode="decimal" id="bf-${k}" value="${b[k]}"></label>`;
-  openSheet(id ? "Ändra båt" : "Ny båt", `
+  openSheet(id ? Tr`Ändra båt` : Tr`Ny båt`, Tr`
     <label class="f">Namn<input id="bf-name" value="${esc(b.name)}" placeholder="t.ex. Buster"></label>
     <label class="f">Typ<select id="bf-type">${Object.entries(BTYPES).map(([k, v]) => `<option value="${k}" ${k === b.type ? "selected" : ""}>${v}</option>`).join("")}</select></label>
-    <div class="grid2">${n("length", "Längd (m)")}${n("beam", "Bredd (m)")}${n("draft", "Djupgående (m)")}${n("air", "Höjd över vattnet (m)")}${n("margin", "Marginal under kölen (m)")}${n("speed", "Marschfart (kn)", "0.5")}${n("fuel", "Förbrukning (l/h)", "0.5")}${n("maxWind", "Gräns för byvind (m/s)", "1")}</div>
+    <div class="grid2">${n("length", Tr`Längd (m)`)}${n("beam", Tr`Bredd (m)`)}${n("draft", Tr`Djupgående (m)`)}${n("air", Tr`Höjd över vattnet (m)`)}${n("margin", Tr`Marginal under kölen (m)`)}${n("speed", Tr`Marschfart (kn)`, "0.5")}${n("fuel", Tr`Förbrukning (l/h)`, "0.5")}${n("maxWind", Tr`Gräns för byvind (m/s)`, "1")}</div>
     <div class="muted">Djupgående och marginal styr grundvarningarna på sjökortet. Fart och förbrukning används för ankomsttid och bränsle. Vindgränsen styr väderfönster och varningar.</div>
     <div class="row"><button class="btn pri" id="bf-save">Spara</button>${id && S.boats.length > 1 ? `<button class="btn warn" id="bf-del">Ta bort</button>` : ""}<button class="btn" id="bf-back">Tillbaka</button></div>`, "boatedit");
   $("#bf-type").onchange = e => { const d = BDEF[e.target.value]; ["speed", "fuel", "maxWind", "draft"].forEach(k => $("#bf-" + k).value = d[k]); };
@@ -2564,32 +2594,32 @@ const OPTS = {
 const applies = k => (OPTS[k] || []).includes(S.layers.base || "chart");
 function openLayers() {
   const r = (k, v) => `<button data-base="${k}" aria-pressed="${S.layers.base === k}">${v}</button>`;
-  openSheet("Kartlager", `
-    <div class="card"><h3>Karta</h3><div class="wxb-modes ly-base" role="group" aria-label="Bakgrundskarta">${r("chart", "Sjökort")}${r("sat", "Flygbild")}${r("osm", "Gatukarta")}</div>
-      ${S.layers.base === "sat" ? `<div class="muted">Flygbild med farleder, sjömärken och djup ovanpå.</div>` : ""}</div>
+  openSheet(Tr`Kartlager`, Tr`
+    <div class="card"><h3>Karta</h3><div class="wxb-modes ly-base" role="group" aria-label="Bakgrundskarta">${r("chart", Tr`Sjökort`)}${r("sat", Tr`Flygbild`)}${r("osm", Tr`Gatukarta`)}</div>
+      ${S.layers.base === "sat" ? Tr`<div class="muted">Flygbild med farleder, sjömärken och djup ovanpå.</div>` : ""}</div>
     <div class="card"><h3>Visa på kartan</h3>
       <div class="row" style="gap:8px;margin-bottom:4px"><button class="btn sm" id="ly-all">Välj alla</button><button class="btn sm" id="ly-none">Avmarkera alla</button></div>
-      ${[["fairways", "Farleder, ledlinjer och farledsdjup"], ["marks", "Sjömärken och fyrar"], ["rocks", "Stenar och grund"], ["sectors", "Ljussektorer"], ["contours", "Djupkurvor"], ["satdepth", "Djupfärg på flygfotot"], ["limits", "Fartbegränsningar och förbudsområden"], ["land", "Ortnamn, vägar och hus"], ["steep", "Branter (syns i läget Fiske)"]].filter(([g]) => applies(g)).map(([g, t]) => `<label class="row"><input type="checkbox" data-grp="${g}" ${(S.layers.groups || {})[g] !== false ? "checked" : ""}> ${t}</label>`).join("")}
-      ${applies("soundings") ? `<label class="row"><input type="checkbox" id="ly-snd" ${S.layers.soundings ? "checked" : ""}> Djupsiffror${S.layers.base === "sat" ? " (bara grundare än din båt)" : ""}</label>` : ""}
+      ${[["fairways", Tr`Farleder, ledlinjer och farledsdjup`], ["marks", Tr`Sjömärken och fyrar`], ["rocks", Tr`Stenar och grund`], ["sectors", Tr`Ljussektorer`], ["contours", Tr`Djupkurvor`], ["satdepth", Tr`Djupfärg på flygfotot`], ["limits", Tr`Fartbegränsningar och förbudsområden`], ["land", Tr`Ortnamn, vägar och hus`], ["steep", Tr`Branter (syns i läget Fiske)`]].filter(([g]) => applies(g)).map(([g, t]) => `<label class="row"><input type="checkbox" data-grp="${g}" ${(S.layers.groups || {})[g] !== false ? "checked" : ""}> ${t}</label>`).join("")}
+      ${applies("soundings") ? `<label class="row"><input type="checkbox" id="ly-snd" ${S.layers.soundings ? "checked" : ""}> Djupsiffror${S.layers.base === "sat" ? Tr` (bara grundare än din båt)` : ""}</label>` : ""}
       <label class="row"><input type="checkbox" id="ly-ais" ${S.layers.ais ? "checked" : ""}> AIS-fartyg i realtid</label>
       <label class="row"><input type="checkbox" id="ly-prop" ${S.layers.props ? "checked" : ""} ${mmlKey() ? "" : "disabled"}> Fastighetsgränser (när du zoomar in)</label>
     </div>
-    ${applies("detail") ? `<div class="card"><h3>Detaljkort</h3>
+    ${applies("detail") ? Tr`<div class="card"><h3>Detaljkort</h3>
       <label class="row"><input type="checkbox" id="ly-det" ${S.layers.detail ? "checked" : ""}> Visa detaljkortet när jag zoomar in</label>
-      <label class="f">Visa detaljkortet från<select id="ly-dz">${[[11, "Översikt (ca 2 nm över skärmen)"], [12, "Mellan (ca 1 nm)"], [13, "Nära (ca 0,5 nm), rekommenderas"], [14, "Mycket nära (ca 0,25 nm)"]].map(([z, t]) => `<option value="${z}" ${dz() === z ? "selected" : ""}>${t}</option>`).join("")}</select></label>
+      <label class="f">Visa detaljkortet från<select id="ly-dz">${[[11, Tr`Översikt (ca 2 nm över skärmen)`], [12, "Mellan (ca 1 nm)"], [13, Tr`Nära (ca 0,5 nm), rekommenderas`], [14, Tr`Mycket nära (ca 0,25 nm)`]].map(([z, t]) => `<option value="${z}" ${dz() === z ? "selected" : ""}>${t}</option>`).join("")}</select></label>
       <div class="muted">Traficoms inskannade sjökort ovanpå vektorkortet. Längre ut blir det svårläst eftersom kortet förminskas.</div>
     </div>` : ""}
     <div class="card"><h3>Båtpilen</h3>
       <label class="row"><input type="checkbox" id="ly-compass" ${S.compassSlow ? "checked" : ""}> Använd telefonens kompass när båten går långsamt</label>
       <div class="muted">Annars pekar pilen åt det håll båten senast rörde sig. Kompassen fungerar bäst om telefonen ligger fast i båten med överkanten mot fören.</div></div>
-    ${applies("detail") ? `<div class="muted">På detaljkortet är vatten som är grundare än din båt behöver skuggat i rött.</div>` : ""}
+    ${applies("detail") ? Tr`<div class="muted">På detaljkortet är vatten som är grundare än din båt behöver skuggat i rött.</div>` : ""}
     <div class="disclaimer">Källa: Traficom (CC BY 4.0). Flygbild och fastighetsgränser: Lantmäteriverket. Ej för navigering, uppfyller inte kraven för officiella sjökort. Använd alltid uppdaterade officiella sjökort.</div>`, "layers");
   const on = (id, ev, f) => { const el = $(id); if (el) el[ev] = f; };
   on("#ly-snd", "onchange", e => { S.layers.soundings = e.target.checked; save(); applyLayers(); });
   $("#ly-ais").onchange = e => setAis(e.target.checked);
   $("#ly-compass").onchange = async e => { const ok = await setCompass(e.target.checked); S.compassSlow = e.target.checked && ok ? 1 : 0; e.target.checked = !!S.compassSlow; save(); };
   on("#ly-det", "onchange", e => { S.layers.detail = e.target.checked; save(); applyLayers(); });
-  $("#ly-prop").onchange = e => { S.layers.props = e.target.checked; save(); applyLayers(); if (e.target.checked && map.getZoom() < 12) toast("Fastighetsgränser visas när du zoomar in närmare", 2200); };
+  $("#ly-prop").onchange = e => { S.layers.props = e.target.checked; save(); applyLayers(); if (e.target.checked && map.getZoom() < 12) toast(Tr`Fastighetsgränser visas när du zoomar in närmare`, 2200); };
   on("#ly-dz", "onchange", e => { S.layers.detailZoom = +e.target.value; save(); applyLayers(); });
   const setAll = on => { const card = $("#ly-all").closest(".card"); card.querySelectorAll("input[type=checkbox]:not(:disabled)").forEach(x => { if (x.checked !== on) { x.checked = on; x.dispatchEvent(new Event("change")); } }); };
   $("#ly-all").onclick = () => setAll(true); $("#ly-none").onclick = () => setAll(false);
@@ -2599,16 +2629,16 @@ function openLayers() {
 }
 $("#b-layers").onclick = openLayers;
 $("#b-detail").onclick = () => {
-  if (S.layers.base !== "chart") { toast("Detaljkortet finns bara i läget Sjökort", 2000); return; }
+  if (S.layers.base !== "chart") { toast(Tr`Detaljkortet finns bara i läget Sjökort`, 2000); return; }
   S.layers.detail = !S.layers.detail; save(); applyLayers();
-  toast(S.layers.detail ? (map.getZoom() < dz() ? "Grynnor visas när du zoomar in närmare" : "Detaljkort med grynnor och stenar") : "Vektorsjökort", 1800);
+  toast(S.layers.detail ? (map.getZoom() < dz() ? Tr`Grynnor visas när du zoomar in närmare` : Tr`Detaljkort med grynnor och stenar`) : Tr`Vektorsjökort`, 1800);
 };
 
 /* ---------- menu ---------- */
 function openMenu() {
   const b = boat();
-  openSheet("Meny", `
-    ${(d => d ? `<div class="callout ok bk-nag"><b>${d.autumn ? "Säsongen är slut. Spara en kopia av fångsterna?" : "Dags att säkerhetskopiera?"}</b><div class="muted">${d.fresh} nya saker ${d.since ? "sedan " + MONTHS[d.since.getMonth()] : "som bara finns i den här telefonen"}.</div>
+  openSheet(Tr`Meny`, Tr`
+    ${(d => d ? Tr`<div class="callout ok bk-nag"><b>${d.autumn ? Tr`Säsongen är slut. Spara en kopia av fångsterna?` : Tr`Dags att säkerhetskopiera?`}</b><div class="muted">${d.fresh} nya saker ${d.since ? Tr`sedan ${MONTHS[d.since.getMonth()]}` : Tr`som bara finns i den här telefonen`}.</div>
       <div class="row"><button class="btn pri" id="m-bk">Spara kopia</button><button class="btn" id="m-bkoff">Påminn inte</button></div></div>` : "")(backupDue())}
     <div class="card sel"><h3>${esc(b.name)}</h3><div class="muted">${BTYPES[b.type]} · djupgående ${b.draft} m · ${b.speed} kn</div><div class="row"><button class="btn" id="m-boats">Båtar</button></div></div>
     <div class="list">
@@ -2619,28 +2649,35 @@ function openMenu() {
       <button class="btn" id="m-catch">Fångstlogg (${S.catches.length})</button>
       <button class="btn" id="m-plotter">Kartplotter (GPX)</button>
       <button class="btn" id="m-data">Flytta och säkerhetskopiera</button>
-      <button class="btn" id="m-anchor">Ankarlarm${S.anchor ? " (på)" : ""}</button>
-      <button class="btn" id="m-offline">Offlinekarta${S.offline ? " (nedladdad)" : ""}</button>
-      <button class="btn" id="m-night">${S.theme && S.theme !== "day" ? THEMES[S.theme] : "Nattläge: av"}</button>
+      <button class="btn" id="m-anchor">Ankarlarm${S.anchor ? Tr` (på)` : ""}</button>
+      <button class="btn" id="m-offline">Offlinekarta${S.offline ? Tr` (nedladdad)` : ""}</button>
+      <div class="wxb-modes lang-pick" role="group" aria-label="Språk">${[["sv", "Svenska"], ["fi", "Suomi"], ["en", "English"]].map(([k, t]) => `<button data-lang="${k}" aria-pressed="${LANG === k}">${t}</button>`).join("")}</div>
+      <button class="btn" id="m-night">${S.theme && S.theme !== "day" ? THEMES[S.theme] : Tr`Nattläge: av`}</button>
       <button class="btn" id="m-legend">Teckenförklaring</button>
       <button class="btn" id="m-welcome">Så fungerar Kummel</button>
       <button class="btn" id="m-about">Om Kummel</button>
     </div>
     <div class="maker">${ALAND_FLAG} Kummel · en produkt från ${MAKER}, ${MAKER_TOWN}</div>`, "menu");
   $("#m-shipsearch").onclick = openShipSearch;
-  if ($("#m-bk")) { $("#m-bk").onclick = openData; $("#m-bkoff").onclick = () => { S.bkOff = 1; save(); backupDot(); openMenu(); toast("Okej. Du hittar säkerhetskopian under Flytta och säkerhetskopiera.", 3000); }; }
+  if ($("#m-bk")) { $("#m-bk").onclick = openData; $("#m-bkoff").onclick = () => { S.bkOff = 1; save(); backupDot(); openMenu(); toast(Tr`Okej. Du hittar säkerhetskopian under Flytta och säkerhetskopiera.`, 3000); }; }
   $("#m-boats").onclick = openBoats; $("#m-places").onclick = openPlaces; $("#m-routes").onclick = openRoutes;
   $("#m-log").onclick = openLog; $("#m-catch").onclick = openCatches; $("#m-data").onclick = openData; $("#m-plotter").onclick = openPlotter; $("#m-about").onclick = openAbout; $("#m-welcome").onclick = () => termsOk() ? openTour() : openWelcome(); $("#m-legend").onclick = openLegend; $("#m-anchor").onclick = openAnchor; $("#m-offline").onclick = openOffline;
-  $("#m-night").onclick = () => { $("#b-night").click(); $("#m-night").textContent = S.theme === "day" ? "Nattläge: av" : THEMES[S.theme]; };
+  document.querySelectorAll("[data-lang]").forEach(b => b.onclick = () => {
+    if (b.dataset.lang === LANG) return;
+    S.lang = b.dataset.lang; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+    track("lang", { l: S.lang });
+    const u = new URL(location.href); u.searchParams.delete("lang"); location.replace(u.toString());   // ladda om på nya språket
+  });
+  $("#m-night").onclick = () => { $("#b-night").click(); $("#m-night").textContent = S.theme === "day" ? Tr`Nattläge: av` : THEMES[S.theme]; };
 }
 $("#b-menu").onclick = openMenu;
 function openPlaces() {
-  openSheet("Mina platser", `<div class="list">${S.places.map(p => `<div class="card"><h3>${CATS[p.cat].e} ${esc(p.name)}</h3>${p.note ? `<div>${esc(p.note)}</div>` : ""}<div class="row"><button class="btn" data-go="${p.id}">Visa</button></div></div>`).join("") || `<div class="muted">Inga platser ännu. Tryck på nålknappen eller håll fingret på kartan för att spara en plats.</div>`}</div>`, "places");
+  openSheet(Tr`Mina platser`, `<div class="list">${S.places.map(p => `<div class="card"><h3>${CATS[p.cat].e} ${esc(p.name)}</h3>${p.note ? `<div>${esc(p.note)}</div>` : ""}<div class="row"><button class="btn" data-go="${p.id}">Visa</button></div></div>`).join("") || Tr`<div class="muted">Inga platser ännu. Tryck på nålknappen eller håll fingret på kartan för att spara en plats.</div>`}</div>`, "places");
   document.querySelectorAll("[data-go]").forEach(x => x.onclick = () => { const p = S.places.find(q => q.id === x.dataset.go); leaveFollow(); map.easeTo({ center: lnglat(p), zoom: 14 }); openPlace(p.id); });
 }
 const boundsOf = pts => pts.reduce((b, p) => b.extend([p[1], p[0]]), new maplibregl.LngLatBounds([pts[0][1], pts[0][0]], [pts[0][1], pts[0][0]]));
 function openRoutes() {
-  openSheet("Sparade rutter", `<div class="list">${S.routes.map(r => `<div class="card"><h3>${esc(r.name)}</h3><div class="muted">${routeStats(r.pts.map(p => ({ lat: p[0], lng: p[1] }))).nm.toFixed(1)} nm · ${r.pts.length} punkter</div><div class="row"><button class="btn pri" data-nav="${r.id}">Navigera</button><button class="btn" data-open="${r.id}">Öppna</button><button class="btn" data-share="${r.id}">Dela</button><button class="btn" data-rgpx="${r.id}">GPX</button><button class="btn warn" data-del="${r.id}">Ta bort</button></div></div>`).join("") || `<div class="muted">Inga sparade rutter.</div>`}</div>`, "routes");
+  openSheet(Tr`Sparade rutter`, `<div class="list">${S.routes.map(r => Tr`<div class="card"><h3>${esc(r.name)}</h3><div class="muted">${routeStats(r.pts.map(p => ({ lat: p[0], lng: p[1] }))).nm.toFixed(1)} nm · ${r.pts.length} punkter</div><div class="row"><button class="btn pri" data-nav="${r.id}">Navigera</button><button class="btn" data-open="${r.id}">Öppna</button><button class="btn" data-share="${r.id}">Dela</button><button class="btn" data-rgpx="${r.id}">GPX</button><button class="btn warn" data-del="${r.id}">Ta bort</button></div></div>`).join("") || Tr`<div class="muted">Inga sparade rutter.</div>`}</div>`, "routes");
   document.querySelectorAll("[data-open]").forEach(x => x.onclick = () => {
     const r = S.routes.find(q => q.id === x.dataset.open);
     leaveFollow(); map.fitBounds(boundsOf(r.pts), { padding: 60, duration: 0 });
@@ -2653,11 +2690,11 @@ function openRoutes() {
 }
 function openLog() {
   const tot = S.tracks.reduce((s, t) => s + (t.nm || 0), 0);
-  openSheet("Loggbok", `
+  openSheet(Tr`Loggbok`, `
     <div class="row" style="gap:24px"><div><div class="big">${tot.toFixed(1)}</div><div class="muted">nm totalt</div></div><div><div class="big">${S.tracks.length}</div><div class="muted">turer</div></div></div>
-    <div class="list">${S.tracks.map(t => { const d = new Date(t.start), h = (t.end - t.start) / 3600000; return `<div class="card"><h3>${DAYS[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1} kl ${hm(d)}</h3>
+    <div class="list">${S.tracks.map(t => { const d = new Date(t.start), h = (t.end - t.start) / 3600000; return Tr`<div class="card"><h3>${DAYS[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1} kl ${hm(d)}</h3>
       <div class="muted num">${(t.nm || 0).toFixed(1)} nm · ${fmtDur(h)} · snitt ${h ? (t.nm / h).toFixed(1) : 0} kn · max ${t.max.toFixed(1)} kn · ${esc(t.boat || "")}</div>
-      <div class="row"><button class="btn" data-show="${t.id}">Visa</button><button class="btn" data-gpx="${t.id}">GPX</button><button class="btn warn" data-del="${t.id}">Ta bort</button></div></div>`; }).join("") || `<div class="muted">Inga turer ännu. Tryck på Spela in när du lämnar bryggan.</div>`}</div>`, "log");
+      <div class="row"><button class="btn" data-show="${t.id}">Visa</button><button class="btn" data-gpx="${t.id}">GPX</button><button class="btn warn" data-del="${t.id}">Ta bort</button></div></div>`; }).join("") || Tr`<div class="muted">Inga turer ännu. Tryck på Spela in när du lämnar bryggan.</div>`}</div>`, "log");
   document.querySelectorAll("[data-show]").forEach(x => x.onclick = () => {
     const t = S.tracks.find(q => q.id === x.dataset.show);
     setData("shown", lineFC(t.pts.map(p => [p[1], p[0]])));
@@ -2702,11 +2739,11 @@ function routeForPlotter(pts) {
 function gpxDoc(parts) { return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Kummel – www.kummel.app" xmlns="http://www.topografix.com/GPX/1/1">\n${parts.join("\n")}\n</gpx>\n`; }
 function gpxRte(r, warn) {
   const { pts, tol } = routeForPlotter(r.pts); if (tol > 25 && warn) warn.push(r.name);
-  const name = xesc(String(r.name || "Rutt").slice(0, 30));
+  const name = xesc(String(r.name || Tr`Rutt`).slice(0, 30));
   return `<rte><name>${name}</name><desc>${xesc(r.name)} · Kummel</desc>${pts.map((p, i) => `<rtept lat="${(+p[0]).toFixed(6)}" lon="${(+p[1]).toFixed(6)}"><name>${i === 0 ? "START" : i === pts.length - 1 ? "MAL" : "K" + String(i).padStart(3, "0")}</name></rtept>`).join("")}</rte>`;
 }
-function gpxWpt(p) { return `<wpt lat="${(+p.lat).toFixed(6)}" lon="${(+p.lng).toFixed(6)}"><name>${xesc(String(p.name || "Plats").slice(0, 30))}</name>${p.note ? `<desc>${xesc(p.note)}</desc>` : ""}<sym>${GPX_SYM[p.cat] || GPX_SYM.ovrigt}</sym></wpt>`; }
-function gpxTrk(t) { return `<trk><name>Tur ${new Date(t.start).toLocaleDateString("sv")}</name><trkseg>${t.pts.map(p => `<trkpt lat="${p[0]}" lon="${p[1]}">${p[2] ? `<time>${new Date(p[2]).toISOString()}</time>` : ""}</trkpt>`).join("")}</trkseg></trk>`; }
+function gpxWpt(p) { return `<wpt lat="${(+p.lat).toFixed(6)}" lon="${(+p.lng).toFixed(6)}"><name>${xesc(String(p.name || Tr`Plats`).slice(0, 30))}</name>${p.note ? `<desc>${xesc(p.note)}</desc>` : ""}<sym>${GPX_SYM[p.cat] || GPX_SYM.ovrigt}</sym></wpt>`; }
+function gpxTrk(t) { return `<trk><name>Tur ${new Date(t.start).toLocaleDateString(LOC)}</name><trkseg>${t.pts.map(p => `<trkpt lat="${p[0]}" lon="${p[1]}">${p[2] ? `<time>${new Date(p[2]).toISOString()}</time>` : ""}</trkpt>`).join("")}</trkseg></trk>`; }
 const gpxSafeName = s => String(s || "kummel").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "kummel";
 async function sendGpx(name, xml, what) {
   const f = new File([xml], name, { type: "application/gpx+xml" });
@@ -2717,7 +2754,7 @@ async function sendGpx(name, xml, what) {
   }
   downloadBlob(name, xml, "application/gpx+xml"); track("gpx_export", { what, how: "file" });
 }
-function exportRouteGpx(r) { const w = []; const x = gpxDoc([gpxRte(r, w)]); sendGpx(`${gpxSafeName(r.name)}.gpx`, x, "route"); if (w.length) toast("Rutten har förenklats till högst " + GPX_MAX + " punkter. Kontrollera den i plottern.", 4500); }
+function exportRouteGpx(r) { const w = []; const x = gpxDoc([gpxRte(r, w)]); sendGpx(`${gpxSafeName(r.name)}.gpx`, x, "route"); if (w.length) toast(Tr`Rutten har förenklats till högst ` + GPX_MAX + Tr` punkter. Kontrollera den i plottern.`, 4500); }
 function wptCat(sym, name) {
   const s = (sym + " " + name).toLowerCase();
   return /anchor|ankr/.test(s) ? "ankring" : /marina|harbor|harbour|hamn|dock|gästhamn/.test(s) ? "hamn" : /fish|fisk/.test(s) ? "fiske" : /swim|bad/.test(s) ? "bad" : /fuel|gas|bensin|diesel/.test(s) ? "service" : /danger|skull|hazard|rock|shoal|fara|grund|sten/.test(s) ? "fara" : "ovrigt";
@@ -2739,7 +2776,7 @@ function importGpx(text) {
   // platser (endast fristående wpt, inte rutt- eller spårpunkter)
   Array.from(doc.documentElement.children).filter(e => e.localName === "wpt").forEach(el => {
     const p = ll(el); if (!ok(p)) return;
-    const name = txt(el, "name") || "Plats";
+    const name = txt(el, "name") || Tr`Plats`;
     if (S.places.some(q => q.name === name && distNm(q, { lat: p[0], lng: p[1] }) < .01)) { n.dup++; return; }
     S.places.push({ id: uid(), created: Date.now(), name, note: txt(el, "desc") || txt(el, "cmt"), cat: wptCat(txt(el, "sym"), name), lat: p[0], lng: p[1] }); n.p++;
   });
@@ -2747,7 +2784,7 @@ function importGpx(text) {
   kids(doc, "trk").forEach((el, i) => {
     const pts = kids(el, "trkpt").map(e => { const p = ll(e), t = Date.parse(txt(e, "time")); return [p[0], p[1], isFinite(t) ? t : 0]; }).filter(ok);
     if (pts.length < 2) return;
-    const name = txt(el, "name") || `Importerat spår ${i + 1}`;
+    const name = txt(el, "name") || Tr`Importerat spår ${i + 1}`;
     if (pts[0][2] && pts[pts.length - 1][2] > pts[0][2]) {
       const start = pts[0][2]; if (S.tracks.some(t => Math.abs((t.start || 0) - start) < 60000)) { n.dup++; return; }
       let max = 0; for (let k = 1; k < pts.length; k++) { const dt = (pts[k][2] - pts[k - 1][2]) / 3600000; if (dt > 0.0008) { const v = distNm({ lat: pts[k - 1][0], lng: pts[k - 1][1] }, { lat: pts[k][0], lng: pts[k][1] }) / dt; if (v < 60) max = Math.max(max, v); } }
@@ -2760,13 +2797,13 @@ function importGpx(text) {
   });
   S.tracks.sort((x, y) => (y.start || 0) - (x.start || 0));
   save(); drawPlaces();
-  const parts = [n.r && `${n.r} ${n.r === 1 ? "rutt" : "rutter"}`, n.p && `${n.p} ${n.p === 1 ? "plats" : "platser"}`, n.t && `${n.t} ${n.t === 1 ? "tur" : "turer"} till loggboken`].filter(Boolean);
+  const parts = [n.r && `${n.r} ${n.r === 1 ? Tr`rutt` : Tr`rutter`}`, n.p && `${n.p} ${n.p === 1 ? Tr`plats` : Tr`platser`}`, n.t && Tr`${n.t} ${n.t === 1 ? Tr`tur` : Tr`turer`} till loggboken`].filter(Boolean);
   track("gpx_import", { r: n.r, p: n.p, t: n.t });
-  return (parts.length ? "Inläst: " + parts.join(", ") + "." : "Filen innehöll inget nytt att läsa in.") + (n.dup ? ` ${n.dup} fanns redan och hoppades över.` : "");
+  return (parts.length ? Tr`Inläst: ` + parts.join(", ") + "." : Tr`Filen innehöll inget nytt att läsa in.`) + (n.dup ? Tr` ${n.dup} fanns redan och hoppades över.` : "");
 }
 function openPlotter() {
   const nR = S.routes.length, nP = S.places.length, nT = S.tracks.length;
-  openSheet("Kartplotter (GPX)", `
+  openSheet(Tr`Kartplotter (GPX)`, Tr`
     <div class="muted">Rita rutter och spara platser i Kummel hemma, och för över dem till plottern i båten. Det går också åt andra hållet. Kummel använder GPX, som nästan alla plottrar och navigationsappar kan läsa: Garmin, Raymarine, Simrad, B&amp;G, Lowrance, Furuno, Navionics med flera.</div>
     <div class="card"><h3>Från Kummel till plottern</h3>
       <label class="row"><input type="checkbox" id="gx-r" ${nR ? "checked" : "disabled"}> Rutter (${nR})</label>
@@ -2788,29 +2825,29 @@ function openPlotter() {
     if (wp) S.places.forEach(p => parts.push(gpxWpt(p)));
     if (wr) S.routes.forEach(r => parts.push(gpxRte(r, warn)));
     if (wt) S.tracks.forEach(t => parts.push(gpxTrk(t)));
-    if (!parts.length) { toast("Välj vad som ska med i filen."); return; }
+    if (!parts.length) { toast(Tr`Välj vad som ska med i filen.`); return; }
     sendGpx(`kummel-${new Date().toISOString().slice(0, 10)}.gpx`, gpxDoc(parts), [wr && "r", wp && "p", wt && "t"].filter(Boolean).join(""));
-    if (warn.length) toast(`Förenklade rutter: ${warn.join(", ")}. Kontrollera dem i plottern.`, 5000);
+    if (warn.length) toast(Tr`Förenklade rutter: ${warn.join(", ")}. Kontrollera dem i plottern.`, 5000);
   };
   $("#gx-imp").onchange = async e => {
     const file = e.target.files[0]; if (!file) return;
     const msg = t => { const el = $("#gx-msg"); if (el) el.textContent = t; };
-    try { msg("Läser in …"); const r = importGpx(await file.text()); msg(r); toast(r, 4500); }
-    catch (err) { msg(""); toast("Filen kunde inte läsas som GPX."); }
+    try { msg(Tr`Läser in …`); const r = importGpx(await file.text()); msg(r); toast(r, 4500); }
+    catch (err) { msg(""); toast(Tr`Filen kunde inte läsas som GPX.`); }
     e.target.value = "";
   };
 }
 function openCatches() {
   const st = catchStats(), recs = Object.entries(st.rec).filter(([, r]) => r.kg || r.len).sort((x, y) => y[1].n - x[1].n);
   const seasonN = Object.values(st.season).reduce((s, v) => s + v, 0), released = S.catches.filter(c => c.released).length;
-  openSheet("Fångstlogg", `
-    ${S.catches.length ? `<div class="card"><h3>Säsongen ${st.yr}</h3><div class="muted">${seasonN} fångster${released ? ` · ${released} catch &amp; release` : ""}</div>
-      <div class="row">${Object.entries(st.season).map(([k, v]) => `<span class="pill">${esc(k)} ${v}</span>`).join("") || `<span class="muted">Inga fångster i år ännu.</span>`}</div></div>` : ""}
+  openSheet(Tr`Fångstlogg`, Tr`
+    ${S.catches.length ? Tr`<div class="card"><h3>Säsongen ${st.yr}</h3><div class="muted">${seasonN} fångster${released ? ` · ${released} catch &amp; release` : ""}</div>
+      <div class="row">${Object.entries(st.season).map(([k, v]) => `<span class="pill">${esc(k)} ${v}</span>`).join("") || Tr`<span class="muted">Inga fångster i år ännu.</span>`}</div></div>` : ""}
     ${recs.length ? `<div class="card"><h3>Dina rekord</h3>${recs.map(([sp, r]) => `<div class="rec-row"><b>${esc(sp)}</b><span>${r.kg ? `${fmt1(r.kg)} kg` : ""}${r.kg && r.len ? " · " : ""}${r.len ? `${fmt1(r.len)} cm` : ""}</span><button class="btn sm" data-c="${(r.kgC || r.lenC).id}">Visa</button></div>`).join("")}</div>` : ""}
-    ${S.catches.length >= 3 ? `<label class="row"><input type="checkbox" id="ct-heat" ${S.heat ? "checked" : ""}> Visa var du fått mest fisk (värmekarta)</label>` : ""}
-    <div class="list">${S.catches.map(c => { const d = new Date(c.t); return `<div class="card"><h3>${c.photo ? "📷 " : ""}${esc(c.species || "Fångst")} ${c.kg ? `· ${esc(c.kg)} kg` : ""}${c.len ? ` · ${esc(c.len)} cm` : ""}${c.released ? ` <span class="pill">C&amp;R</span>` : ""}</h3>
+    ${S.catches.length >= 3 ? Tr`<label class="row"><input type="checkbox" id="ct-heat" ${S.heat ? "checked" : ""}> Visa var du fått mest fisk (värmekarta)</label>` : ""}
+    <div class="list">${S.catches.map(c => { const d = new Date(c.t); return Tr`<div class="card"><h3>${c.photo ? "📷 " : ""}${esc(Lx(c.species) || Tr`Fångst`)} ${c.kg ? `· ${esc(c.kg)} kg` : ""}${c.len ? ` · ${esc(c.len)} cm` : ""}${c.released ? ` <span class="pill">C&amp;R</span>` : ""}</h3>
       <div class="muted">${DAYS[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1} kl ${hm(d)}${c.depth ? ` · ${esc(c.depth)}` : ""}${c.wx ? ` · ${c.wx.wind.toFixed(0)} m/s ${compass(c.wx.dir)} · ${Math.round(c.wx.p)} hPa · ${c.wx.moon.icon}` : ""}${c.lure ? " · " + esc(c.lure) : ""}</div>
-      <div class="row"><button class="btn" data-c="${c.id}">Visa</button><button class="btn" data-share="${c.id}">Dela</button></div></div>`; }).join("") || `<div class="muted">Inga fångster ännu. Välj läget Fiske och tryck på Fisk! när det nappar.</div>`}</div>
+      <div class="row"><button class="btn" data-c="${c.id}">Visa</button><button class="btn" data-share="${c.id}">Dela</button></div></div>`; }).join("") || Tr`<div class="muted">Inga fångster ännu. Välj läget Fiske och tryck på Fisk! när det nappar.</div>`}</div>
     <button class="btn pri" id="ct-past">Lägg till fångst i efterhand</button>
     <div class="muted">Dina fiskeplatser och foton sparas bara på den här enheten och delas aldrig, om du inte själv delar en fångst.</div>`, "catches");
   $("#ct-past").onclick = newPastCatch;
@@ -2821,7 +2858,7 @@ function openCatches() {
 /* ---------- säkerhetskopia: spara, skicka och slå ihop ----------
    Filen innehåller platser, rutter, turer, fångster (med foton) och båtar.
    Inläsning SLÅR IHOP: nya saker läggs till, det som redan finns (samma id) lämnas orört. */
-const LISTS = [["catches", "fångst", "fångster"], ["routes", "rutt", "rutter"], ["places", "plats", "platser"], ["tracks", "tur", "turer"], ["boats", "båt", "båtar"]];
+const LISTS = [["catches", Tr`fångst`, Tr`fångster`], ["routes", Tr`rutt`, Tr`rutter`], ["places", Tr`plats`, Tr`platser`], ["tracks", Tr`tur`, Tr`turer`], ["boats", Tr`båt`, Tr`båtar`]];
 const blobToData = b => new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.onerror = () => r(null); f.readAsDataURL(b); });
 async function makeBackup() {
   const data = {}; LISTS.forEach(([k]) => data[k] = S[k] || []);
@@ -2834,7 +2871,7 @@ const backupName = () => { const d = new Date(), p = n => String(n).padStart(2, 
 function backupSummary() {
   const n = LISTS.filter(([k]) => k !== "boats").map(([k, one, many]) => { const c = (S[k] || []).length; return c ? `${c} ${c === 1 ? one : many}` : ""; }).filter(Boolean);
   const ph = S.catches.filter(c => c.photo).length;
-  return (n.length ? n.join(", ") : "inget sparat än") + (ph ? ` · ${ph} foto${ph === 1 ? "" : "n"}` : "");
+  return (n.length ? n.join(", ") : Tr`inget sparat än`) + (ph ? ` · ${ph} ${ph === 1 ? Tr`foto` : Tr`foton`}` : "");
 }
 async function mergeBackup(o) {
   const src = o && o.kummel ? o.data : o;   // äldre kopior var hela tillståndet
@@ -2845,7 +2882,7 @@ async function mergeBackup(o) {
     for (const it of src[k] || []) {
       if (!it || !it.id) continue;
       if (have.has(it.id)) { if (k !== "boats") same++; continue; }
-      if (k === "boats" && mine.length === 1 && mine[0].id === "b1" && mine[0].name === "Min båt") { mine.length = 0; S.boatId = it.id; }   // ersätt standardbåten
+      if (k === "boats" && mine.length === 1 && mine[0].id === "b1" && mine[0].name === Tr`Min båt`) { mine.length = 0; S.boatId = it.id; }   // ersätt standardbåten
       mine.push(it); have.add(it.id); added[k] = (added[k] || 0) + 1;
       if (k === "catches" && it.photo && o.photos && o.photos[it.id]) { try { await photoPut(it.id, await (await fetch(o.photos[it.id])).blob()); ph++; } catch (e) { it.photo = 0; } }
       else if (k === "catches" && it.photo) it.photo = 0;
@@ -2856,11 +2893,11 @@ async function mergeBackup(o) {
   save(); drawPlaces(); refreshCatches(); boatChanged();
   const txt = LISTS.filter(([k]) => added[k]).map(([k, one, many]) => `${added[k]} ${added[k] === 1 ? one : many}`);
   track("backup_import", { added: Object.values(added).reduce((s, v) => s + v, 0) });
-  return (txt.length ? "La till " + txt.join(", ") : "Inget nytt att lägga till") + (ph ? ` (${ph} foto${ph === 1 ? "" : "n"})` : "") + (same ? `. ${same} fanns redan.` : ".");
+  return (txt.length ? Tr`La till ` + txt.join(", ") : Tr`Inget nytt att lägga till`) + (ph ? ` (${ph} ${ph === 1 ? Tr`foto` : Tr`foton`})` : "") + (same ? Tr`. ${same} fanns redan.` : ".");
 }
 async function backupFile() { const j = JSON.stringify(await makeBackup()); return new File([j], backupName(), { type: "application/json" }); }
 function openData() {
-  openSheet("Flytta data", `
+  openSheet(Tr`Flytta data`, Tr`
     <div class="muted">Allt du sparar finns bara på den här enheten. Så här flyttar du det, till exempel från datorn till telefonen inför turen, eller fångsterna från telefonen till datorn:</div>
     <div class="card"><h3>1. På enheten du har sakerna på</h3><div class="muted">Just nu: ${backupSummary()}</div>
       <div class="row"><button class="btn pri" id="d-send">Skicka till annan enhet</button><button class="btn" id="d-exp">Spara som fil</button></div>
@@ -2870,41 +2907,41 @@ function openData() {
       <div class="muted">Det som finns i kopian läggs till. Inget du redan har här tas bort eller skrivs över.</div></div>
     <div class="muted" id="d-msg"></div>`, "data");
   const msg = t => { const el = $("#d-msg"); if (el) el.textContent = t; };
-  $("#d-exp").onclick = async () => { msg("Skapar kopia …"); const f = await backupFile(); downloadBlob(f.name, await f.text(), "application/json"); msg(""); backupDone(); backupDot(); track("backup_export", { how: "file" }); };
+  $("#d-exp").onclick = async () => { msg(Tr`Skapar kopia …`); const f = await backupFile(); downloadBlob(f.name, await f.text(), "application/json"); msg(""); backupDone(); backupDot(); track("backup_export", { how: "file" }); };
   $("#d-send").onclick = async () => {
-    msg("Skapar kopia …"); let f = await backupFile(); msg("");
+    msg(Tr`Skapar kopia …`); let f = await backupFile(); msg("");
     if (navigator.canShare && !navigator.canShare({ files: [f] })) f = new File([await f.text()], f.name, { type: "text/plain" });   // vissa webbläsare delar bara "text"-filer
     if (navigator.canShare && navigator.canShare({ files: [f] })) {
-      try { await navigator.share({ files: [f], title: "Kummel-kopia", text: "Öppna Kummel på den andra enheten: Meny → Flytta och säkerhetskopiera → Läs in kopia." }); track("backup_export", { how: "share" }); backupDone(); backupDot(); } catch (e) {}
-    } else { downloadBlob(f.name, await f.text(), "application/json"); toast("Filen är sparad. Flytta den till den andra enheten och läs in den där.", 4000); backupDone(); backupDot(); track("backup_export", { how: "file" }); }
+      try { await navigator.share({ files: [f], title: "Kummel-kopia", text: Tr`Öppna Kummel på den andra enheten: Meny → Flytta och säkerhetskopiera → Läs in kopia.` }); track("backup_export", { how: "share" }); backupDone(); backupDot(); } catch (e) {}
+    } else { downloadBlob(f.name, await f.text(), "application/json"); toast(Tr`Filen är sparad. Flytta den till den andra enheten och läs in den där.`, 4000); backupDone(); backupDot(); track("backup_export", { how: "file" }); }
   };
   $("#d-imp").onchange = async e => {
     const file = e.target.files[0]; if (!file) return;
-    try { msg("Läser in …"); const r = await mergeBackup(JSON.parse(await file.text())); msg(r); toast(r, 4000); }
-    catch (err) { msg(""); toast("Filen kunde inte läsas. Välj en kopia som är gjord i Kummel."); }
+    try { msg(Tr`Läser in …`); const r = await mergeBackup(JSON.parse(await file.text())); msg(r); toast(r, 4000); }
+    catch (err) { msg(""); toast(Tr`Filen kunde inte läsas. Välj en kopia som är gjord i Kummel.`); }
     e.target.value = "";
   };
 }
 function shareApp() {
   track("share_app");
-  const d = { title: "Kummel", text: "Kummel – sjökort, sjöväder och fiske för Åland, Åboland och Nyland. Gratis i webbläsaren:", url: SITE_URL };
+  const d = { title: "Kummel", text: Tr`Kummel – sjökort, sjöväder och fiske för Åland, Åboland och Nyland. Gratis i webbläsaren:`, url: SITE_URL };
   if (navigator.share) navigator.share(d).catch(() => {});
-  else { try { navigator.clipboard.writeText(SITE_URL); toast("Adressen är kopierad: " + SITE, 2500); } catch (e) { toast(SITE, 3000); } }
+  else { try { navigator.clipboard.writeText(SITE_URL); toast(Tr`Adressen är kopierad: ` + SITE, 2500); } catch (e) { toast(SITE, 3000); } }
 }
 function openAbout() {
-  openSheet("Om Kummel", `
+  openSheet(Tr`Om Kummel`, Tr`
     <div class="home-line">${ALAND_FLAG}<div><b>Kummel</b> är sjökortet för Åland, Åbolands skärgård och Nylands kust: djup, sjömärken, grynnor, sjöväder, rutter med ankomsttid och fiske. Byggt av båtfolk för de egna vattnen: från Ålands hav i väster, genom hela Åland och Åbolands skärgård med Åbo och Nådendal, längs Nylands kust förbi Hangö och Helsingfors till Pellinge utanför Borgå i öster.</div></div>
     <div class="card"><h3>${SITE}</h3><div class="muted">Här finns Kummel alltid. Tipsa gärna båt- och fiskevänner.</div>
       <div class="row"><button class="btn pri" id="ab-share">Dela Kummel</button><a class="btn" href="/om/" target="_blank" rel="noopener">Om Kummel på webben</a></div></div>
     <div class="card"><h3>Officiella källor</h3><div class="muted">Djup och sjökort: Traficom. Farleder, sjömärken, fyrar och vattentrafikmärken: Väylävirasto. Stenar, grund och flygbild: Lantmäteriverket. Vattenstånd och vattentemperatur: Meteorologiska institutet. Fartyg (AIS): Digitraffic. Väderprognos: Open-Meteo. Bakgrundskarta: OpenStreetMap. Sjökortet uppdateras varje vecka.</div></div>
     <div class="card"><h3>Kontakt</h3><div class="muted">Frågor, idéer eller fel i kartan? Mejla <a href="mailto:${CONTACT}">${CONTACT}</a>. Skriv gärna var felet finns, så rättar vi eller rapporterar vidare till rätt myndighet.</div></div>
-    <div class="card"><h3>Dina fiskeplatser är dina</h3><div class="muted">Platser, rutter, fångster och foton sparas bara i den här enheten. Kummel har ingen databas och inga konton, så ingen annan kan se dem, inte heller vi som gör appen. Det enda som lämnar telefonen är det du själv delar, och när du delar en fångst väljer du om platsen ska synas. För att hämta väder, vattenstånd och kartor skickas kartans position till respektive tjänst, men aldrig till oss. ${"Kummel räknar antal besök utan kakor och utan personuppgifter (Cloudflare Web Analytics). "}${GA_ID ? "Om du tillåter det räknas också anonymt vilka funktioner som används (Google Analytics), utan positioner eller fångster." : ""}</div>
-      ${GA_ID ? `<label class="row"><input type="checkbox" id="ab-stats" ${S.stats === 1 ? "checked" : ""}> Tillåt anonym statistik</label>` : ""}</div>
+    <div class="card"><h3>Dina fiskeplatser är dina</h3><div class="muted">Platser, rutter, fångster och foton sparas bara i den här enheten. Kummel har ingen databas och inga konton, så ingen annan kan se dem, inte heller vi som gör appen. Det enda som lämnar telefonen är det du själv delar, och när du delar en fångst väljer du om platsen ska synas. För att hämta väder, vattenstånd och kartor skickas kartans position till respektive tjänst, men aldrig till oss. ${Tr`Kummel räknar antal besök utan kakor och utan personuppgifter (Cloudflare Web Analytics). `}${GA_ID ? Tr`Om du tillåter det räknas också anonymt vilka funktioner som används (Google Analytics), utan positioner eller fångster.` : ""}</div>
+      ${GA_ID ? Tr`<label class="row"><input type="checkbox" id="ab-stats" ${S.stats === 1 ? "checked" : ""}> Tillåt anonym statistik</label>` : ""}</div>
     <div class="card"><h3>Tips</h3><div class="muted">Håll fingret på kartan för att spara en plats. Vrid kartan med två fingrar. Tryck på positionsknappen två gånger för kurs upp. Ställ in båtens djupgående under Meny → Båtar, så markeras grunt vatten för just din båt. Lägg till Kummel på hemskärmen så öppnas den som en app.</div></div>
     <div class="disclaimer">Kummel är inte ett certifierat navigationshjälpmedel. Ruttförslag och varningar är hjälpmedel: föraren ansvarar alltid för navigeringen. Sjökortsdata från Traficom (CC BY 4.0) är inte avsedd för navigering.</div>
     <div class="maker" style="flex-direction:column;gap:2px"><div>Kummel är en produkt från <b>${MAKER}</b>, ${MAKER_TOWN}</div><div>FO-nummer ${MAKER_ID} · version 0.2</div></div>`, "about");
   $("#ab-share").onclick = shareApp;
-  const st = $("#ab-stats"); if (st) st.onchange = () => { setStats(st.checked); toast(st.checked ? "Tack! Statistiken är på." : "Statistiken är avstängd.", 2000); };
+  const st = $("#ab-stats"); if (st) st.onchange = () => { setStats(st.checked); toast(st.checked ? Tr`Tack! Statistiken är på.` : Tr`Statistiken är avstängd.`, 2000); };
 }
 
 /* ---------- ankarlarm ----------
@@ -2949,7 +2986,7 @@ function anchorBar() {
   el.classList.toggle("hidden", !S.anchor);
   if (!S.anchor) return;
   el.classList.toggle("bad", anchorAlarmOn);
-  el.innerHTML = anchorDist == null ? `⚓ Ankarlarm · väntar på GPS` : `⚓ ${Math.round(anchorDist)} m av ${S.anchor.r} m · max ${Math.round(anchorMax)} m`;
+  el.innerHTML = anchorDist == null ? Tr`⚓ Ankarlarm · väntar på GPS` : Tr`⚓ ${Math.round(anchorDist)} m av ${S.anchor.r} m · max ${Math.round(anchorMax)} m`;
   if (sheetView === "anchor") { const d = $("#an-now"); if (d) d.textContent = anchorDist == null ? "–" : Math.round(anchorDist) + " m"; const m = $("#an-max"); if (m) m.textContent = Math.round(anchorMax) + " m"; }
 }
 function anchorCheck(pos) {
@@ -2957,14 +2994,14 @@ function anchorCheck(pos) {
   anchorDist = distNm(S.anchor, pos) * NM;
   anchorMax = Math.max(anchorMax, anchorDist);
   const slack = Math.min(gps && gps.acc || 10, 30) * .5;   // osäker GPS ska inte ge falsklarm
-  if (anchorDist - slack > S.anchor.r) { if (++anchorOut >= 3 && !anchorAlarmOn) anchorAlarm(true, `Båten är ${Math.round(anchorDist)} m från ankaret (gräns ${S.anchor.r} m).`); }
+  if (anchorDist - slack > S.anchor.r) { if (++anchorOut >= 3 && !anchorAlarmOn) anchorAlarm(true, Tr`Båten är ${Math.round(anchorDist)} m från ankaret (gräns ${S.anchor.r} m).`); }
   else { anchorOut = 0; if (anchorAlarmOn && anchorDist < S.anchor.r) anchorAlarm(false); }
   anchorBar();
 }
 setInterval(() => {   // GPS-vakt
   if (!S.anchor || anchorAlarmOn) return;
   const age = lastFix ? Date.now() - lastFix.t : Infinity;
-  if (age > 60000 && watchId !== null) anchorAlarm(true, "Ingen GPS-position på över en minut. Kontrollera båten.");
+  if (age > 60000 && watchId !== null) anchorAlarm(true, Tr`Ingen GPS-position på över en minut. Kontrollera båten.`);
 }, 10000);
 function setAnchor(at) {
   track("anchor_set");
@@ -2972,17 +3009,17 @@ function setAnchor(at) {
   S.anchor = { lat: at.lat, lng: at.lng, r: +($("#an-r") ? $("#an-r").value : 40), t: Date.now() }; save();
   anchorOut = 0; anchorMax = 0; anchorDist = gps ? distNm(S.anchor, gps) * NM : null;
   anchorDraw(); anchorBar(); openAnchor();
-  toast("Ankarlarmet är på. Håll appen öppen och skärmen tänd.", 3500);
+  toast(Tr`Ankarlarmet är på. Håll appen öppen och skärmen tänd.`, 3500);
 }
 function openAnchor() {
   const r = S.anchor ? S.anchor.r : 40;
-  openSheet("Ankarlarm", S.anchor ? `
+  openSheet(Tr`Ankarlarm`, S.anchor ? Tr`
     <div class="grid2"><div class="card"><div class="muted">Avstånd nu</div><b id="an-now" style="font-size:22px">${anchorDist == null ? "–" : Math.round(anchorDist) + " m"}</b></div>
       <div class="card"><div class="muted">Längst bort</div><b id="an-max" style="font-size:22px">${Math.round(anchorMax)} m</b></div></div>
     <label class="f">Larmgräns: <b id="an-rv">${r} m</b><input type="range" id="an-r" min="15" max="250" step="5" value="${r}"></label>
     <div class="row"><button class="btn" id="an-show">Visa på kartan</button><button class="btn" id="an-test">Testa larmet</button><button class="btn warn" id="an-off">Ta upp ankaret</button></div>
     <div class="callout"><b>Viktigt:</b> larmet fungerar bara när Kummel är öppen och skärmen är tänd. Låser du telefonen eller byter app kan larmet inte gå. Sätt telefonen på laddning och stäng av ljudlöst läge, annars hörs inte larmet.</div>`
-  : `
+  : Tr`
     <div>Sätt ankarpunkten när ankaret ligger på botten. Om båten hamnar utanför cirkeln, eller om GPS:en tystnar, larmar telefonen med ljud och vibration.</div>
     <label class="f">Larmgräns: <b id="an-rv">${r} m</b><input type="range" id="an-r" min="15" max="250" step="5" value="${r}"></label>
     <div class="muted">Tumregel: utsläppt lina eller kätting plus båtens längd, och lite marginal.</div>
@@ -2995,17 +3032,17 @@ function openAnchor() {
   if (S.anchor) {
     $("#an-show").onclick = () => map.easeTo({ center: lnglat(S.anchor), zoom: Math.max(map.getZoom(), 16) });
     $("#an-test").onclick = () => { unlockAudio(); beep(); setTimeout(beep, 600); try { navigator.vibrate && navigator.vibrate([400, 200, 400]); } catch (e) {} };
-    $("#an-off").onclick = () => { S.anchor = null; save(); anchorAlarm(false); anchorDist = null; anchorDraw(); anchorBar(); closeSheet(); toast("Ankarlarmet är avstängt", 1500); };
+    $("#an-off").onclick = () => { S.anchor = null; save(); anchorAlarm(false); anchorDist = null; anchorDraw(); anchorBar(); closeSheet(); toast(Tr`Ankarlarmet är avstängt`, 1500); };
   } else {
     $("#an-here").onclick = () => {
       if (gps) return setAnchor(gps);
-      startGps(); toast("Väntar på GPS-position …");
-      const t0 = Date.now(), iv = setInterval(() => { if (gps) { clearInterval(iv); setAnchor(gps); } else if (Date.now() - t0 > 30000) { clearInterval(iv); toast("Ingen GPS-position. Prova igen eller sätt ankaret vid korset.", 4000); } }, 500);
+      startGps(); toast(Tr`Väntar på GPS-position …`);
+      const t0 = Date.now(), iv = setInterval(() => { if (gps) { clearInterval(iv); setAnchor(gps); } else if (Date.now() - t0 > 30000) { clearInterval(iv); toast(Tr`Ingen GPS-position. Prova igen eller sätt ankaret vid korset.`, 4000); } }, 500);
     };
     $("#an-cross").onclick = () => setAnchor(ll(map.getCenter()));
   }
 }
-$("#aa-mute").onclick = () => { unlockAudio(); anchorMuteUntil = Date.now() + 60000; toast("Tyst i en minut. Larmet ljuder igen om båten fortfarande är utanför.", 3000); };
+$("#aa-mute").onclick = () => { unlockAudio(); anchorMuteUntil = Date.now() + 60000; toast(Tr`Tyst i en minut. Larmet ljuder igen om båten fortfarande är utanför.`, 3000); };
 $("#aa-off").onclick = () => { anchorAlarm(false); anchorOut = 0; anchorMuteUntil = 0; openAnchor(); };
 $("#anchorbar").onclick = openAnchor;
 
@@ -3049,7 +3086,7 @@ async function downloadOffline(withChart) {
       bytes = 0;
       for (let i = 0; i < OFF_BIG.length; i++) {
         const url = abs(OFF_BIG[i]);
-        say(["Laddar ner sjökortet …", "Laddar ner stenar och grund …", "Laddar ner djupkurvor och branter …"][i]);
+        say([Tr`Laddar ner sjökortet …`, Tr`Laddar ner stenar och grund …`, Tr`Laddar ner djupkurvor och branter …`][i]);
         const res = await fetch(url, { cache: "no-store" });
         if (!res.ok) { if (i === 0) throw new Error("Kunde inte hämta sjökortet"); continue; }
         const total = +res.headers.get("Content-Length") || 0, rd = res.body.getReader(), parts = []; let got = 0;
@@ -3062,7 +3099,7 @@ async function downloadOffline(withChart) {
       for (const p of OFF_SMALL) { try { const r = await fetch(abs(p), { cache: "no-store" }); if (r.ok) { const b = await r.clone().blob(); bytes += b.size; await c.put(abs(p), r); } } catch (e) {} }
     }
     try { const tj = "https://tiles.openfreemap.org/planet", r = await fetch(tj); if (r.ok) await c.put(tj, r); } catch (e) {}
-    say("Laddar ner landkartan för området …");
+    say(Tr`Laddar ner landkartan för området …`);
     const tpl = await ofmTemplate(), tiles = landTiles(viewBox());
     let done = 0, i = 0;
     const work = async () => {
@@ -3079,10 +3116,10 @@ async function downloadOffline(withChart) {
     areas.push(viewBox());
     S.offline = { date: Date.now(), bytes, etag, areas }; save();
     if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage("offline-changed");
-    toast("Offlinekartan är sparad", 2000);
+    toast(Tr`Offlinekartan är sparad`, 2000);
     track("offline_saved", { mb: Math.round(bytes / 1048576), chart: withChart ? 1 : 0 });
   } catch (e) {
-    toast("Nedladdningen misslyckades: " + (e.message || e), 4000);
+    toast(Tr`Nedladdningen misslyckades: ` + (e.message || e), 4000);
   } finally { offBusy = false; if (sheetView === "offline") openOffline(); }
 }
 // sjökortet flyttade till kartor.kummel.app och utökades: gamla offlinefiler tas bort och användaren ombeds ladda ner på nytt
@@ -3094,29 +3131,29 @@ async function downloadOffline(withChart) {
     if (!old.length) return;
     for (const k of old) await c.delete(k);
     S.offline.bytes = 0; S.offline.needsChart = 1; save();
-    setTimeout(() => toast("Sjökortet täcker nu även Åboland och Nyland. Ladda ner offlinekartan på nytt under Meny → Offlinekarta.", 6000), 4000);
+    setTimeout(() => toast(Tr`Sjökortet täcker nu även Åboland och Nyland. Ladda ner offlinekartan på nytt under Meny → Offlinekarta.`, 6000), 4000);
   } catch (e) {}
 })();
 async function deleteOffline() {
   try { await caches.delete(OFFLINE); } catch (e) {}
   S.offline = null; save();
   if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage("offline-changed");
-  toast("Offlinekartan är borttagen", 1500); openOffline();
+  toast(Tr`Offlinekartan är borttagen`, 1500); openOffline();
 }
 async function openOffline() {
   const o = S.offline, mb = n => (n / 1048576).toFixed(0) + " MB";
   const z = map.getZoom(), n = landTiles(viewBox()).length, tooBig = n > 6000;
   let est = "";
-  try { const e = await navigator.storage.estimate(); est = `Använt för Kummel: ${mb(e.usage)}.`; } catch (e) {}
-  openSheet("Offlinekarta", `
+  try { const e = await navigator.storage.estimate(); est = Tr`Använt för Kummel: ${mb(e.usage)}.`; } catch (e) {}
+  openSheet(Tr`Offlinekarta`, Tr`
     <div>Spara sjökortet så att kartan fungerar utan täckning ute i skärgården. Sjökortet (djup, sjömärken, stenar och grund) sparas för hela området från Åland till Borgå, cirka 160 MB. Landkartan sparas i detalj för området du ser nu. Ladda ner över wifi.</div>
-    ${o ? `<div class="card"><h3>Sparad ${new Date(o.date).toLocaleDateString("sv-FI")}</h3><div class="muted">${mb(o.bytes)} · ${o.areas.length} område${o.areas.length === 1 ? "" : "n"} med detaljerad landkarta</div></div>` : ""}
-    ${tooBig ? `<div class="callout">Zooma in lite för att spara landkartan för området. Det du ser är för stort (${n} kartbitar).</div>` : ""}
+    ${o ? Tr`<div class="card"><h3>Sparad ${new Date(o.date).toLocaleDateString(LOC)}</h3><div class="muted">${mb(o.bytes)} · ${o.areas.length} ${o.areas.length === 1 ? Tr`område` : Tr`områden`} med detaljerad landkarta</div></div>` : ""}
+    ${tooBig ? Tr`<div class="callout">Zooma in lite för att spara landkartan för området. Det du ser är för stort (${n} kartbitar).</div>` : ""}
     <progress id="off-prog" max="1" value="0" hidden style="width:100%"></progress>
-    <div class="muted" id="off-msg">${offBusy ? "Laddar ner …" : ""}</div>
+    <div class="muted" id="off-msg">${offBusy ? Tr`Laddar ner …` : ""}</div>
     <div class="row">
-      ${o ? `<button class="btn pri" id="off-add" ${tooBig ? "disabled" : ""}>Spara området du ser</button><button class="btn" id="off-upd">Uppdatera sjökortet</button><button class="btn warn" id="off-del">Ta bort</button>`
-          : `<button class="btn pri" id="off-dl" ${tooBig ? "disabled" : ""}>Ladda ner (ca 80–120 MB)</button>`}
+      ${o ? Tr`<button class="btn pri" id="off-add" ${tooBig ? "disabled" : ""}>Spara området du ser</button><button class="btn" id="off-upd">Uppdatera sjökortet</button><button class="btn warn" id="off-del">Ta bort</button>`
+          : Tr`<button class="btn pri" id="off-dl" ${tooBig ? "disabled" : ""}>Ladda ner (ca 80–120 MB)</button>`}
     </div>
     <div class="muted">Gör det helst på wifi. Väder, AIS och flygbild kräver fortfarande nät. På iPhone fungerar det bäst när Kummel ligger på hemskärmen, annars kan Safari rensa sparad data om appen inte används på ett tag. ${est}</div>`, "offline");
   if (o) { $("#off-add").onclick = () => downloadOffline(false); $("#off-upd").onclick = () => downloadOffline(true); $("#off-del").onclick = deleteOffline; }
@@ -3124,7 +3161,7 @@ async function openOffline() {
 }
 /* finns ny sjökortsdata än den sparade? (en gång per start, bara med nät) */
 if (S.offline && navigator.onLine) fetch(abs(OFF_BIG[0]), { method: "HEAD", cache: "no-store" }).then(r => {
-  const et = r.headers.get("ETag"); if (et && S.offline.etag && et !== S.offline.etag) toast("Nytt sjökort finns. Uppdatera offlinekartan under Meny → Offlinekarta.", 5000);
+  const et = r.headers.get("ETag"); if (et && S.offline.etag && et !== S.offline.etag) toast(Tr`Nytt sjökort finns. Uppdatera offlinekartan under Meny → Offlinekarta.`, 5000);
 }).catch(() => {});
 
 /* ---------- dela rutt som länk ----------
@@ -3141,30 +3178,30 @@ function unpackRoute(code) {
   const o = JSON.parse(s), pts = []; let la = 0, lo = 0;
   for (let k = 0; k + 1 < o.p.length; k += 2) { la += o.p[k]; lo += o.p[k + 1]; pts.push([+(la / 1e5).toFixed(5), +(lo / 1e5).toFixed(5)]); }
   if (pts.length < 2) throw new Error("för få punkter");
-  return { id: o.i || uid(), name: String(o.n || "Delad rutt").slice(0, 80), pts };
+  return { id: o.i || uid(), name: String(o.n || Tr`Delad rutt`).slice(0, 80), pts };
 }
 async function shareRoute(r) {
   const url = SITE_URL + "#rutt=" + packRoute(r), nm = routeStats(r.pts.map(p => ({ lat: p[0], lng: p[1] }))).nm.toFixed(1);
-  const text = `Rutt i Kummel: ${r.name} (${nm} nm). Öppna länken så ser du den på sjökortet:`;
+  const text = Tr`Rutt i Kummel: ${r.name} (${nm} nm). Öppna länken så ser du den på sjökortet:`;
   track("route_shared", { points: r.pts.length });
   if (navigator.share) { try { await navigator.share({ title: r.name, text, url }); } catch (e) {} }
-  else { try { await navigator.clipboard.writeText(text + " " + url); toast("Länken är kopierad. Klistra in den i ett meddelande.", 3500); } catch (e) { prompt("Kopiera länken:", url); } }
+  else { try { await navigator.clipboard.writeText(text + " " + url); toast(Tr`Länken är kopierad. Klistra in den i ett meddelande.`, 3500); } catch (e) { prompt(Tr`Kopiera länken:`, url); } }
 }
 /* öppnas appen med #rutt=… visas rutten, och man kan spara den */
 function openSharedRoute() {
   const m = /#rutt=([A-Za-z0-9_-]+)/.exec(location.hash); if (!m) return false;
   history.replaceState(null, "", location.pathname + location.search);   // länken ska inte ligga kvar i adressfältet
-  let r; try { r = unpackRoute(m[1]); } catch (e) { toast("Länken till rutten verkar vara trasig."); return false; }
+  let r; try { r = unpackRoute(m[1]); } catch (e) { toast(Tr`Länken till rutten verkar vara trasig.`); return false; }
   const have = S.routes.find(q => q.id === r.id), ll2 = r.pts.map(p => ({ lat: p[0], lng: p[1] })), nm = routeStats(ll2).nm.toFixed(1);
   const show = () => { leaveFollow(); setData("shown", lineFC(r.pts.map(p => [p[1], p[0]]))); const h = map.getContainer().clientHeight; map.fitBounds(boundsOf(r.pts), { padding: { top: 90, left: 40, right: 80, bottom: Math.round(h * .45) }, duration: 0 }); };
   if (mapReady) show(); else map.once("style.load", show);
   track("route_received");
-  openSheet("Delad rutt", `
+  openSheet(Tr`Delad rutt`, Tr`
     <div class="card"><h3>${esc(r.name)}</h3><div class="muted">${nm} nm · ${r.pts.length} punkter</div></div>
-    ${have ? `<div class="muted">Du har redan den här rutten sparad.</div>` : `<div class="muted">Någon har delat en rutt med dig. Spara den så finns den under Meny → Sparade rutter.</div>`}
+    ${have ? Tr`<div class="muted">Du har redan den här rutten sparad.</div>` : Tr`<div class="muted">Någon har delat en rutt med dig. Spara den så finns den under Meny → Sparade rutter.</div>`}
     <div class="row">${have ? "" : `<button class="btn pri" id="sr-save">Spara rutten</button>`}<button class="btn" id="sr-open">Öppna i ruttplaneringen</button><button class="btn" id="sr-close">Stäng</button></div>
     <div class="muted">Kontrollera alltid rutten mot sjökortet och dagens förhållanden innan du kör den.</div>`, "sharedroute");
-  const sv = $("#sr-save"); if (sv) sv.onclick = () => { S.routes.unshift({ ...r, created: Date.now(), from: "delad" }); save(); toast(`Rutten "${r.name}" är sparad`); closeSheet(); setData("shown", EMPTY); };
+  const sv = $("#sr-save"); if (sv) sv.onclick = () => { S.routes.unshift({ ...r, created: Date.now(), from: "delad" }); save(); toast(Tr`Rutten "${r.name}" är sparad`); closeSheet(); setData("shown", EMPTY); };
   $("#sr-open").onclick = () => { setData("shown", EMPTY); closeSheet(); startPlanning(ll2); if (S.routes.find(q => q.id === r.id)) routeId = r.id; routeName = r.name; renderRoute(); };
   $("#sr-close").onclick = () => { setData("shown", EMPTY); closeSheet(); };
   return true;
@@ -3176,12 +3213,12 @@ window.addEventListener("hashchange", () => { if (/#rutt=/.test(location.hash) &
    på Åland), plus prognos för platsen. Sjökortets djup visas som vanligt; vattenståndet visas och
    räknas in i grundvarningar och djuprutan. */
 const WL_STATIONS = [
-  { id: 134252, name: "Degerby, Föglö", lat: 60.0317, lng: 20.3848 },
-  { id: 134225, name: "Ruissalo, Åbo", lat: 60.4285, lng: 22.1009 },
-  { id: 134253, name: "Hangö", lat: 59.8226, lng: 22.9766 },
-  { id: 134224, name: "Raumo", lat: 61.1335, lng: 21.4255 },
-  { id: 132310, name: "Helsingfors, Brunnsparken", lat: 60.1536, lng: 24.9563 },
-  { id: 100669, name: "Borgå, Emsalö", lat: 60.2048, lng: 25.6253 }
+  { id: 134252, name: Tr`Degerby, Föglö`, lat: 60.0317, lng: 20.3848 },
+  { id: 134225, name: Tr`Ruissalo, Åbo`, lat: 60.4285, lng: 22.1009 },
+  { id: 134253, name: Tr`Hangö`, lat: 59.8226, lng: 22.9766 },
+  { id: 134224, name: Tr`Raumo`, lat: 61.1335, lng: 21.4255 },
+  { id: 132310, name: Tr`Helsingfors, Brunnsparken`, lat: 60.1536, lng: 24.9563 },
+  { id: 100669, name: Tr`Borgå, Emsalö`, lat: 60.2048, lng: 25.6253 }
 ];
 let wlKey = "";
 async function fmiSeries(url) {
@@ -3222,7 +3259,7 @@ function renderWl() {
   el.classList.toggle("hidden", !feat("wlevel") || !wl);
   if (!wl) return;
   const tr = wl.trend == null ? "" : wl.trend > 1.5 ? " ↑" : wl.trend < -1.5 ? " ↓" : " →";
-  el.innerHTML = `Vattenstånd <b>${fmtCm(wl.cm)}</b>${tr}`;
+  el.innerHTML = Tr`Vattenstånd <b>${fmtCm(wl.cm)}</b>${tr}`;
   el.classList.toggle("low", wl.cm <= -20); el.classList.toggle("high", wl.cm >= 30);
 }
 function wlChart() {
@@ -3243,18 +3280,18 @@ function wlChart() {
     ${ticks.join("")}</svg>`;
 }
 function openWaterLevel() {
-  if (!wl) { openSheet("Vattenstånd", `<div class="muted">Hämtar vattenstånd …</div>`, "wlevel"); loadWaterLevel(true); return; }
+  if (!wl) { openSheet(Tr`Vattenstånd`, Tr`<div class="muted">Hämtar vattenstånd …</div>`, "wlevel"); loadWaterLevel(true); return; }
   const need = boatNeed(), eff = needDepth(), b = boat();
   const minF = wl.fc.length ? wl.fc.reduce((m, p) => p.v < m.v ? p : m) : null, maxF = wl.fc.length ? wl.fc.reduce((m, p) => p.v > m.v ? p : m) : null;
-  const when = t => { const d = new Date(t); return `${d.toDateString() === new Date().toDateString() ? "i dag" : DAYS[d.getDay()]} ${pad(d.getHours())}:00`; };
-  openSheet("Vattenstånd", `
-    <div class="wl-big"><b>${fmtCm(wl.cm)}</b><span>${wl.cm < -3 ? "under" : wl.cm > 3 ? "över" : "nära"} medelvattenstånd${wl.trend != null ? ` · ${wl.trend > 1.5 ? "stiger" : wl.trend < -1.5 ? "sjunker" : "stabilt"}` : ""}</span></div>
-    <div class="muted">Uppmätt i ${esc(wl.station)}${wl.km > 15 ? ` (${Math.round(wl.km)} km bort)` : ""}, kl ${hm(new Date(wl.t))}. Streckad linje är prognos.</div>
+  const when = t => { const d = new Date(t); return `${d.toDateString() === new Date().toDateString() ? Tr`i dag` : DAYS[d.getDay()]} ${pad(d.getHours())}:00`; };
+  openSheet(Tr`Vattenstånd`, Tr`
+    <div class="wl-big"><b>${fmtCm(wl.cm)}</b><span>${wl.cm < -3 ? Tr`under medelvattenstånd` : wl.cm > 3 ? Tr`över medelvattenstånd` : Tr`nära medelvattenstånd`}${wl.trend != null ? ` · ${wl.trend > 1.5 ? Tr`stiger` : wl.trend < -1.5 ? Tr`sjunker` : Tr`stabilt`}` : ""}</span></div>
+    <div class="muted">Uppmätt i ${esc(wl.station)}${wl.km > 15 ? Tr` (${Math.round(wl.km)} km bort)` : ""}, kl ${hm(new Date(wl.t))}. Streckad linje är prognos.</div>
     ${wlChart()}
-    ${minF ? `<div class="muted">Närmaste dygnen: lägst ${fmtCm(minF.v)} ${when(minF.t)}, högst ${fmtCm(maxF.v)} ${when(maxF.t)}.</div>` : ""}
-    <div class="card"><h3>Vad betyder det?</h3><div class="muted">Djupen på sjökortet gäller medelvattenstånd. ${wl.cm < -3 ? `Just nu står vattnet ${Math.abs(wl.cm)} cm lägre, så alla grund är ${Math.abs(wl.cm)} cm grundare än kartan visar.` : wl.cm > 3 ? `Just nu står vattnet ${wl.cm} cm högre, så det är ${wl.cm} cm djupare än kartan visar.` : "Just nu stämmer kartans djup ganska väl."}</div></div>
+    ${minF ? Tr`<div class="muted">Närmaste dygnen: lägst ${fmtCm(minF.v)} ${when(minF.t)}, högst ${fmtCm(maxF.v)} ${when(maxF.t)}.</div>` : ""}
+    <div class="card"><h3>Vad betyder det?</h3><div class="muted">Djupen på sjökortet gäller medelvattenstånd. ${wl.cm < -3 ? Tr`Just nu står vattnet ${Math.abs(wl.cm)} cm lägre, så alla grund är ${Math.abs(wl.cm)} cm grundare än kartan visar.` : wl.cm > 3 ? Tr`Just nu står vattnet ${wl.cm} cm högre, så det är ${wl.cm} cm djupare än kartan visar.` : Tr`Just nu stämmer kartans djup ganska väl.`}</div></div>
     <label class="row"><input type="checkbox" id="wl-adj" ${S.wlAdjust !== false ? "checked" : ""}> Räkna med vattenståndet i grundvarningar och röd "för grunt"-färg</label>
-    <div class="muted">${esc(b.name)} behöver ${need.toFixed(1).replace(".", ",")} m. ${S.wlAdjust !== false && Math.abs(wl.cm) >= 3 ? `Med dagens vattenstånd markeras allt grundare än <b>${eff.toFixed(1).replace(".", ",")} m på kartan</b>.` : ""}</div>
+    <div class="muted">${esc(b.name)} behöver ${need.toFixed(1).replace(".", DEC)} m. ${S.wlAdjust !== false && Math.abs(wl.cm) >= 3 ? Tr`Med dagens vattenstånd markeras allt grundare än <b>${eff.toFixed(1).replace(".", DEC)} m på kartan</b>.` : ""}</div>
     <div class="disclaimer">Källa: Meteorologiska institutet. Vattenståndet kan variera lokalt, särskilt i trånga vikar och vid kraftig vind.</div>`, "wlevel");
   $("#wl-adj").onchange = e => { S.wlAdjust = e.target.checked; save(); boatChanged(); openWaterLevel(); };
 }
@@ -3363,50 +3400,50 @@ function openLegend() {
   const sw = (c, b) => `<span class="lg-ic"><i style="background:${c};${b ? `border:${b}` : ""}"></i></span>`;
   const ln = (c, dash, w = 3) => `<span class="lg-ic"><svg viewBox="0 0 36 12"><line x1="2" y1="6" x2="34" y2="6" stroke="${c}" stroke-width="${w}" ${dash ? `stroke-dasharray="${dash}"` : ""} stroke-linecap="round"/></svg></span>`;
   const row = (i, t, d) => `<div class="lg-row">${i}<div><b>${t}</b>${d ? `<div class="muted">${d}</div>` : ""}</div></div>`;
-  const need = needDepth().toFixed(1).replace(".", ",");
-  openSheet("Teckenförklaring", `
+  const need = needDepth().toFixed(1).replace(".", DEC);
+  openSheet(Tr`Teckenförklaring`, Tr`
     <div class="card"><h3>Sjömärken</h3>
-      ${row(ic("aid-port"), "Babordsmärke (rött)", "Lämnas till vänster (babord) när du följer farledens riktning, som i regel går från havet in mot land eller hamn. Åt andra hållet: till höger.")}
-      ${row(ic("aid-stbd"), "Styrbordsmärke (grönt)", "Lämnas till höger (styrbord) i farledens riktning, alltså på väg in mot land.")}
-      ${row(ic("aid-n"), "Nordprick", "Säkert vatten norr om märket.")}
-      ${row(ic("aid-s"), "Sydprick", "Säkert vatten söder om märket.")}
-      ${row(ic("aid-e"), "Ostprick", "Säkert vatten öster om märket.")}
-      ${row(ic("aid-w"), "Västprick", "Säkert vatten väster om märket.")}
-      ${row(ic("aid-iso"), "Grundmärke", "En enstaka fara precis vid märket. Håll avstånd runt om.")}
-      ${row(ic("aid-safe"), "Mittledsmärke", "Säkert vatten runt märket, ofta mitt i en farled.")}
-      ${row(ic("aid-spec"), "Specialmärke (gult)", "Till exempel kabel, rörledning, gräns eller område.")}
-      ${row(ic("light"), "Fyr eller ljus", "Tryck för att se ljusets karaktär.")}
-      ${row(ln(P.yellow, "", 5) + "", "Ljussektorer", "Vit: den säkra sektorn, oftast farleden. Röd eller grön: utanför den säkra sektorn.")}
-      ${row(ic("fault"), "Fel på sjömärke", "Ett märke i närheten är ur funktion eller borta enligt Väylävirasto.")}
-      ${row(ic("sign"), "Vattentrafikmärke", "Förbud, fartgräns eller anvisning. Tryck på märket för mer.")}
+      ${row(ic("aid-port"), Tr`Babordsmärke (rött)`, Tr`Lämnas till vänster (babord) när du följer farledens riktning, som i regel går från havet in mot land eller hamn. Åt andra hållet: till höger.`)}
+      ${row(ic("aid-stbd"), Tr`Styrbordsmärke (grönt)`, Tr`Lämnas till höger (styrbord) i farledens riktning, alltså på väg in mot land.`)}
+      ${row(ic("aid-n"), Tr`Nordprick`, Tr`Säkert vatten norr om märket.`)}
+      ${row(ic("aid-s"), Tr`Sydprick`, Tr`Säkert vatten söder om märket.`)}
+      ${row(ic("aid-e"), Tr`Ostprick`, Tr`Säkert vatten öster om märket.`)}
+      ${row(ic("aid-w"), Tr`Västprick`, Tr`Säkert vatten väster om märket.`)}
+      ${row(ic("aid-iso"), Tr`Grundmärke`, Tr`En enstaka fara precis vid märket. Håll avstånd runt om.`)}
+      ${row(ic("aid-safe"), Tr`Mittledsmärke`, Tr`Säkert vatten runt märket, ofta mitt i en farled.`)}
+      ${row(ic("aid-spec"), Tr`Specialmärke (gult)`, Tr`Till exempel kabel, rörledning, gräns eller område.`)}
+      ${row(ic("light"), Tr`Fyr eller ljus`, Tr`Tryck för att se ljusets karaktär.`)}
+      ${row(ln(P.yellow, "", 5) + "", Tr`Ljussektorer`, Tr`Vit: den säkra sektorn, oftast farleden. Röd eller grön: utanför den säkra sektorn.`)}
+      ${row(ic("fault"), Tr`Fel på sjömärke`, Tr`Ett märke i närheten är ur funktion eller borta enligt Väylävirasto.`)}
+      ${row(ic("sign"), Tr`Vattentrafikmärke`, Tr`Förbud, fartgräns eller anvisning. Tryck på märket för mer.`)}
     </div>
     <div class="card"><h3>Stenar och grund</h3>
-      ${row(ic("rock-under"), "Sten under vattnet", "Syns inte. Gå inte nära.")}
-      ${row(ic("rock-awash"), "Sten i vattenytan", "Syns ibland, beroende på vattenstånd och vågor.")}
-      ${row(ic("rock-dry"), "Sten ovanför vattnet", "Kobbe eller sten som syns.")}
-      ${row(sw(P.unsafe, "1px dashed #111"), "Område med många stenar", "Inramat med prickad linje.")}
+      ${row(ic("rock-under"), Tr`Sten under vattnet`, Tr`Syns inte. Gå inte nära.`)}
+      ${row(ic("rock-awash"), Tr`Sten i vattenytan`, Tr`Syns ibland, beroende på vattenstånd och vågor.`)}
+      ${row(ic("rock-dry"), Tr`Sten ovanför vattnet`, Tr`Kobbe eller sten som syns.`)}
+      ${row(sw(P.unsafe, "1px dashed #111"), Tr`Område med många stenar`, Tr`Inramat med prickad linje.`)}
     </div>
     <div class="card"><h3>Djup på sjökortet</h3>
-      ${row(sw(P.unsafe), `Grundare än ${need} m`, "Grundare än din båts djupgående plus säkerhetsmarginal.")}
-      ${row(sw(P.d0, "1px solid #9cc"), "Grunt, till 3 m")}
+      ${row(sw(P.unsafe), Tr`Grundare än ${need} m`, Tr`Grundare än din båts djupgående plus säkerhetsmarginal.`)}
+      ${row(sw(P.d0, "1px solid #9cc"), Tr`Grunt, till 3 m`)}
       ${row(sw(P.d3, "1px solid #9cc"), "3–6 m")}
       ${row(sw(P.d6, "1px solid #9cc"), "6–10 m")}
-      ${row(sw(P.d10, "1px solid #9cc"), "Över 10 m")}
-      ${row(sw(P.drying), "Torrfallande", "Under vatten bara vid högt vattenstånd.")}
-      ${row(ln(P.contour, "", 2), "Djupkurva", "Siffran visar djupet i meter.")}
-      ${row(ln("#ff6a00", "", 4), "Brant (läget Fiske)", "Djupet ökar snabbt. Ofta bra fiskeställen.")}
+      ${row(sw(P.d10, "1px solid #9cc"), Tr`Över 10 m`)}
+      ${row(sw(P.drying), Tr`Torrfallande`, Tr`Under vatten bara vid högt vattenstånd.`)}
+      ${row(ln(P.contour, "", 2), Tr`Djupkurva`, Tr`Siffran visar djupet i meter.`)}
+      ${row(ln("#ff6a00", "", 4), Tr`Brant (läget Fiske)`, Tr`Djupet ökar snabbt. Ofta bra fiskeställen.`)}
     </div>
     <div class="card"><h3>Farleder och områden</h3>
-      ${row(ln(P.nav, "", 2.5), "Farled", "Siffran (t.ex. 2,4 m) är farledens djupgående.")}
-      ${row(ln(P.nav, "6 3", 1.5), "Ensmärkeslinje", "Linjen mellan två ensmärken som visar farledens riktning.")}
-      ${row(ln(P.magenta, "2 3", 2), "Fartbegränsning", "Siffran i km/h.")}
-      ${row(ln(P.magenta, "6 4", 2), "Förbud eller begränsning", "Till exempel ankringsförbud eller mötesförbud.")}
+      ${row(ln(P.nav, "", 2.5), Tr`Farled`, Tr`Siffran (t.ex. 2,4 m) är farledens djupgående.`)}
+      ${row(ln(P.nav, "6 3", 1.5), Tr`Ensmärkeslinje`, Tr`Linjen mellan två ensmärken som visar farledens riktning.`)}
+      ${row(ln(P.magenta, "2 3", 2), Tr`Fartbegränsning`, "Siffran i km/h.")}
+      ${row(ln(P.magenta, "6 4", 2), Tr`Förbud eller begränsning`, Tr`Till exempel ankringsförbud eller mötesförbud.`)}
     </div>
     <div class="card"><h3>Ditt och appens</h3>
-      ${row(`<span class="lg-ic"><svg viewBox="0 0 34 34" width="22" height="22"><path d="M17 3 25 29 17 24 9 29Z" fill="#d64545" stroke="#fff" stroke-width="2"/></svg></span>`, "Din båt", "Linjen framför visar vart du är på väg de närmaste 10 minuterna.")}
-      ${row(ln("#d64545", "4 3", 3), "Rutt", "Orange del: utanför farlederna.")}
-      ${row(`<span class="lg-ic"><i style="background:#f2c14e;border:2px solid #1b1500;border-radius:50% 40% 40% 50%"></i></span>`, "Fångst (läget Fiske)")}
-      ${row(`<span class="lg-ic"><i style="background:#fff;border:2px solid #0b1620;border-radius:50%"></i></span>`, "AIS-fartyg", "Färgen visar typ: rosa passagerare, grön last, röd tank, orange fiske, lila segel, gul fritid.")}
+      ${row(`<span class="lg-ic"><svg viewBox="0 0 34 34" width="22" height="22"><path d="M17 3 25 29 17 24 9 29Z" fill="#d64545" stroke="#fff" stroke-width="2"/></svg></span>`, Tr`Din båt`, Tr`Linjen framför visar vart du är på väg de närmaste 10 minuterna.`)}
+      ${row(ln("#d64545", "4 3", 3), Tr`Rutt`, Tr`Orange del: utanför farlederna.`)}
+      ${row(`<span class="lg-ic"><i style="background:#f2c14e;border:2px solid #1b1500;border-radius:50% 40% 40% 50%"></i></span>`, Tr`Fångst (läget Fiske)`)}
+      ${row(`<span class="lg-ic"><i style="background:#fff;border:2px solid #0b1620;border-radius:50%"></i></span>`, Tr`AIS-fartyg`, Tr`Färgen visar typ: rosa passagerare, grön last, röd tank, orange fiske, lila segel, gul fritid.`)}
     </div>`, "legend");
 }
 
@@ -3440,7 +3477,7 @@ function track(name, params) { if (gaOn && window.gtag) { try { gtag("event", na
 function askStats() {
   if (!GA_ID || S.stats === 0 || S.stats === 1 || !termsOk() || $("#statsask")) return;
   const d = document.createElement("div"); d.id = "statsask";
-  d.innerHTML = `<div><b>Får Kummel räkna besök?</b><div class="muted">Anonym statistik över vilka funktioner som används hjälper oss att göra Kummel bättre. Inga positioner eller fångster skickas. Du kan ändra dig under Om Kummel.</div></div>
+  d.innerHTML = Tr`<div><b>Får Kummel räkna besök?</b><div class="muted">Anonym statistik över vilka funktioner som används hjälper oss att göra Kummel bättre. Inga positioner eller fångster skickas. Du kan ändra dig under Om Kummel.</div></div>
     <div class="row"><button class="btn pri" id="sa-yes">Ja, gärna</button><button class="btn" id="sa-no">Nej tack</button></div>`;
   document.body.appendChild(d);
   $("#sa-yes").onclick = () => { setStats(true); d.remove(); };
@@ -3454,19 +3491,19 @@ function termsOk() { return S.termsOk >= TERMS_V; }
 function openTour() {
   const ic = id => `<span class="wl-ic${id === "#b-fish" ? " fish" : ""}">${$(id).querySelector("svg").outerHTML}</span>`;
   const row = (id, txt) => `<div class="wl-row">${ic(id)}<div>${txt}</div></div>`;
-  openSheet("Så fungerar Kummel", `
+  openSheet(Tr`Så fungerar Kummel`, Tr`
     <div class="home-line">${ALAND_FLAG}<div>Välj <b>Båttur</b> eller <b>Fiske</b> uppe till vänster. Rutan uppe till höger visar vinden, tryck på den för hela vädret.</div></div>
     <div class="wl">
-      ${row("#b-locate", "<b>Min position.</b> Ett tryck: kartan följer båten. Två tryck: kurs upp.")}
-      ${row("#b-route", "<b>Planera rutt.</b> Välj start och mål, så föreslås en väg längs farlederna med ankomsttid.")}
-      ${row("#b-wx", "<b>Sjöväder.</b> Vind, vågor och vattentemperatur över kartan, nu och framåt.")}
-      ${row("#b-layers", "<b>Kartlager.</b> Sjökort, flygbild, AIS-fartyg med mera.")}
-      ${row("#b-menu", "<b>Meny.</b> Båtar, sparade platser och rutter, loggbok, fångstlogg och offlinekarta.")}
-      ${row("#b-hide", "<b>Färre knappar.</b> Dölj knapparna så att kartan syns bättre. Fart, kurs och vattenstånd syns ändå. Tryck igen för att visa dem.")}
-      ${row("#b-night", "<b>Nattläge</b> finns i Menyn: mörk karta eller rött ljus för kvällen.")}
+      ${row("#b-locate", Tr`<b>Min position.</b> Ett tryck: kartan följer båten. Två tryck: kurs upp.`)}
+      ${row("#b-route", Tr`<b>Planera rutt.</b> Välj start och mål, så föreslås en väg längs farlederna med ankomsttid.`)}
+      ${row("#b-wx", Tr`<b>Sjöväder.</b> Vind, vågor och vattentemperatur över kartan, nu och framåt.`)}
+      ${row("#b-layers", Tr`<b>Kartlager.</b> Sjökort, flygbild, AIS-fartyg med mera.`)}
+      ${row("#b-menu", Tr`<b>Meny.</b> Båtar, sparade platser och rutter, loggbok, fångstlogg och offlinekarta.`)}
+      ${row("#b-hide", Tr`<b>Färre knappar.</b> Dölj knapparna så att kartan syns bättre. Fart, kurs och vattenstånd syns ändå. Tryck igen för att visa dem.`)}
+      ${row("#b-night", Tr`<b>Nattläge</b> finns i Menyn: mörk karta eller rött ljus för kvällen.`)}
     </div>
     <div class="card"><h3>Fiske</h3><div class="wl">
-      ${row("#b-fish", "<b>Fisk!</b> Ett tryck när du får napp sparar plats, tid, väder och vattentemperatur. Lägg till art, storlek och foto när du har tid, och dela fångsten som bild.")}
+      ${row("#b-fish", Tr`<b>Fisk!</b> Ett tryck när du får napp sparar plats, tid, väder och vattentemperatur. Lägg till art, storlek och foto när du har tid, och dela fångsten som bild.`)}
     </div><div class="muted" style="margin-top:6px">Finns i läget <b>Fiske</b>. Där ser du också branta kanter och ett fiskeläge efter väder, tryck och måne.</div></div>
     <div class="muted">Håll fingret på kartan för att spara en plats. Kummel finns alltid på <b>${SITE}</b>. Lägg till den på hemskärmen (Dela → Lägg till på hemskärmen) så öppnas den som en app.</div>
     <div class="row"><button class="btn" id="tr-close">Stäng</button></div>`, "tour");
@@ -3476,7 +3513,7 @@ function openTour() {
 /* välkomstruta: villkor, din båt, kom igång. Knappförklaringarna finns i rundturen. */
 function openWelcome() {
   const must = !termsOk(), b = boat();
-  openSheet("Välkommen till Kummel", `
+  openSheet(Tr`Välkommen till Kummel`, Tr`
     <div class="home-line">${ALAND_FLAG}<div>Sjökort, sjöväder och rutter för Åland, Åbolands skärgård och Nylands kust, från Eckerö i väster till Pellinge utanför Borgå i öster.</div></div>
     <div class="warnbox"><b>Kummel är inte ett sjökort för navigering.</b> Appen är ett hjälpmedel för planering och överblick, inte certifierad för navigering. Djup, sjömärken, ruttförslag, ankomsttider och väder kan vara felaktiga, ofullständiga eller inaktuella. Använd alltid officiella, uppdaterade sjökort och gott sjömanskap. Du som förare ansvarar själv för navigeringen och för båtens säkerhet. Kummel tillhandahålls av AsterIQ Ab (Mariehamn, FO-nummer 3553529-1) gratis och i befintligt skick, utan garantier.</div>
     <div class="card"><h3>Din båt</h3>
@@ -3487,12 +3524,12 @@ function openWelcome() {
       </div>
       <div class="muted" style="margin-top:4px">Mer om båten under Meny → Båtar.</div>
     </div>
-    ${must ? `<div class="muted"><b>Genom att trycka på en knapp nedan bekräftar du att du har läst och förstått texten ovan.</b></div>` : ""}
-    <div class="row"><button class="btn pri" id="wl-go">${must ? "Jag förstår – visa min position" : "Visa min position"}</button><button class="btn" id="wl-skip">${must ? "Jag förstår – bara kartan" : "Stäng"}</button></div>
-    ${must ? "" : `<button class="btn" id="wl-tour" style="align-self:flex-start">Så fungerar knapparna</button>`}`, "welcome");
+    ${must ? Tr`<div class="muted"><b>Genom att trycka på en knapp nedan bekräftar du att du har läst och förstått texten ovan.</b></div>` : ""}
+    <div class="row"><button class="btn pri" id="wl-go">${must ? Tr`Jag förstår – visa min position` : Tr`Visa min position`}</button><button class="btn" id="wl-skip">${must ? Tr`Jag förstår – bara kartan` : Tr`Stäng`}</button></div>
+    ${must ? "" : Tr`<button class="btn" id="wl-tour" style="align-self:flex-start">Så fungerar knapparna</button>`}`, "welcome");
   setSheetState($("#sheet"), 2);
   $("#sheet").classList.toggle("locked", must); document.body.classList.toggle("terms", must);
-  const ok = () => { const first = !termsOk(); S.termsOk = TERMS_V; S.welcomed = 1; save(); if (first) { setTimeout(() => toast("Tips: Meny → Så fungerar Kummel visar vad knapparna gör", 3500), 2500); setTimeout(askStats, 7000); } setTimeout(openSharedRoute, 400); $("#sheet").classList.remove("locked"); document.body.classList.remove("terms"); };
+  const ok = () => { const first = !termsOk(); S.termsOk = TERMS_V; S.welcomed = 1; save(); if (first) { setTimeout(() => toast(Tr`Tips: Meny → Så fungerar Kummel visar vad knapparna gör`, 3500), 2500); setTimeout(askStats, 7000); } setTimeout(openSharedRoute, 400); $("#sheet").classList.remove("locked"); document.body.classList.remove("terms"); };
   $("#wl-btype").onchange = e => { boat().type = e.target.value; save(); renderBoatIcon(); };
   $("#wl-draft").onchange = e => { const v = parseFloat(String(e.target.value).replace(",", ".")); if (v >= 0 && v <= 5) { boat().draft = v; save(); boatChanged(); } };
   $("#wl-go").onclick = () => { ok(); closeSheet(); $("#b-locate").click(); };
@@ -3502,7 +3539,7 @@ function openWelcome() {
 $("#nonav").onclick = openWelcome;
 
 /* ---------- night mode ---------- */
-const THEMES = { day: "Dagläge", dark: "Nattläge: mörk karta", red: "Nattläge: rött ljus" };
+const THEMES = { day: Tr`Dagläge`, dark: Tr`Nattläge: mörk karta`, red: Tr`Nattläge: rött ljus` };
 function applyTheme(rebuild) {
   const t = S.theme || "day";
   if (t === "day") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = "dark";
@@ -3522,7 +3559,7 @@ function applyRails() {
   const on = !!S.railsMin, b = $("#b-hide");
   document.body.classList.toggle("rails-min", on);
   b.setAttribute("aria-pressed", "false");   // räknas inte som ett aktivt verktyg
-  b.title = on ? "Visa knappar" : "Dölj knappar"; b.setAttribute("aria-label", b.title);
+  b.title = on ? Tr`Visa knappar` : Tr`Dölj knappar`; b.setAttribute("aria-label", b.title);
   b.querySelector("svg").innerHTML = on ? '<circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/>' : '<path d="m6 15 6-6 6 6"/>';
 }
 $("#b-hide").onclick = () => { S.railsMin = !S.railsMin; save(); applyRails(); };
@@ -3537,7 +3574,7 @@ applyRails();
 /* ---------- init ---------- */
 setMode(S.mode);
 if (S.layers.ais) setAis(true);
-if (S.anchor) { anchorBar(); startGps(); keepAwake(); toast("Ankarlarmet är på", 2000); }
+if (S.anchor) { anchorBar(); startGps(); keepAwake(); toast(Tr`Ankarlarmet är på`, 2000); }
 statsOn(); setTimeout(askStats, 4000);
 setTimeout(() => loadWaterLevel(), 2500);
 $("#wlbar").onclick = openWaterLevel;
