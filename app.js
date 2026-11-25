@@ -166,7 +166,7 @@ const MML = (layer, fmt) => MML_PROXY ? `${MML_PROXY}/${layer}/{z}/{y}/{x}.${fmt
 function mmlSources() {
   if (!mmlKey()) return {};
   return {
-    "mml-orto": { type: "raster", tiles: [MML("ortokuva", "jpg")], tileSize: ORTO_TILE, maxzoom: 18, bounds: [19, 59.3, 32, 70.2], attribution: "Flygbild © Maanmittauslaitos" },
+    "mml-orto": { type: "raster", tiles: [MML("ortokuva", "jpg")], tileSize: ORTO_TILE, maxzoom: 18, bounds: [19, 59.3, 32, 70.2], attribution: Tr`Flygbild © Maanmittauslaitos` },
     "mml-prop": { type: "raster", tiles: [MML("kiinteistojaotus", "png")], tileSize: 256, minzoom: 12, maxzoom: 16, bounds: [19, 59.3, 32, 70.2], attribution: Tr`Fastighetsgränser © Maanmittauslaitos` }
   };
 }
@@ -176,7 +176,7 @@ function baseStyle() {
     glyphs: location.href.replace(/[?#].*$/, "").replace(/[^/]*$/, "") + "fonts/{fontstack}/{range}.pbf", // egna typsnitt: fungerar offline
     sources: {
       osm: { type: "raster", tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], tileSize: 256, maxzoom: 19, attribution: "© OpenStreetMap" },
-      sat: { type: "raster", tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"], tileSize: 256, maxzoom: 18, attribution: "Bild © Esri" },
+      sat: { type: "raster", tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"], tileSize: 256, maxzoom: 18, attribution: Tr`Bild © Esri` },
       ...mmlSources(),
       ...KummelChart.rasterSources(),
       ofm: { type: "vector", url: "https://tiles.openfreemap.org/planet", attribution: "OpenFreeMap © OpenStreetMap" },
@@ -309,7 +309,7 @@ const dz = () => +S.layers.detailZoom || 13;
 function renderSatLegend(on) {
   const el = $("#satlegend"); if (!el) return;
   el.hidden = !on; if (!on) return;
-  const n = needDepth().toFixed(1).replace(".", DEC) + (wlM() && Math.abs(wl.cm) >= 3 ? ` (vattenst. ${fmtCm(wl.cm)})` : "");
+  const n = needDepth().toFixed(1).replace(".", DEC) + (wlM() && Math.abs(wl.cm) >= 3 ? Tr` (vattenst. ${fmtCm(wl.cm)})` : "");
   el.innerHTML = Tr`<b>Djup</b><span><i style="background:#ff5a5a"></i>under ${n} m</span><span><i style="background:#7fd6ff"></i>till 3 m</span><span><i style="background:#3d9ed6"></i>3–6 m</span><span><i style="background:#1f5f9a"></i>6–10 m</span><span><i style="background:transparent;border:1px solid #fff"></i>över 10 m</span>`;
   requestAnimationFrame(() => document.documentElement.style.setProperty("--legend-h", el.offsetHeight + "px"));
 }
@@ -344,11 +344,11 @@ function applyLayers() {
 /* ---------- places (markers) ---------- */
 const CATS = {
   hamn: { e: "⚓", c: "#1d6fa3", n: Tr`Hamn` },
-  ankring: { e: "⛵", c: "#0f2a3d", n: "Ankring / naturhamn" },
+  ankring: { e: "⛵", c: "#0f2a3d", n: Tr`Ankring / naturhamn` },
   bad: { e: "🏊", c: "#2f8f5b", n: Tr`Bad` },
   fiske: { e: "🎣", c: "#c9921b", n: Tr`Fiskeplats` },
   service: { e: "⛽", c: "#7a4fb0", n: Tr`Service` },
-  fara: { e: "⚠️", c: "#d64545", n: "Varning / grund" },
+  fara: { e: "⚠️", c: "#d64545", n: Tr`Varning / grund` },
   ovrigt: { e: "📍", c: "#5d6b73", n: Tr`Övrigt` }
 };
 let placeMarkers = [];
@@ -897,7 +897,7 @@ function openCatch(id) {
   const draft = c === draftCatch;
   const d = new Date(c.t), w = c.wx;
   openSheet(Tr`Fångst`, Tr`
-    <div class="pos-line"><div class="muted">${DAYS[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1} kl ${hm(d)} · ${fmtPosTxt(c)}${c.depth ? ` · djup ${c.depth}` : ""}</div><button class="btn sm" id="cf-move">Flytta</button></div>
+    <div class="pos-line"><div class="muted">${DAYS[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1} kl ${hm(d)} · ${fmtPosTxt(c)}${c.depth ? Tr` · djup ${c.depth}` : ""}</div><button class="btn sm" id="cf-move">Flytta</button></div>
     <div class="ph-box" id="cf-ph"><span class="muted">Inget foto</span></div>
     <label class="btn ph-btn">${c.photo ? Tr`Byt foto` : Tr`📷 Lägg till foto`}<input type="file" id="cf-file" accept="image/*" hidden></label>
     <div class="grid2">
@@ -911,7 +911,7 @@ function openCatch(id) {
     <div class="card"><h3>Förhållanden vid fångsten</h3>
       ${w ? Tr`<div class="wx-stats">
         <div><b>${w.wind.toFixed(0)}–${w.gust.toFixed(0)}</b><span>Vind m/s ${compass(w.dir)}</span></div>
-        <div><b>${Math.round(w.p)}</b><span>Tryck ${w.pTrend == null ? "" : w.pTrend > 0.5 ? "↑ stiger" : w.pTrend < -0.5 ? "↓ faller" : "→ stabilt"}</span></div>
+        <div><b>${Math.round(w.p)}</b><span>Tryck ${w.pTrend == null ? "" : w.pTrend > 0.5 ? Tr`↑ stiger` : w.pTrend < -0.5 ? Tr`↓ faller` : Tr`→ stabilt`}</span></div>
         <div><b>${w.sst != null ? w.sst.toFixed(1) + "°" : "–"}</b><span>Vatten</span></div>
         <div><b>${w.temp.toFixed(0)}°</b><span>Luft</span></div>
         <div><b>${w.moon.icon}</b><span>${w.moon.name}</span></div></div>` : Tr`<div class="muted">Hämtar väder … (sparas automatiskt när nätet finns)</div>`}
@@ -988,7 +988,7 @@ async function catchCard(c, where) {
   const L = 72, d = new Date(c.t), w = c.wx;
   const size = [c.kg && `${String(c.kg).replace(".", DEC)} kg`, c.len && `${String(c.len).replace(".", DEC)} cm`].filter(Boolean).join("  ·  ");
   const facts = [Tr`${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()} kl ${hm(d)}`];
-  if (w) { facts.push(`Vind ${w.wind.toFixed(0)} m/s ${compass(w.dir)}`); if (w.sst != null) facts.push(`Vatten ${w.sst.toFixed(1).replace(".", DEC)}°`); if (w.pTrend != null) facts.push(w.pTrend < -0.5 ? Tr`Fallande tryck` : w.pTrend > 0.5 ? Tr`Stigande tryck` : Tr`Stabilt tryck`); facts.push(`${w.moon.icon} ${w.moon.name}`); }
+  if (w) { facts.push(Tr`Vind ${w.wind.toFixed(0)} m/s ${compass(w.dir)}`); if (w.sst != null) facts.push(Tr`Vatten ${w.sst.toFixed(1).replace(".", DEC)}°`); if (w.pTrend != null) facts.push(w.pTrend < -0.5 ? Tr`Fallande tryck` : w.pTrend > 0.5 ? Tr`Stigande tryck` : Tr`Stabilt tryck`); facts.push(`${w.moon.icon} ${w.moon.name}`); }
   if (c.lure) facts.push(c.lure);
   g.font = `500 36px ${F}`;
   let lines = 1, lx = L; facts.forEach((t, i) => { const tw = g.measureText((i ? "  ·  " : "") + t).width; if (lx + tw > W - L && lx > L) { lines++; lx = L + g.measureText(t).width; } else lx += tw; });
@@ -1382,7 +1382,7 @@ function renderRoute() {
   $("#rt-save").onclick = () => {
     if (wps.length < 2) { toast(Tr`Lägg till minst två punkter.`); return; }
     track("route_saved", { points: wps.length, auto: autoInfo ? 1 : 0 });
-    const name = (routeName || "").trim() || `Rutt ${new Date().getDate()}.${new Date().getMonth() + 1} (${st.nm.toFixed(1)} nm)`;
+    const name = (routeName || "").trim() || Tr`Rutt ${new Date().getDate()}.${new Date().getMonth() + 1} (${st.nm.toFixed(1)} nm)`;
     const pts = wps.map(p => [+p.lat.toFixed(6), +p.lng.toFixed(6)]), old = routeId && S.routes.find(r => r.id === routeId);
     if (old) { old.name = name; old.pts = pts; old.updated = Date.now(); }
     else { routeId = uid(); S.routes.unshift({ id: routeId, name, pts, created: Date.now() }); }
@@ -1391,7 +1391,7 @@ function renderRoute() {
   $("#rt-share").onclick = () => {
     if (wps.length < 2) { toast(Tr`Lägg till minst två punkter.`); return; }
     const pts = wps.map(p => [+p.lat.toFixed(6), +p.lng.toFixed(6)]);
-    shareRoute({ id: routeId || uid(), name: (routeName || "").trim() || `Rutt (${st.nm.toFixed(1)} nm)`, pts });
+    shareRoute({ id: routeId || uid(), name: (routeName || "").trim() || Tr`Rutt (${st.nm.toFixed(1)} nm)`, pts });
   };
 }
 /* ---------- ruttförslag längs farleder ----------
@@ -1958,7 +1958,7 @@ function updateNav(pos) {
   // passerad punkt: nära, eller förbi den längs sträckan
   const prev = P[nav.i - 1], legBrg = bearing(prev, next), along = distNm(prev, pos) * Math.cos(rad(bearing(prev, pos) - legBrg));
   if (d < .035 || (along > distNm(prev, next) && nav.i < P.length - 1)) {
-    if (nav.i === P.length - 1) { stopNav(`Framme! ${hm(new Date())}`); try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {} return; }
+    if (nav.i === P.length - 1) { stopNav(Tr`Framme! ${hm(new Date())}`); try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {} return; }
     nav.i++; next = P[nav.i]; d = distNm(pos, next);
     try { navigator.vibrate && navigator.vibrate(150); } catch (e) {}
   }
@@ -2074,7 +2074,7 @@ function renderChip() {
   // väderikon och temperatur visar att knappen ger hela vädret, inte bara vinden
   $("#wxic").innerHTML = c.weather_code != null ? `<i>${c.is_day === 0 && c.weather_code <= 2 ? "🌙" : WX_ICON(c.weather_code)}</i>${c.temperature_2m.toFixed(0)}°` : "";
   const s = sstInfo();
-  $("#wxsub").textContent = (S.wxSrc === "map" ? Tr`vid korset · ` : "") + (S.mode === "fiske" && s ? `${compass(c.wind_direction_10m)} · vatten ${s.v.toFixed(1)}°` : `${compass(c.wind_direction_10m)}`);
+  $("#wxsub").textContent = (S.wxSrc === "map" ? Tr`vid korset · ` : "") + (S.mode === "fiske" && s ? Tr`${compass(c.wind_direction_10m)} · vatten ${s.v.toFixed(1)}°` : `${compass(c.wind_direction_10m)}`);
   $("#wxchip .arrow").style.transform = `rotate(${(c.wind_direction_10m + 180) % 360}deg)`;
   $("#wxchip").style.color = c.wind_gusts_10m > (boat().maxWind || 10) ? "var(--port)" : "";
 }
@@ -2163,7 +2163,7 @@ function fcChart() {
     return note(Tr`Lufttryck hPa · ${trend} (${d >= 0 ? "+" : ""}${d.toFixed(1)} hPa kommande 24 h)`) + `<div class="chart">${hourChart(xs, v, { unit: "hPa", col: "#7a5cc2", step: 2 })}</div>`;
   }
   const v = xs.map(i => h.temperature_2m[i]);
-  return note("Lufttemperatur °C kommande 48 h") + `<div class="chart">${hourChart(xs, v, { unit: "°", col: "#d6763a", step: 2, zero: true })}</div>`;
+  return note(Tr`Lufttemperatur °C kommande 48 h`) + `<div class="chart">${hourChart(xs, v, { unit: "°", col: "#d6763a", step: 2, zero: true })}</div>`;
 }
 /* linje- eller stapeldiagram över timmar, samma format som vinddiagrammet */
 function hourChart(xs, v, o) {
@@ -2241,7 +2241,7 @@ function openWx() {
     <div class="wxb-modes fc-tabs" role="tablist" aria-label="Prognos">${FC_TABS.map(([k, t]) => `<button data-fct="${k}" aria-pressed="${fcTab() === k}">${t}</button>`).join("")}</div>
     <div id="fc-chart">${fcChart()}</div>
     ${dailyHtml()}
-    ${S.mode === "fiske" ? Tr`<div class="card"><h3>Fiskeförhållanden</h3>${sst ? `<div><b>Vattnet ${sst.v.toFixed(1)}°</b>${sst.d != null ? `, ${trendTxt(sst.d)}` : ""} <span class="muted">(${sst.src})</span></div>` : ""}<div>${moon.icon} ${moon.name} · Tryck ${pTrend > .5 ? "stigande" : pTrend < -.5 ? "fallande" : "stabilt"} (${pTrend >= 0 ? "+" : ""}${pTrend.toFixed(1)} hPa/3 h)</div></div>` : ""}
+    ${S.mode === "fiske" ? Tr`<div class="card"><h3>Fiskeförhållanden</h3>${sst ? Tr`<div><b>Vattnet ${sst.v.toFixed(1)}°</b>${sst.d != null ? `, ${trendTxt(sst.d)}` : ""} <span class="muted">(${sst.src})</span></div>` : ""}<div>${moon.icon} ${moon.name} · Tryck ${pTrend > .5 ? Tr`stigande` : pTrend < -.5 ? Tr`fallande` : "stabilt"} (${pTrend >= 0 ? "+" : ""}${pTrend.toFixed(1)} hPa/3 h)</div></div>` : ""}
     <div class="muted">Prognos för ${fmtPosTxt({ lat: wx.lat, lng: wx.lng })} · uppdaterad för ${age} min sedan. Källa: Open-Meteo.</div>
     <button class="btn" id="wx-ref">Uppdatera</button>`, "wx");
   $("#wx-ref").onclick = () => loadWx(true);
@@ -2310,7 +2310,7 @@ function wxAt(ll) {
 const fmtRain = r => r < .05 ? Tr`uppehåll` : Tr`${r < 1 ? r.toFixed(1).replace(".", DEC) : Math.round(r)} mm regn/h`;
 function wxReadout() {
   const v = wxAt(ll(map.getCenter())); if (!v) return "";
-  return Tr`Vid korset: ${Math.round(v.w)} m/s (byar ${Math.round(v.g)}) från ${compass(v.d)} · ${fmtRain(v.r)}${wxStep === 0 ? "" : " · prognos"}`;
+  return Tr`Vid korset: ${Math.round(v.w)} m/s (byar ${Math.round(v.g)}) från ${compass(v.d)} · ${fmtRain(v.r)}${wxStep === 0 ? "" : Tr` · prognos`}`;
 }
 function renderWxLayer() {
   if (!wxOn || !wxGrid) return;
@@ -2337,7 +2337,7 @@ function renderWxLayer() {
   } else setData("wxsst", EMPTY);
   const t = new Date(H.time[i]);
   $("#wxb-time").textContent = wxStep === 0 ? Tr`Nu` : `${t.toDateString() === new Date().toDateString() ? Tr`Idag` : DAYS[t.getDay()]} ${pad(t.getHours())}:00`;
-  $("#wxb-sub").textContent = water ? Tr`Vattentemperatur vid ytan${wxStep === 0 ? "" : " · prognos"}` : flow ? wxReadout() : Tr`Vind m/s (byar) och våghöjd · ${wxObs.length && wxStep === 0 ? Tr`kuststationer uppmätta` : "prognos"}`;
+  $("#wxb-sub").textContent = water ? Tr`Vattentemperatur vid ytan${wxStep === 0 ? "" : Tr` · prognos`}` : flow ? wxReadout() : Tr`Vind m/s (byar) och våghöjd · ${wxObs.length && wxStep === 0 ? Tr`kuststationer uppmätta` : Tr`prognos`}`;
   document.querySelectorAll("[data-wxm]").forEach(b => b.setAttribute("aria-pressed", b.dataset.wxm === wxMode));
   if (flow !== flowCalm) { flowCalm = flow; applyLayers(); }
   $("#wxb-legend-wind").classList.toggle("hidden", water || flow); $("#wxb-legend-water").classList.toggle("hidden", !water); $("#wxb-legend-flow").classList.toggle("hidden", !flow || rain); $("#wxb-legend-rain").classList.toggle("hidden", !rain);
@@ -2606,7 +2606,7 @@ function openLayers() {
     </div>
     ${applies("detail") ? Tr`<div class="card"><h3>Detaljkort</h3>
       <label class="row"><input type="checkbox" id="ly-det" ${S.layers.detail ? "checked" : ""}> Visa detaljkortet när jag zoomar in</label>
-      <label class="f">Visa detaljkortet från<select id="ly-dz">${[[11, Tr`Översikt (ca 2 nm över skärmen)`], [12, "Mellan (ca 1 nm)"], [13, Tr`Nära (ca 0,5 nm), rekommenderas`], [14, Tr`Mycket nära (ca 0,25 nm)`]].map(([z, t]) => `<option value="${z}" ${dz() === z ? "selected" : ""}>${t}</option>`).join("")}</select></label>
+      <label class="f">Visa detaljkortet från<select id="ly-dz">${[[11, Tr`Översikt (ca 2 nm över skärmen)`], [12, Tr`Mellan (ca 1 nm)`], [13, Tr`Nära (ca 0,5 nm), rekommenderas`], [14, Tr`Mycket nära (ca 0,25 nm)`]].map(([z, t]) => `<option value="${z}" ${dz() === z ? "selected" : ""}>${t}</option>`).join("")}</select></label>
       <div class="muted">Traficoms inskannade sjökort ovanpå vektorkortet. Längre ut blir det svårläst eftersom kortet förminskas.</div>
     </div>` : ""}
     <div class="card"><h3>Båtpilen</h3>
@@ -2769,7 +2769,7 @@ function importGpx(text) {
   // rutter
   kids(doc, "rte").forEach((el, i) => {
     const pts = kids(el, "rtept").map(ll).filter(ok); if (pts.length < 2) return;
-    const name = txt(el, "name") || `Importerad rutt ${i + 1}`;
+    const name = txt(el, "name") || Tr`Importerad rutt ${i + 1}`;
     if (S.routes.some(r => r.name === name && r.pts.length && distNm({ lat: r.pts[0][0], lng: r.pts[0][1] }, { lat: pts[0][0], lng: pts[0][1] }) < .01)) { n.dup++; return; }
     S.routes.unshift({ id: uid(), name, pts, created: Date.now(), from: "gpx" }); n.r++;
   });
@@ -3436,7 +3436,7 @@ function openLegend() {
     <div class="card"><h3>Farleder och områden</h3>
       ${row(ln(P.nav, "", 2.5), Tr`Farled`, Tr`Siffran (t.ex. 2,4 m) är farledens djupgående.`)}
       ${row(ln(P.nav, "6 3", 1.5), Tr`Ensmärkeslinje`, Tr`Linjen mellan två ensmärken som visar farledens riktning.`)}
-      ${row(ln(P.magenta, "2 3", 2), Tr`Fartbegränsning`, "Siffran i km/h.")}
+      ${row(ln(P.magenta, "2 3", 2), Tr`Fartbegränsning`, Tr`Siffran i km/h.`)}
       ${row(ln(P.magenta, "6 4", 2), Tr`Förbud eller begränsning`, Tr`Till exempel ankringsförbud eller mötesförbud.`)}
     </div>
     <div class="card"><h3>Ditt och appens</h3>
