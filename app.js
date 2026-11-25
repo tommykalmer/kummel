@@ -763,7 +763,7 @@ function placeForm(p) {
     <label class="f">Anteckning<textarea id="pf-note" rows="3" placeholder="t.ex. Bra skydd vid sydvästlig vind, 3 m djup vid berget">${esc(p.note)}</textarea></label>
     <div class="muted">${fmtPosTxt(p)}${p.depth != null ? Tr` · djup enligt sjökortet ${p.depth}` : ""}</div>
     <div class="private-note">🔒 Sparas bara i din telefon. Ingen annan ser den, inte heller vi som gör Kummel.</div>
-    <div class="row"><button class="btn pri" id="pf-save">Spara</button>${p.id ? `<button class="btn warn" id="pf-del">Ta bort</button><button class="btn" id="pf-nav">Rutt hit</button>` : ""}</div>`;
+    <div class="row"><button class="btn pri" id="pf-save">Spara</button>${p.id ? Tr`<button class="btn warn" id="pf-del">Ta bort</button><button class="btn" id="pf-nav">Rutt hit</button>` : ""}</div>`;
 }
 function newPlace(pos) {
   const p = { lat: pos.lat, lng: pos.lng, name: "", cat: S.mode === "fiske" ? "fiske" : "ankring", note: "", depth: depthAt(pos) };
@@ -909,7 +909,7 @@ function openCatch(id) {
     <label class="f">Bete / metod<input id="cf-lure" value="${esc(c.lure)}" placeholder="t.ex. jigg 10 cm, trolling 2,5 kn"></label>
     <label class="f">Anteckning<textarea id="cf-note" rows="2">${esc(c.note)}</textarea></label>
     <div class="card"><h3>Förhållanden vid fångsten</h3>
-      ${w ? `<div class="wx-stats">
+      ${w ? Tr`<div class="wx-stats">
         <div><b>${w.wind.toFixed(0)}–${w.gust.toFixed(0)}</b><span>Vind m/s ${compass(w.dir)}</span></div>
         <div><b>${Math.round(w.p)}</b><span>Tryck ${w.pTrend == null ? "" : w.pTrend > 0.5 ? "↑ stiger" : w.pTrend < -0.5 ? "↓ faller" : "→ stabilt"}</span></div>
         <div><b>${w.sst != null ? w.sst.toFixed(1) + "°" : "–"}</b><span>Vatten</span></div>
@@ -1927,7 +1927,7 @@ function arrivalPlan(nm, h) {
   const t = arrTarget(); if (!t || !nm) return Tr`Ange en tid så räknar appen ut när du behöver åka.`;
   const b = boat(), left = (t - Date.now()) / 3600000, need = nm / Math.max(left, .01);
   const dep = new Date(t - h * 3600000), dayTxt = t.toDateString() === new Date().toDateString() ? "" : Tr`i morgon `;
-  if (left <= 0) return `<span class="pill bad">Tiden har passerat</span>`;
+  if (left <= 0) return Tr`<span class="pill bad">Tiden har passerat</span>`;
   if (dep > Date.now()) return Tr`I ${b.speed} kn: <b>åk senast ${dayTxt}${hm(dep)}</b> (om ${fmtDur((dep - Date.now()) / 3600000)}). ${need >= 1 ? Tr`Åker du nu räcker ${need.toFixed(1)} kn.` : ""}`;
   return need > b.speed * 1.3 ? Tr`<span class="pill bad">Hinns inte</span> Det kräver ${need.toFixed(1)} kn från nu, marschfarten är ${b.speed} kn.` : Tr`Åk nu och håll <b>${need.toFixed(1)} kn</b> för att vara framme ${dayTxt}${hm(t)}.`;
 }
@@ -1968,7 +1968,7 @@ function updateNav(pos) {
   const p0 = P[nav.i - 1], d13 = distNm(p0, pos) / R_NM, xte = Math.asin(Math.sin(d13) * Math.sin(rad(bearing(p0, pos) - bearing(p0, next)))) * R_NM * NM;
   const brg = bearing(pos, next), t = arrTarget();
   let late = "";
-  if (t) { const diff = Math.round((eta - t) / 60000); late = Math.abs(diff) <= 2 ? `<span class="pill ok">I tid</span>` : diff > 0 ? `<span class="pill bad">${fmtDur(diff / 60)} sen</span>` : Tr`<span class="pill ok">${fmtDur(-diff / 60)} före</span>`; }
+  if (t) { const diff = Math.round((eta - t) / 60000); late = Math.abs(diff) <= 2 ? Tr`<span class="pill ok">I tid</span>` : diff > 0 ? Tr`<span class="pill bad">${fmtDur(diff / 60)} sen</span>` : Tr`<span class="pill ok">${fmtDur(-diff / 60)} före</span>`; }
   $("#nav-to").textContent = nav.i === P.length - 1 ? Tr`Till målet` : Tr`Till punkt ${nav.i + 1} av ${P.length}`;
   $("#nav-brg").textContent = String(Math.round(brg)).padStart(3, "0") + "°";
   $("#nav-dtw").textContent = d < .3 ? `${Math.round(d * NM)} m` : `${d.toFixed(2)} nm`;
@@ -2199,7 +2199,7 @@ function windChart() {
   let max = lim + 2; for (let i = i0; i < i0 + n && i < h.time.length; i++) max = Math.max(max, h.wind_gusts_10m[i]);
   max = Math.ceil(max / 5) * 5;
   const y = v => (H - padB) - (v / max) * (H - padB - 10);
-  let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Vind kommande 48 timmar" style="font:11px var(--f-ui)">`;
+  let s = Tr`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Vind kommande 48 timmar" style="font:11px var(--f-ui)">`;
   for (let v = 0; v <= max; v += 5) s += `<line x1="${padL}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${padL - 4}" y="${y(v) + 4}" text-anchor="end" fill="var(--muted)">${v}</text>`;
   s += `<line x1="${padL}" x2="${W}" y1="${y(lim)}" y2="${y(lim)}" stroke="var(--port)" stroke-dasharray="4 4"/>`;
   for (let k = 0; k < n; k++) {
@@ -2337,7 +2337,7 @@ function renderWxLayer() {
   } else setData("wxsst", EMPTY);
   const t = new Date(H.time[i]);
   $("#wxb-time").textContent = wxStep === 0 ? Tr`Nu` : `${t.toDateString() === new Date().toDateString() ? Tr`Idag` : DAYS[t.getDay()]} ${pad(t.getHours())}:00`;
-  $("#wxb-sub").textContent = water ? `Vattentemperatur vid ytan${wxStep === 0 ? "" : " · prognos"}` : flow ? wxReadout() : Tr`Vind m/s (byar) och våghöjd · ${wxObs.length && wxStep === 0 ? Tr`kuststationer uppmätta` : "prognos"}`;
+  $("#wxb-sub").textContent = water ? Tr`Vattentemperatur vid ytan${wxStep === 0 ? "" : " · prognos"}` : flow ? wxReadout() : Tr`Vind m/s (byar) och våghöjd · ${wxObs.length && wxStep === 0 ? Tr`kuststationer uppmätta` : "prognos"}`;
   document.querySelectorAll("[data-wxm]").forEach(b => b.setAttribute("aria-pressed", b.dataset.wxm === wxMode));
   if (flow !== flowCalm) { flowCalm = flow; applyLayers(); }
   $("#wxb-legend-wind").classList.toggle("hidden", water || flow); $("#wxb-legend-water").classList.toggle("hidden", !water); $("#wxb-legend-flow").classList.toggle("hidden", !flow || rain); $("#wxb-legend-rain").classList.toggle("hidden", !rain);
@@ -2456,7 +2456,7 @@ function loadShipPhoto(imo, mmsi) {
   })());
 }
 function shipPhotoHtml(p) {
-  return p ? `<figure class="ship-photo"><img src="${esc(p.src)}" alt="Foto av fartyget" loading="lazy"><figcaption>Foto: ${esc(p.by)} · ${esc(p.lic)} · <a href="${esc(p.page)}" target="_blank" rel="noopener">Wikimedia Commons</a></figcaption></figure>` : "";
+  return p ? Tr`<figure class="ship-photo"><img src="${esc(p.src)}" alt="Foto av fartyget" loading="lazy"><figcaption>Foto: ${esc(p.by)} · ${esc(p.lic)} · <a href="${esc(p.page)}" target="_blank" rel="noopener">Wikimedia Commons</a></figcaption></figure>` : "";
 }
 // grovt område för delade bilder (avslöjar inte platsen)
 const regionName = p => p.lng < 21.1 ? Tr`Ålands skärgård` : p.lng < 22.75 ? Tr`Åbolands skärgård` : Tr`Nylands skärgård`;
@@ -2479,7 +2479,7 @@ function openShip(mmsi, refresh) {
     </div>
     ${near}
     ${s.nav != null && NAVSTAT[s.nav] ? `<div>${NAVSTAT[s.nav]}</div>` : ""}
-    ${m.destination ? `<div>Destination: <b>${esc(m.destination)}</b></div>` : ""}
+    ${m.destination ? Tr`<div>Destination: <b>${esc(m.destination)}</b></div>` : ""}
     <div class="row"><a class="btn" href="https://www.vesselfinder.com/vessels/details/${m.imo || mmsi}" target="_blank" rel="noopener">Visa på VesselFinder ↗</a><a class="btn" href="https://www.marinetraffic.com/en/ais/details/ships/mmsi:${mmsi}" target="_blank" rel="noopener">MarineTraffic ↗</a></div>
     <div class="muted">Position för ${age < 1 ? Tr`mindre än en minut` : age + " min"} sedan. Källa: Digitraffic (Fintraffic).</div>`;
   if (refresh && sheetView === "ais:" + mmsi) { $("#sh-body").innerHTML = html; return; }
@@ -2516,7 +2516,7 @@ function openShipSearch() {
       if (score >= 0) hits.push([score, n, m]);
     }
     hits.sort((a, b) => a[0] - b[0] || a[1].localeCompare(b[1]));
-    res.innerHTML = hits.length ? hits.slice(0, 25).map(([, , m]) => `<button class="btn ss-hit" data-mmsi="${m.mmsi}"><b>${esc((m.name || "").trim() || Tr`Namn saknas`)}</b> <span class="muted">${CATNAME[SHIPCAT(m.shipType)]}${m.destination ? " · mot " + esc(m.destination.trim()) : ""}</span></button>`).join("")
+    res.innerHTML = hits.length ? hits.slice(0, 25).map(([, , m]) => `<button class="btn ss-hit" data-mmsi="${m.mmsi}"><b>${esc((m.name || "").trim() || Tr`Namn saknas`)}</b> <span class="muted">${CATNAME[SHIPCAT(m.shipType)]}${m.destination ? Tr` · mot ` + esc(m.destination.trim()) : ""}</span></button>`).join("")
       : Tr`<div class="muted">Inget fartyg med det namnet har synts det senaste dygnet.</div>`;
     res.querySelectorAll("[data-mmsi]").forEach(b => b.onclick = () => findShip(+b.dataset.mmsi));
   };
@@ -2557,7 +2557,7 @@ function openBoats() {
   openSheet(Tr`Båtar`, Tr`
     <div class="list">${S.boats.map(b => Tr`<div class="card ${b.id === S.boatId ? "sel" : ""}">
       <h3>${esc(b.name)}</h3><div class="muted">${BTYPES[b.type]} · ${b.length} m · djupgående ${b.draft} m (+${b.margin} m marginal) · höjd ${b.air} m · ${b.speed} kn</div>
-      <div class="row">${b.id === S.boatId ? `<span class="pill ok">Aktiv</span>` : Tr`<button class="btn" data-use="${b.id}">Använd</button>`}<button class="btn" data-edit="${b.id}">Ändra</button></div></div>`).join("")}</div>
+      <div class="row">${b.id === S.boatId ? Tr`<span class="pill ok">Aktiv</span>` : Tr`<button class="btn" data-use="${b.id}">Använd</button>`}<button class="btn" data-edit="${b.id}">Ändra</button></div></div>`).join("")}</div>
     <div class="muted">Sjökortet markerar vatten som är grundare än den aktiva båtens djupgående plus marginal.</div>
     <button class="btn pri" id="bt-new">Lägg till båt</button>`, "boats");
   document.querySelectorAll("[data-use]").forEach(x => x.onclick = () => { S.boatId = x.dataset.use; save(); boatChanged(); openBoats(); toast(Tr`Aktiv båt: ${boat().name}`); });
@@ -2572,7 +2572,7 @@ function editBoat(id) {
     <label class="f">Typ<select id="bf-type">${Object.entries(BTYPES).map(([k, v]) => `<option value="${k}" ${k === b.type ? "selected" : ""}>${v}</option>`).join("")}</select></label>
     <div class="grid2">${n("length", Tr`Längd (m)`)}${n("beam", Tr`Bredd (m)`)}${n("draft", Tr`Djupgående (m)`)}${n("air", Tr`Höjd över vattnet (m)`)}${n("margin", Tr`Marginal under kölen (m)`)}${n("speed", Tr`Marschfart (kn)`, "0.5")}${n("fuel", Tr`Förbrukning (l/h)`, "0.5")}${n("maxWind", Tr`Gräns för byvind (m/s)`, "1")}</div>
     <div class="muted">Djupgående och marginal styr grundvarningarna på sjökortet. Fart och förbrukning används för ankomsttid och bränsle. Vindgränsen styr väderfönster och varningar.</div>
-    <div class="row"><button class="btn pri" id="bf-save">Spara</button>${id && S.boats.length > 1 ? `<button class="btn warn" id="bf-del">Ta bort</button>` : ""}<button class="btn" id="bf-back">Tillbaka</button></div>`, "boatedit");
+    <div class="row"><button class="btn pri" id="bf-save">Spara</button>${id && S.boats.length > 1 ? Tr`<button class="btn warn" id="bf-del">Ta bort</button>` : ""}<button class="btn" id="bf-back">Tillbaka</button></div>`, "boatedit");
   $("#bf-type").onchange = e => { const d = BDEF[e.target.value]; ["speed", "fuel", "maxWind", "draft"].forEach(k => $("#bf-" + k).value = d[k]); };
   $("#bf-save").onclick = () => {
     b.name = $("#bf-name").value.trim() || BTYPES[$("#bf-type").value]; b.type = $("#bf-type").value;
@@ -2672,7 +2672,7 @@ function openMenu() {
 }
 $("#b-menu").onclick = openMenu;
 function openPlaces() {
-  openSheet(Tr`Mina platser`, `<div class="list">${S.places.map(p => `<div class="card"><h3>${CATS[p.cat].e} ${esc(p.name)}</h3>${p.note ? `<div>${esc(p.note)}</div>` : ""}<div class="row"><button class="btn" data-go="${p.id}">Visa</button></div></div>`).join("") || Tr`<div class="muted">Inga platser ännu. Tryck på nålknappen eller håll fingret på kartan för att spara en plats.</div>`}</div>`, "places");
+  openSheet(Tr`Mina platser`, `<div class="list">${S.places.map(p => Tr`<div class="card"><h3>${CATS[p.cat].e} ${esc(p.name)}</h3>${p.note ? `<div>${esc(p.note)}</div>` : ""}<div class="row"><button class="btn" data-go="${p.id}">Visa</button></div></div>`).join("") || Tr`<div class="muted">Inga platser ännu. Tryck på nålknappen eller håll fingret på kartan för att spara en plats.</div>`}</div>`, "places");
   document.querySelectorAll("[data-go]").forEach(x => x.onclick = () => { const p = S.places.find(q => q.id === x.dataset.go); leaveFollow(); map.easeTo({ center: lnglat(p), zoom: 14 }); openPlace(p.id); });
 }
 const boundsOf = pts => pts.reduce((b, p) => b.extend([p[1], p[0]]), new maplibregl.LngLatBounds([pts[0][1], pts[0][0]], [pts[0][1], pts[0][0]]));
@@ -2690,7 +2690,7 @@ function openRoutes() {
 }
 function openLog() {
   const tot = S.tracks.reduce((s, t) => s + (t.nm || 0), 0);
-  openSheet(Tr`Loggbok`, `
+  openSheet(Tr`Loggbok`, Tr`
     <div class="row" style="gap:24px"><div><div class="big">${tot.toFixed(1)}</div><div class="muted">nm totalt</div></div><div><div class="big">${S.tracks.length}</div><div class="muted">turer</div></div></div>
     <div class="list">${S.tracks.map(t => { const d = new Date(t.start), h = (t.end - t.start) / 3600000; return Tr`<div class="card"><h3>${DAYS[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1} kl ${hm(d)}</h3>
       <div class="muted num">${(t.nm || 0).toFixed(1)} nm · ${fmtDur(h)} · snitt ${h ? (t.nm / h).toFixed(1) : 0} kn · max ${t.max.toFixed(1)} kn · ${esc(t.boat || "")}</div>
@@ -2843,9 +2843,9 @@ function openCatches() {
   openSheet(Tr`Fångstlogg`, Tr`
     ${S.catches.length ? Tr`<div class="card"><h3>Säsongen ${st.yr}</h3><div class="muted">${seasonN} fångster${released ? ` · ${released} catch &amp; release` : ""}</div>
       <div class="row">${Object.entries(st.season).map(([k, v]) => `<span class="pill">${esc(k)} ${v}</span>`).join("") || Tr`<span class="muted">Inga fångster i år ännu.</span>`}</div></div>` : ""}
-    ${recs.length ? `<div class="card"><h3>Dina rekord</h3>${recs.map(([sp, r]) => `<div class="rec-row"><b>${esc(sp)}</b><span>${r.kg ? `${fmt1(r.kg)} kg` : ""}${r.kg && r.len ? " · " : ""}${r.len ? `${fmt1(r.len)} cm` : ""}</span><button class="btn sm" data-c="${(r.kgC || r.lenC).id}">Visa</button></div>`).join("")}</div>` : ""}
+    ${recs.length ? Tr`<div class="card"><h3>Dina rekord</h3>${recs.map(([sp, r]) => Tr`<div class="rec-row"><b>${esc(sp)}</b><span>${r.kg ? `${fmt1(r.kg)} kg` : ""}${r.kg && r.len ? " · " : ""}${r.len ? `${fmt1(r.len)} cm` : ""}</span><button class="btn sm" data-c="${(r.kgC || r.lenC).id}">Visa</button></div>`).join("")}</div>` : ""}
     ${S.catches.length >= 3 ? Tr`<label class="row"><input type="checkbox" id="ct-heat" ${S.heat ? "checked" : ""}> Visa var du fått mest fisk (värmekarta)</label>` : ""}
-    <div class="list">${S.catches.map(c => { const d = new Date(c.t); return Tr`<div class="card"><h3>${c.photo ? "📷 " : ""}${esc(Lx(c.species) || Tr`Fångst`)} ${c.kg ? `· ${esc(c.kg)} kg` : ""}${c.len ? ` · ${esc(c.len)} cm` : ""}${c.released ? ` <span class="pill">C&amp;R</span>` : ""}</h3>
+    <div class="list">${S.catches.map(c => { const d = new Date(c.t); return Tr`<div class="card"><h3>${c.photo ? "📷 " : ""}${esc(Lx(c.species) || Tr`Fångst`)} ${c.kg ? `· ${esc(c.kg)} kg` : ""}${c.len ? ` · ${esc(c.len)} cm` : ""}${c.released ? Tr` <span class="pill">C&amp;R</span>` : ""}</h3>
       <div class="muted">${DAYS[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1} kl ${hm(d)}${c.depth ? ` · ${esc(c.depth)}` : ""}${c.wx ? ` · ${c.wx.wind.toFixed(0)} m/s ${compass(c.wx.dir)} · ${Math.round(c.wx.p)} hPa · ${c.wx.moon.icon}` : ""}${c.lure ? " · " + esc(c.lure) : ""}</div>
       <div class="row"><button class="btn" data-c="${c.id}">Visa</button><button class="btn" data-share="${c.id}">Dela</button></div></div>`; }).join("") || Tr`<div class="muted">Inga fångster ännu. Välj läget Fiske och tryck på Fisk! när det nappar.</div>`}</div>
     <button class="btn pri" id="ct-past">Lägg till fångst i efterhand</button>
@@ -3078,7 +3078,7 @@ async function downloadOffline(withChart) {
   const bar = () => $("#off-prog"), say = t => { const el = $("#off-msg"); if (el) el.textContent = t; };
   const prog = f => { const el = bar(); if (el) { el.hidden = false; el.value = f; } };
   try {
-    if (!("caches" in window)) throw new Error("Webbläsaren saknar stöd för offlinelagring.");
+    if (!("caches" in window)) throw new Error(Tr`Webbläsaren saknar stöd för offlinelagring.`);
     try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch (e) {}
     const c = await caches.open(OFFLINE);
     let bytes = (S.offline && S.offline.bytes) || 0, etag = S.offline && S.offline.etag;
@@ -3088,7 +3088,7 @@ async function downloadOffline(withChart) {
         const url = abs(OFF_BIG[i]);
         say([Tr`Laddar ner sjökortet …`, Tr`Laddar ner stenar och grund …`, Tr`Laddar ner djupkurvor och branter …`][i]);
         const res = await fetch(url, { cache: "no-store" });
-        if (!res.ok) { if (i === 0) throw new Error("Kunde inte hämta sjökortet"); continue; }
+        if (!res.ok) { if (i === 0) throw new Error(Tr`Kunde inte hämta sjökortet`); continue; }
         const total = +res.headers.get("Content-Length") || 0, rd = res.body.getReader(), parts = []; let got = 0;
         for (;;) { const { done, value } = await rd.read(); if (done) break; parts.push(value); got += value.length; if (total) prog((i + got / total) / (OFF_BIG.length + 1)); }
         const blob = new Blob(parts);
@@ -3199,7 +3199,7 @@ function openSharedRoute() {
   openSheet(Tr`Delad rutt`, Tr`
     <div class="card"><h3>${esc(r.name)}</h3><div class="muted">${nm} nm · ${r.pts.length} punkter</div></div>
     ${have ? Tr`<div class="muted">Du har redan den här rutten sparad.</div>` : Tr`<div class="muted">Någon har delat en rutt med dig. Spara den så finns den under Meny → Sparade rutter.</div>`}
-    <div class="row">${have ? "" : `<button class="btn pri" id="sr-save">Spara rutten</button>`}<button class="btn" id="sr-open">Öppna i ruttplaneringen</button><button class="btn" id="sr-close">Stäng</button></div>
+    <div class="row">${have ? "" : Tr`<button class="btn pri" id="sr-save">Spara rutten</button>`}<button class="btn" id="sr-open">Öppna i ruttplaneringen</button><button class="btn" id="sr-close">Stäng</button></div>
     <div class="muted">Kontrollera alltid rutten mot sjökortet och dagens förhållanden innan du kör den.</div>`, "sharedroute");
   const sv = $("#sr-save"); if (sv) sv.onclick = () => { S.routes.unshift({ ...r, created: Date.now(), from: "delad" }); save(); toast(Tr`Rutten "${r.name}" är sparad`); closeSheet(); setData("shown", EMPTY); };
   $("#sr-open").onclick = () => { setData("shown", EMPTY); closeSheet(); startPlanning(ll2); if (S.routes.find(q => q.id === r.id)) routeId = r.id; routeName = r.name; renderRoute(); };
@@ -3271,7 +3271,7 @@ function wlChart() {
   const path = f => pts.filter((p, i) => p.f === f || (f === 1 && pts[i + 1] && pts[i + 1].f === 1 && p.f === 0)).map((p, i) => `${i ? "L" : "M"}${X(p.t).toFixed(1)},${Y(p.v).toFixed(1)}`).join("");
   const now = X(Date.now()), ticks = [];
   for (let t = Math.ceil(t0 / 21600000) * 21600000; t < t1; t += 21600000) { const d = new Date(t); ticks.push(`<text x="${X(t)}" y="${H - 4}" font-size="10" text-anchor="middle" fill="currentColor" opacity=".6">${d.getHours() === 0 ? DAYS[d.getDay()] : pad(d.getHours())}</text>`); }
-  return `<svg viewBox="0 0 ${W} ${H}" class="wl-chart">
+  return Tr`<svg viewBox="0 0 ${W} ${H}" class="wl-chart">
     <line x1="8" x2="${W - 8}" y1="${Y(0)}" y2="${Y(0)}" stroke="currentColor" stroke-opacity=".35" stroke-dasharray="3 3"/>
     <text x="${W - 8}" y="${Y(0) - 3}" font-size="10" text-anchor="end" fill="currentColor" opacity=".6">medel</text>
     <path d="${path(0)}" fill="none" stroke="#1d6fa3" stroke-width="2.5"/>
