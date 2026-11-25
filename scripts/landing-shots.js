@@ -30,7 +30,7 @@ const SHOTS = [
   { name: "fiskelage", dev: { ...devices["iPhone 13"], deviceScaleFactor: 2 }, view: { lat: 60.09, lng: 19.94, z: 12 }, base: "chart", mode: "fiske",
     run: `openFishIndex(); await sleep(5000); setSheetState($("#sheet"), 2, true); await sleep(500); const b = document.querySelector(".idx-bars button.best:not([data-k='0'])"); b && b.click(); await sleep(400);` },
   { name: "rutt", dev: { ...devices["iPhone 13"], deviceScaleFactor: 2 }, view: { lat: 60.07, lng: 20.15, z: 10 }, base: "chart",
-    run: `await autoRoute({ lat: 60.0905, lng: 19.9255 }, { lat: 60.0330, lng: 20.3830 }); await sleep(3000); setSheetState($("#sheet"), 0); await sleep(500); const h = map.getContainer().clientHeight; map.fitBounds(boundsOf(wps.map(w => [w.lat, w.lng])), { padding: { top: 130, left: 30, right: 90, bottom: Math.round(h * .3) }, duration: 0 }); await sleep(5000);` },
+    run: `await autoRoute({ lat: 60.0905, lng: 19.9255 }, { lat: 60.0455, lng: 19.985 }); await sleep(3000); setSheetState($("#sheet"), 0); await sleep(500); const h = map.getContainer().clientHeight; map.fitBounds(boundsOf(wps.map(w => [w.lat, w.lng])), { padding: { top: 140, left: 90, right: 90, bottom: Math.round(h * .2) }, duration: 0 }); await sleep(5000);` },
   { name: "dator", dev: { viewport: { width: 1440, height: 860 }, deviceScaleFactor: 1.5 }, view: { lat: 60.0835, lng: 19.962, z: 13.2 }, base: "chart" },
   { name: "karta", dev: { ...devices["iPhone 13"], deviceScaleFactor: 2 }, view: { lat: 60.045, lng: 19.985, z: 12.8 }, base: "chart" },
   { name: "flode-dator", dev: { viewport: { width: 1440, height: 860 }, deviceScaleFactor: 1.5 }, view: { lat: 60.05, lng: 21.9, z: 7.4 }, base: "chart", wx: "flow" },
