@@ -2130,7 +2130,7 @@ function fcChart() {
   if (t === "p") {
     const v = xs.map(i => h.pressure_msl[i]), d = v[Math.min(23, v.length - 1)] - v[0];
     const trend = d > 3 ? "stiger tydligt, ofta bättre väder på väg" : d > 1 ? "stiger" : d < -3 ? "faller tydligt, ofta mer vind och sämre väder på väg" : d < -1 ? "faller" : "stabilt";
-    return note(`Lufttryck hPa · ${trend} (${d >= 0 ? "+" : ""}${d.toFixed(1)} hPa kommande 24 h)`) + `<div class="chart">${hourChart(xs, v, { unit: "hPa", col: "#7a5cc2", step: 5 })}</div>`;
+    return note(`Lufttryck hPa · ${trend} (${d >= 0 ? "+" : ""}${d.toFixed(1)} hPa kommande 24 h)`) + `<div class="chart">${hourChart(xs, v, { unit: "hPa", col: "#7a5cc2", step: 2 })}</div>`;
   }
   const v = xs.map(i => h.temperature_2m[i]);
   return note("Lufttemperatur °C kommande 48 h") + `<div class="chart">${hourChart(xs, v, { unit: "°", col: "#d6763a", step: 2, zero: true })}</div>`;
