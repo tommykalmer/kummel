@@ -220,6 +220,7 @@ label.f input,label.f select,label.f textarea{border:1px solid var(--line);borde
 .wx-now{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;align-items:center}
 .wx-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .ss-hit{text-align:left;display:block;line-height:1.35}.ss-hit .muted{display:block;font-size:13px;font-weight:400}
+.lang-pick{display:flex;justify-content:center}.lang-pick button{flex:1}
 .fc-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;flex-shrink:0}.fc-tabs::-webkit-scrollbar{display:none}.fc-tabs button{flex:1 0 auto;padding-left:7px;padding-right:7px;font-size:14px}
 .fc-days{display:grid}
 .fc-day{display:grid;grid-template-columns:2.6em 1.6em auto 1fr auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:15px;white-space:nowrap}
@@ -427,11 +428,11 @@ label.row{flex-wrap:nowrap;align-items:center}
   if (!ok[l]) { l = "en"; var a = navigator.languages || [navigator.language || ""];
     for (var i = 0; i < a.length; i++) { var c = String(a[i]).slice(0, 2).toLowerCase(); if (ok[c]) { l = c; break; } } }
   window.KUMMEL_LANG = l; document.documentElement.lang = l === "sv" ? "sv-AX" : l;
-  if (l !== "sv") document.write('<script src="lang/' + l + '.js?v=202611260300"><\/script>');
+  if (l !== "sv") document.write('<script src="lang/' + l + '.js?v=202611260330"><\/script>');
 })();
 </script>
-<script src="config.js?v=202611260300"></script>
-<script src="chartstyle.js?v=202611260300"></script>
-<script src="app.js?v=202611260300"></script>
+<script src="config.js?v=202611260330"></script>
+<script src="chartstyle.js?v=202611260330"></script>
+<script src="app.js?v=202611260330"></script>
 </body>
 </html>
