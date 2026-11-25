@@ -516,6 +516,8 @@ function setFollow(on, quiet) {
   if (on && gps) { followBoat(true); $("#g-pos").innerHTML = fmtPos(gps); $("#g-poslbl").textContent = "GPS"; }
   if (!on && !quiet) updateCross();
 }
+/* när man vill titta på något annat (ett fartyg, en plats, en rutt) slutar kartan följa båten */
+function leaveFollow() { lastTouch = Date.now(); if (follow) setFollow(false, true); }
 function followBoat(jump) {
   const c = map.getContainer(), k = Math.min(c.clientWidth, c.clientHeight) * .22;
   const moving = gps.sog > 2 && gps.cog != null && (gps.acc || 0) < 50;   // datorns wifi-position hoppar och ger skenbar fart
@@ -909,7 +911,7 @@ function openCatch(id) {
 /* flytta en fångst: kartan centreras på den, man drar kartan så att korset står rätt och sparar */
 function moveCatch(c) {
   const from = { lat: c.lat, lng: c.lng };
-  map.easeTo({ center: lnglat(c), zoom: Math.max(map.getZoom(), 15), duration: 400 });
+  leaveFollow(); map.easeTo({ center: lnglat(c), zoom: Math.max(map.getZoom(), 15), duration: 400 });
   openSheet("Flytta fångsten", `
     <div class="callout">Dra kartan så att <b>korset</b> står exakt där du fick fisken.</div>
     <div class="muted" id="mv-pos">${fmtPosTxt(c)}</div>
@@ -1344,7 +1346,7 @@ function renderRoute() {
   $("#rt-rev").onclick = () => { wps.reverse(); wpsOff.reverse(); renderRoute(); };
   $("#rt-clear").onclick = () => { wps = []; wpsOff = []; autoInfo = null; renderRoute(); };
   const au = $("#rt-auto"); if (au) au.onclick = () => autoRoute(wps[0], wps[wps.length - 1]);
-  const show = $("#rt-show"); if (show) show.onclick = () => map.easeTo({ center: lnglat(sh.at), zoom: Math.max(map.getZoom(), 14) });
+  const show = $("#rt-show"); if (show) show.onclick = () => { leaveFollow(); map.easeTo({ center: lnglat(sh.at), zoom: Math.max(map.getZoom(), 14) }); };
   const nm = $("#rt-name"); if (nm) nm.oninput = () => { routeName = nm.value; };
   $("#rt-save").textContent = routeId ? "Spara ändringar" : "Spara rutt";
   $("#rt-save").onclick = () => {
@@ -2500,7 +2502,7 @@ async function findShip(mmsi) {
     const s = { mmsi, lat, lng, sog: p.sog ?? 0, cog: p.cog ?? 0, hdg: p.heading, nav: p.navStat, t: p.timestampExternal || Date.now() };
     if (!S.layers.ais) setAis(true);
     aisShips = [...aisShips.filter(x => x.mmsi !== mmsi), s]; renderAis();
-    map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 11.5) });
+    leaveFollow(); map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 11.5), offset: [0, -Math.round(map.getContainer().clientHeight * .2)] });   // ovanför panelen
     openShip(mmsi);
   } catch (e) {
     const m = aisMeta[mmsi] || {};
@@ -2634,14 +2636,14 @@ function openMenu() {
 $("#b-menu").onclick = openMenu;
 function openPlaces() {
   openSheet("Mina platser", `<div class="list">${S.places.map(p => `<div class="card"><h3>${CATS[p.cat].e} ${esc(p.name)}</h3>${p.note ? `<div>${esc(p.note)}</div>` : ""}<div class="row"><button class="btn" data-go="${p.id}">Visa</button></div></div>`).join("") || `<div class="muted">Inga platser ännu. Tryck på nålknappen eller håll fingret på kartan för att spara en plats.</div>`}</div>`, "places");
-  document.querySelectorAll("[data-go]").forEach(x => x.onclick = () => { const p = S.places.find(q => q.id === x.dataset.go); map.easeTo({ center: lnglat(p), zoom: 14 }); openPlace(p.id); });
+  document.querySelectorAll("[data-go]").forEach(x => x.onclick = () => { const p = S.places.find(q => q.id === x.dataset.go); leaveFollow(); map.easeTo({ center: lnglat(p), zoom: 14 }); openPlace(p.id); });
 }
 const boundsOf = pts => pts.reduce((b, p) => b.extend([p[1], p[0]]), new maplibregl.LngLatBounds([pts[0][1], pts[0][0]], [pts[0][1], pts[0][0]]));
 function openRoutes() {
   openSheet("Sparade rutter", `<div class="list">${S.routes.map(r => `<div class="card"><h3>${esc(r.name)}</h3><div class="muted">${routeStats(r.pts.map(p => ({ lat: p[0], lng: p[1] }))).nm.toFixed(1)} nm · ${r.pts.length} punkter</div><div class="row"><button class="btn pri" data-nav="${r.id}">Navigera</button><button class="btn" data-open="${r.id}">Öppna</button><button class="btn" data-share="${r.id}">Dela</button><button class="btn" data-rgpx="${r.id}">GPX</button><button class="btn warn" data-del="${r.id}">Ta bort</button></div></div>`).join("") || `<div class="muted">Inga sparade rutter.</div>`}</div>`, "routes");
   document.querySelectorAll("[data-open]").forEach(x => x.onclick = () => {
     const r = S.routes.find(q => q.id === x.dataset.open);
-    map.fitBounds(boundsOf(r.pts), { padding: 60, duration: 0 });
+    leaveFollow(); map.fitBounds(boundsOf(r.pts), { padding: 60, duration: 0 });
     startPlanning(r.pts.map(p => ({ lat: p[0], lng: p[1] }))); routeId = r.id; routeName = r.name; renderRoute();
   });
   document.querySelectorAll("[data-del]").forEach(x => x.onclick = () => { S.routes = S.routes.filter(q => q.id !== x.dataset.del); save(); openRoutes(); });
@@ -2659,7 +2661,7 @@ function openLog() {
   document.querySelectorAll("[data-show]").forEach(x => x.onclick = () => {
     const t = S.tracks.find(q => q.id === x.dataset.show);
     setData("shown", lineFC(t.pts.map(p => [p[1], p[0]])));
-    map.fitBounds(boundsOf(t.pts), { padding: 60 });
+    leaveFollow(); map.fitBounds(boundsOf(t.pts), { padding: 60 });
   });
   document.querySelectorAll("[data-gpx]").forEach(x => x.onclick = () => downloadGpx(S.tracks.find(q => q.id === x.dataset.gpx)));
   document.querySelectorAll("[data-del]").forEach(x => x.onclick = () => { S.tracks = S.tracks.filter(q => q.id !== x.dataset.del); save(); openLog(); });
@@ -2813,7 +2815,7 @@ function openCatches() {
     <div class="muted">Dina fiskeplatser och foton sparas bara på den här enheten och delas aldrig, om du inte själv delar en fångst.</div>`, "catches");
   $("#ct-past").onclick = newPastCatch;
   const heat = $("#ct-heat"); if (heat) heat.onchange = () => { S.heat = heat.checked; save(); if (S.mode !== "fiske") setMode("fiske"); refreshCatches(); };
-  document.querySelectorAll("[data-c]").forEach(x => x.onclick = () => { const c = S.catches.find(q => q.id === x.dataset.c); if (S.mode !== "fiske") setMode("fiske"); map.easeTo({ center: lnglat(c), zoom: 14 }); openCatch(c.id); });
+  document.querySelectorAll("[data-c]").forEach(x => x.onclick = () => { const c = S.catches.find(q => q.id === x.dataset.c); if (S.mode !== "fiske") setMode("fiske"); leaveFollow(); map.easeTo({ center: lnglat(c), zoom: 14 }); openCatch(c.id); });
   document.querySelectorAll("[data-share]").forEach(x => x.onclick = () => openShare(x.dataset.share));
 }
 /* ---------- säkerhetskopia: spara, skicka och slå ihop ----------
@@ -3154,7 +3156,7 @@ function openSharedRoute() {
   history.replaceState(null, "", location.pathname + location.search);   // länken ska inte ligga kvar i adressfältet
   let r; try { r = unpackRoute(m[1]); } catch (e) { toast("Länken till rutten verkar vara trasig."); return false; }
   const have = S.routes.find(q => q.id === r.id), ll2 = r.pts.map(p => ({ lat: p[0], lng: p[1] })), nm = routeStats(ll2).nm.toFixed(1);
-  const show = () => { setData("shown", lineFC(r.pts.map(p => [p[1], p[0]]))); const h = map.getContainer().clientHeight; map.fitBounds(boundsOf(r.pts), { padding: { top: 90, left: 40, right: 80, bottom: Math.round(h * .45) }, duration: 0 }); };
+  const show = () => { leaveFollow(); setData("shown", lineFC(r.pts.map(p => [p[1], p[0]]))); const h = map.getContainer().clientHeight; map.fitBounds(boundsOf(r.pts), { padding: { top: 90, left: 40, right: 80, bottom: Math.round(h * .45) }, duration: 0 }); };
   if (mapReady) show(); else map.once("style.load", show);
   track("route_received");
   openSheet("Delad rutt", `
