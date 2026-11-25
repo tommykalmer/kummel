@@ -34,7 +34,6 @@ const SHOTS = [
   { name: "vattenstand", dev: { ...devices["iPhone 13"], deviceScaleFactor: 2 }, view: { lat: 60.045, lng: 19.985, z: 12 }, base: "chart",
     run: `openWaterLevel(); await sleep(5000); setSheetState($("#sheet"), 2, true); await sleep(600);` },
   { name: "vattentemp", dev: { ...devices["iPhone 13"], deviceScaleFactor: 2 }, view: { lat: 60.15, lng: 20.1, z: 8.8 }, base: "chart", wx: "water" },
-  { name: "fiskekarta", dev: { ...devices["iPhone 13"], deviceScaleFactor: 2 }, view: { lat: 60.045, lng: 19.985, z: 13.6 }, base: "chart", mode: "fiske" },
   { name: "gpx", dev: { ...devices["iPhone 13"], deviceScaleFactor: 2 }, view: { lat: 60.045, lng: 19.985, z: 12 }, base: "chart",
     run: `openPlotter(); await sleep(1500); setSheetState($("#sheet"), 2, true); await sleep(600);` },
   { name: "dator", dev: { viewport: { width: 1440, height: 860 }, deviceScaleFactor: 1.5 }, view: { lat: 60.0835, lng: 19.962, z: 13.2 }, base: "chart" },
