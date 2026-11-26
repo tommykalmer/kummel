@@ -231,7 +231,13 @@ map.on("styleimagemissing", e => {
   }
   KummelChart.image(map, e.id);
 });
-map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
+/* källrutan börjar hopfälld: MapLibre visar den annars utfälld en stund och fäller sedan ihop den,
+   vilket får rutan att hoppa (syns som layoutskift i Cloudflares mätning) */
+const attribCtl = new maplibregl.AttributionControl({ compact: true });
+{ const uc = attribCtl._updateCompact;
+  if (uc) attribCtl._updateCompact = () => { const el = attribCtl._container, had = el.classList.contains("maplibregl-compact"); uc();
+    if (!had && el.classList.contains("maplibregl-compact")) { el.classList.remove("maplibregl-compact-show"); el.removeAttribute("open"); } }; }
+map.addControl(attribCtl, "bottom-right");
 /* källrutan: alltid hopfälld från start, stängs själv efter en stund när man öppnat den */
 const attribEl = () => document.querySelector(".maplibregl-ctrl-attrib");
 function foldAttrib() { const el = attribEl(); if (!el) return; el.classList.remove("maplibregl-compact-show"); el.removeAttribute("open"); }
