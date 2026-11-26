@@ -675,7 +675,9 @@ function onFix(p) {
   if (gps.sog > 0.5) depthAlarm(pos);
   anchorCheck(pos);
   if (S.wxSrc !== "map" && (first || wxPos().key !== wxKey)) loadWx();
+  if (wxSeek) { wxSeek = false; if (!follow) map.easeTo({ center: lnglat(pos), zoom: Math.max(map.getZoom(), 11) }); }
 }
+let wxSeek = false;   // "Där jag är" väntar på en position
 $("#b-locate").onclick = () => {
   if (watchId !== null && gpsStale()) restartGps(); else startGps();
   if (!follow) {
@@ -2226,7 +2228,7 @@ function openWx() {
   const where = S.wxSrc === "map" ? "map" : "me";
   openSheet(Tr`Väder`, Tr`
     <div class="wxb-modes wx-where" role="group" aria-label="Var vädret gäller"><button data-wsrc="me" aria-pressed="${where === "me"}">Där jag är</button><button data-wsrc="map" aria-pressed="${where === "map"}">Vid korset på kartan</button></div>
-    ${where === "map" ? Tr`<div class="muted">Flytta kartan så att korset står där du vill se vädret. Vindrutan uppe till höger visar samma plats.</div>` : !gps ? Tr`<div class="muted">Din position är inte känd än, så vädret gäller kartans mitt tills GPS:en hittar dig.</div>` : ""}
+    ${where === "map" ? Tr`<div class="muted">Flytta kartan så att korset står där du vill se vädret. Vindrutan uppe till höger visar samma plats.</div>` : !gps ? (wxSeek ? Tr`<div class="muted">Söker din position … Vädret gäller kartans mitt tills GPS:en hittar dig.</div>` : Tr`<div class="muted">Din position är inte känd. <b>Tryck på Där jag är</b> för att söka upp den. Tills dess gäller vädret kartans mitt.</div>`) : ""}
     <div class="wx-now">
       <svg viewBox="0 0 24 24" width="56" height="56" style="transform:rotate(${(c.wind_direction_10m + 180) % 360}deg)"><path d="M12 2 19 21 12 16.5 5 21Z" fill="var(--accent)"/></svg>
       <div><div class="big">${c.wind_speed_10m.toFixed(1)} <small style="font-size:16px">m/s</small></div>
@@ -2256,9 +2258,11 @@ function openWx() {
   });
   document.querySelectorAll("[data-wsrc]").forEach(b => b.onclick = () => {
     // "Där jag är" utan känd position: starta positionssökningen (vädret flyttar dit så fort GPS:en hittar båten)
-    if (b.dataset.wsrc === "me" && (!gps || watchId === null || gpsStale())) {
-      if (watchId !== null && gpsStale()) restartGps(); else startGps();
-      if (!gps) toast(Tr`Söker din position …`, 2500);
+    if (b.dataset.wsrc === "me") {
+      if (!gps || watchId === null || gpsStale()) { if (watchId !== null && gpsStale()) restartGps(); else startGps(); }
+      // kartan hoppar till positionen (direkt om den är känd, annars när GPS:en hittar den)
+      if (gps && !gpsStale()) { if (!follow) map.easeTo({ center: lnglat(gps), zoom: Math.max(map.getZoom(), 11) }); }
+      else { wxSeek = true; if (sheetView === "wx") openWx(); toast(Tr`Söker din position …`, 2500); }
     }
     if ((S.wxSrc === "map" ? "map" : "me") === b.dataset.wsrc) return;
     S.wxSrc = b.dataset.wsrc; save(); track("weather_where", { w: S.wxSrc });
