@@ -2480,6 +2480,7 @@ function openShip(mmsi, refresh) {
     ${near}
     ${s.nav != null && NAVSTAT[s.nav] ? `<div>${NAVSTAT[s.nav]}</div>` : ""}
     ${m.destination ? Tr`<div>Destination: <b>${esc(m.destination)}</b></div>` : ""}
+    <div class="muted">Varifrån fartyget kommer och hela resan ser du på VesselFinder eller MarineTraffic.</div>
     <div class="row"><a class="btn" href="https://www.vesselfinder.com/vessels/details/${m.imo || mmsi}" target="_blank" rel="noopener">Visa på VesselFinder ↗</a><a class="btn" href="https://www.marinetraffic.com/en/ais/details/ships/mmsi:${mmsi}" target="_blank" rel="noopener">MarineTraffic ↗</a></div>
     <div class="muted">Position för ${age < 1 ? Tr`mindre än en minut` : age + " min"} sedan. Källa: Digitraffic (Fintraffic).</div>`;
   if (refresh && sheetView === "ais:" + mmsi) { $("#sh-body").innerHTML = html; return; }
