@@ -2255,6 +2255,11 @@ function openWx() {
     if (S.fcTab === "wl" && !wl) loadWaterLevel(true).then(() => { if (sheetView === "wx" && fcTab() === "wl") $("#fc-chart").innerHTML = fcChart(); });
   });
   document.querySelectorAll("[data-wsrc]").forEach(b => b.onclick = () => {
+    // "Där jag är" utan känd position: starta positionssökningen (vädret flyttar dit så fort GPS:en hittar båten)
+    if (b.dataset.wsrc === "me" && (!gps || watchId === null || gpsStale())) {
+      if (watchId !== null && gpsStale()) restartGps(); else startGps();
+      if (!gps) toast(Tr`Söker din position …`, 2500);
+    }
     if ((S.wxSrc === "map" ? "map" : "me") === b.dataset.wsrc) return;
     S.wxSrc = b.dataset.wsrc; save(); track("weather_where", { w: S.wxSrc });
     if (S.wxSrc === "map") setSheetState($("#sheet"), 1, true);
