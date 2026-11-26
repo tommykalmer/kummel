@@ -428,11 +428,19 @@ label.row{flex-wrap:nowrap;align-items:center}
   if (!ok[l]) { l = "en"; var a = navigator.languages || [navigator.language || ""];
     for (var i = 0; i < a.length; i++) { var c = String(a[i]).slice(0, 2).toLowerCase(); if (ok[c]) { l = c; break; } } }
   window.KUMMEL_LANG = l; document.documentElement.lang = l === "sv" ? "sv-AX" : l;
-  if (l !== "sv") document.write('<script src="lang/' + l + '.js?v=202611260630"><\/script>');
+  // översättningen laddas synkront (innan app.js körs); en kopia i localStorage används om nätet/cachen sviker
+  if (l !== "sv") {
+    var V = "202611260900", K = "kummel.i18n." + l, t = null;
+    try { var x = new XMLHttpRequest(); x.open("GET", "lang/" + l + ".js?v=" + V, false); x.send();
+      if (x.status === 200 && x.responseText.indexOf("KUMMEL_I18N") > 0) t = x.responseText; } catch (e) {}
+    if (t) { try { localStorage.setItem(K, t); } catch (e) {} }
+    else { try { t = localStorage.getItem(K); } catch (e) {} }
+    if (t) { try { (0, eval)(t); } catch (e) {} }
+  }
 })();
 </script>
-<script src="config.js?v=202611260630"></script>
-<script src="chartstyle.js?v=202611260630"></script>
-<script src="app.js?v=202611260630"></script>
+<script src="config.js?v=202611260900"></script>
+<script src="chartstyle.js?v=202611260900"></script>
+<script src="app.js?v=202611260900"></script>
 </body>
 </html>

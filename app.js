@@ -8,6 +8,9 @@
    Texter i koden är svenska och märks med Tr`...`. Översättningen slås upp i lang/fi.js eller lang/en.js
    med den svenska texten som nyckel, där ${...} blir {0}, {1} … */
 const LANG = window.KUMMEL_LANG || "sv", I18N = window.KUMMEL_I18N || {};
+// översättningen saknas (t.ex. nätet bröts precis vid starten): ladda om en gång i stället för att visa fel språk
+if (LANG !== "sv" && !window.KUMMEL_I18N) { try { if (!sessionStorage.getItem("kummel.i18nretry")) { sessionStorage.setItem("kummel.i18nretry", "1"); setTimeout(() => location.reload(), 1500); } } catch (e) {} }
+else { try { sessionStorage.removeItem("kummel.i18nretry"); } catch (e) {} }
 const LOC = { sv: "sv-FI", fi: "fi-FI", en: "en-GB" }[LANG], DEC = LANG === "en" ? "." : ",";
 function Tr(strs, ...v) {
   const key = strs.reduce((a, x, i) => a + "{" + (i - 1) + "}" + x);
