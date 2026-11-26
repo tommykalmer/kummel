@@ -220,7 +220,7 @@ label.f input,label.f select,label.f textarea{border:1px solid var(--line);borde
 .wx-now{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;align-items:center}
 .wx-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .ss-hit{text-align:left;display:block;line-height:1.35}.ss-hit .muted{display:block;font-size:13px;font-weight:400}
-.lang-pick{display:flex;justify-content:center}.lang-pick button{flex:1}
+.lang-pick{display:flex;justify-content:center;margin-top:8px}.lang-pick button{flex:1}
 .fc-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;flex-shrink:0}.fc-tabs::-webkit-scrollbar{display:none}.fc-tabs button{flex:1 0 auto;padding-left:7px;padding-right:7px;font-size:14px}
 .fc-days{display:grid}
 .fc-day{display:grid;grid-template-columns:2.6em 1.6em auto 1fr auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:15px;white-space:nowrap}
@@ -430,7 +430,7 @@ label.row{flex-wrap:nowrap;align-items:center}
   window.KUMMEL_LANG = l; document.documentElement.lang = l === "sv" ? "sv-AX" : l;
   // översättningen laddas synkront (innan app.js körs); en kopia i localStorage används om nätet/cachen sviker
   if (l !== "sv") {
-    var V = "202611260900", K = "kummel.i18n." + l, t = null;
+    var V = "202611260645", K = "kummel.i18n." + l, t = null;
     try { var x = new XMLHttpRequest(); x.open("GET", "lang/" + l + ".js?v=" + V, false); x.send();
       if (x.status === 200 && x.responseText.indexOf("KUMMEL_I18N") > 0) t = x.responseText; } catch (e) {}
     if (t) { try { localStorage.setItem(K, t); } catch (e) {} }
@@ -439,8 +439,8 @@ label.row{flex-wrap:nowrap;align-items:center}
   }
 })();
 </script>
-<script src="config.js?v=202611260900"></script>
-<script src="chartstyle.js?v=202611260900"></script>
-<script src="app.js?v=202611260900"></script>
+<script src="config.js?v=202611260645"></script>
+<script src="chartstyle.js?v=202611260645"></script>
+<script src="app.js?v=202611260645"></script>
 </body>
 </html>

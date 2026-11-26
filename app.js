@@ -2655,11 +2655,11 @@ function openMenu() {
       <button class="btn" id="m-data">Flytta och säkerhetskopiera</button>
       <button class="btn" id="m-anchor">Ankarlarm${S.anchor ? Tr` (på)` : ""}</button>
       <button class="btn" id="m-offline">Offlinekarta${S.offline ? Tr` (nedladdad)` : ""}</button>
-      <div class="wxb-modes lang-pick" role="group" aria-label="Språk">${[["sv", "Svenska"], ["fi", "Suomi"], ["en", "English"]].map(([k, t]) => `<button data-lang="${k}" aria-pressed="${LANG === k}">${t}</button>`).join("")}</div>
       <button class="btn" id="m-night">${S.theme && S.theme !== "day" ? THEMES[S.theme] : Tr`Nattläge: av`}</button>
       <button class="btn" id="m-legend">Teckenförklaring</button>
       <button class="btn" id="m-welcome">Så fungerar Kummel</button>
       <button class="btn" id="m-about">Om Kummel</button>
+      <div class="wxb-modes lang-pick" role="group" aria-label="Språk">${[["sv", "Svenska"], ["fi", "Suomi"], ["en", "English"]].map(([k, t]) => `<button data-lang="${k}" aria-pressed="${LANG === k}">${t}</button>`).join("")}</div>
     </div>
     <div class="maker">${ALAND_FLAG} Kummel · en produkt från ${MAKER}, ${MAKER_TOWN}</div>`, "menu");
   $("#m-shipsearch").onclick = openShipSearch;
